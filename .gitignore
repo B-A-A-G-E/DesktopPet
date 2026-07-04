@@ -31,3 +31,9 @@ idea/
 # 数据库与本地配置
 db.sqlite3
 local_settings.py
+
+# 图片
+img/
+
+# old文件夹
+old/
