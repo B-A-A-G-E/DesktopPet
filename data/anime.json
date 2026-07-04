@@ -1,0 +1,32 @@
+{
+  "entre": {
+    "path": "./img/",
+    "fps": 60,
+    "loop": false
+  },
+  "exit": {
+    "path": "./img/exit",
+    "fps": 30,
+    "loop": false
+  },
+  "idle": {
+    "path": "./img/idle",
+    "fps": 30,
+    "loop": true
+  },
+  "stroke": {
+    "path": "./img/stroke",
+    "fps": 30,
+    "loop": true
+  },
+  "drag": {
+    "path": "./img/drag",
+    "fps": 30,
+    "loop": true
+  },
+  "after-stroke": {
+    "path": "./img/after-stroke",
+    "fps": 50,
+    "loop": false
+  }
+}

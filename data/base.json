@@ -1,0 +1,11 @@
+{
+  "log-path": "./log.log",
+  "load-failed-img-path": "./img/load_failed.png",
+  "quesSelecter-item-count": 10,
+  "idle-time": 10000,
+  "idle-move-time": 15000,
+  "move-min-step": 200,
+  "move-max-step": 3000,
+  "move-step-time": 20,
+  "move-speed": 10
+}
