@@ -179,7 +179,7 @@ class SettingMenu(QWidget):
 
     def initPage4(self) -> None:
         self.pg4, self.pg4.items = PageFactory.createPage(
-            data.state, self.tabW, "反应文本", "新建回复"
+            data.state, self.tabW, "状态反馈文本", "新建回复"
         )
 
     def initPage5(self) -> None:
@@ -198,11 +198,11 @@ class SettingMenu(QWidget):
             # 绑定移除按钮
             for rowIdx, row in enumerate(item["rows"]):
                 row["remove"].clicked.connect(
-                    lambda clicked, key=k, idx=rowIdx: self.removeActionRow(key, idx)
+                    lambda clicked, key=k, idx=rowIdx: self.removeStateRow(key, idx)
                 )
             # 绑定添加按钮
             item["add"].clicked.connect(
-                lambda clicked, key=k: self.addActionRow(key)
+                lambda clicked, key=k: self.addStateRow(key)
             )
 
         # 绑定page5的动态按钮
@@ -215,7 +215,7 @@ class SettingMenu(QWidget):
                 lambda clicked, key=k: self.addDialogRow(key)
             )
 
-    def removeActionRow(self, key: str, idx: int) -> None:
+    def removeStateRow(self, key: str, idx: int) -> None:
         """移除反应文本的一行"""
         item = self.pg4.items[key]
         rows = item["rows"]
@@ -238,9 +238,9 @@ class SettingMenu(QWidget):
         container.removeItem(rowLayout)
         
         # 更新所有剩余行的移除按钮绑定
-        self.rebindRemoveButtons(key, "action")
+        self.rebindRemoveButtons(key, "state")
 
-    def addActionRow(self, key: str) -> None:
+    def addStateRow(self, key: str) -> None:
         """为反应文本添加新行"""
         item = self.pg4.items[key]
         container = item["container"]
@@ -261,7 +261,7 @@ class SettingMenu(QWidget):
         item["rows"].append(newRow)
 
         # 重新绑定所有移除按钮（包括新添加的）
-        self.rebindRemoveButtons(key, "action")
+        self.rebindRemoveButtons(key, "state")
 
     def removeDialogRow(self, key: str, idx: int) -> None:
         """移除对话文本的一行"""
@@ -312,7 +312,7 @@ class SettingMenu(QWidget):
 
     def rebindRemoveButtons(self, key: str, pageType: str) -> None:
         """重新绑定指定key的所有移除按钮"""
-        if pageType == "action":
+        if pageType == "state":
             item = self.pg4.items[key]
         else:  # dialog
             item = self.pg5.items[key]
@@ -326,9 +326,9 @@ class SettingMenu(QWidget):
                 pass  # 如果没有连接则忽略
             
             # 重新绑定
-            if pageType == "action":
+            if pageType == "state":
                 row["remove"].clicked.connect(
-                    lambda checked, k=key, i=idx: self.removeActionRow(k, i)
+                    lambda checked, k=key, i=idx: self.removestateRow(k, i)
                 )
             else:
                 row["remove"].clicked.connect(

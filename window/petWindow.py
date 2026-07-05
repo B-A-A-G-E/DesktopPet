@@ -6,6 +6,7 @@ import random
 import importlib
 
 from tool import data
+from tool import mouse
 from tool import conv
 from tool import anime
 from tool.data import LogType
@@ -144,13 +145,6 @@ class PetWindow(QWidget):
             self.state = state
             self.stateMenu.log(self.state, LogType.StateChange)
     
-    def getCollision(self, pos: QPoint) -> str | None:
-        """获取鼠标点击位置的碰撞体"""
-        for k in self.collisions.keys():
-            if self.collisions[k].contains(pos):
-                return k
-        return None
-
     @Slot()
     def moveRandomly(self) -> None:
         if self.state == "idle":
@@ -213,7 +207,7 @@ class PetWindow(QWidget):
     
     def mouseMoveEvent(self, event: QMouseEvent):
         if event.buttons() == Qt.MouseButton.LeftButton:
-            collision = self.getCollision(event.position().toPoint())
+            collision = mouse.getCollision(event.position().toPoint())
             if self.state != "drag" and collision:
                 event.accept()
                 self.replyState(collision)
