@@ -30,6 +30,8 @@
 | |-dialogMenu.py
 | |-stateMenu.py
 | |-settingMenu.py
+| |-action
+| | |-import.json
 ```
 
 ## "act-event"类型事件的自定义
