@@ -91,6 +91,7 @@ class SettingMenu(QWidget):
         fields = [
             ("日志保存路径", "log-path", False),
             ("加载失败图片路径", "load-failed-img-path", False),
+            ("行动事件路径", "action-import-json-path", False),
             ("询问框最大问题数", "quesSelecter-item-count", True),
             ("待机判定时间（毫秒）", "idle-time", True),
             ("待机移动时间（毫秒）", "idle-move-time", True),
@@ -178,7 +179,7 @@ class SettingMenu(QWidget):
 
     def initPage4(self) -> None:
         self.pg4, self.pg4.items = PageFactory.createPage(
-            data.action, self.tabW, "反应文本", "新建回复"
+            data.state, self.tabW, "反应文本", "新建回复"
         )
 
     def initPage5(self) -> None:
@@ -197,21 +198,21 @@ class SettingMenu(QWidget):
             # 绑定移除按钮
             for rowIdx, row in enumerate(item["rows"]):
                 row["remove"].clicked.connect(
-                    lambda checked, key=k, idx=rowIdx: self.removeActionRow(key, idx)
+                    lambda clicked, key=k, idx=rowIdx: self.removeActionRow(key, idx)
                 )
             # 绑定添加按钮
             item["add"].clicked.connect(
-                lambda checked, key=k: self.addActionRow(key)
+                lambda clicked, key=k: self.addActionRow(key)
             )
 
         # 绑定page5的动态按钮
         for k, item in self.pg5.items.items():
             for rowIdx, row in enumerate(item["rows"]):
                 row["remove"].clicked.connect(
-                    lambda checked, key=k, idx=rowIdx: self.removeDialogRow(key, idx)
+                    lambda clicked, key=k, idx=rowIdx: self.removeDialogRow(key, idx)
                 )
             item["add"].clicked.connect(
-                lambda checked, key=k: self.addDialogRow(key)
+                lambda clicked, key=k: self.addDialogRow(key)
             )
 
     def removeActionRow(self, key: str, idx: int) -> None:
@@ -221,7 +222,7 @@ class SettingMenu(QWidget):
         
         # 检查索引是否有效，并且至少保留一行
         if idx < 0 or idx >= len(rows) or len(rows) <= 1:
-            QMessageBox.critical(self, "Row Too Few", "Every action must have at least 1 response.", QMessageBox.StandardButton.Ok)
+            QMessageBox.critical(self, "Row Too Few", "Every state must have at least 1 response.", QMessageBox.StandardButton.Ok)
             return
         
         # 获取要删除的行数据
@@ -368,8 +369,8 @@ class SettingMenu(QWidget):
             data.collision[k]["height"] = int(self.pg3.items[k]["height"].text())
 
         # page4
-        for k in data.action.keys():
-            data.action[k] = [row["text"].text() for row in self.pg4.items[k]["rows"]]
+        for k in data.state.keys():
+            data.state[k] = [row["text"].text() for row in self.pg4.items[k]["rows"]]
 
         # page5
         for k in data.dialog.keys():
@@ -382,8 +383,8 @@ class SettingMenu(QWidget):
             f.write(json.dumps(data.anime, ensure_ascii = False, indent = 2))
         with open("./data/collision.json", "w", encoding = "utf-8") as f:
             f.write(json.dumps(data.collision, ensure_ascii = False, indent = 2))
-        with open("./data/action.json", "w", encoding = "utf-8") as f:
-            f.write(json.dumps(data.action, ensure_ascii = False, indent = 2))
+        with open("./data/state.json", "w", encoding = "utf-8") as f:
+            f.write(json.dumps(data.state, ensure_ascii = False, indent = 2))
         with open("./data/dialog.json", "w", encoding = "utf-8") as f:
             f.write(json.dumps(data.dialog, ensure_ascii = False, indent = 2))
 

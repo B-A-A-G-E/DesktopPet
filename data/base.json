@@ -1,6 +1,7 @@
 {
   "log-path": "./log.log",
   "load-failed-img-path": "./img/load_failed.png",
+  "action-import-json-path": "./action/import.json",
   "quesSelecter-item-count": 10,
   "idle-time": 10000,
   "idle-move-time": 15000,

@@ -4,9 +4,9 @@ from enum import Enum
 base: dict
 anime: dict
 collision: dict
-action: dict
+state: dict
 dialog: dict
-
+actPath: dict
 
 class LogType(Enum):
     Error = 0
@@ -20,7 +20,8 @@ def loadData() -> None:
     global base
     global anime
     global collision
-    global action, dialog
+    global state, dialog
+    global actPath
 
     with open("./data/base.json", "r", encoding = "utf-8") as f:
        base = json.load(f)
@@ -28,9 +29,11 @@ def loadData() -> None:
        anime = json.load(f)
     with open("./data/collision.json", "r", encoding = "utf-8") as f:
        collision = json.load(f)
-    with open("./data/action.json", "r", encoding = "utf-8") as f:
-        action = json.load(f)
+    with open("./data/state.json", "r", encoding = "utf-8") as f:
+        state = json.load(f)
     with open("./data/dialog.json", "r", encoding = "utf-8") as f:
         dialog = json.load(f)
+    with open(base["action-import-json-path"], "r", encoding = "utf-8") as f:
+        actPath = json.load(f)
 
 loadData()

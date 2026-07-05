@@ -1,6 +1,6 @@
 {
   "entre": {
-    "path": "./img/",
+    "path": "./img/entre",
     "fps": 60,
     "loop": false
   },

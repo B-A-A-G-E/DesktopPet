@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QApplication, QMessageBox
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import QTimer, QDir, Slot, Signal, QObject
+
 import time
 
 from tool import data
