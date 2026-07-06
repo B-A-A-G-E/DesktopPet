@@ -1,12 +1,15 @@
-from PySide6.QtWidgets import QWidget
-from PySide6.QtCore import Slot
+from tool.plugin import Plugin
 
-@Slot(QWidget)
-def start(window: QWidget):
-    """开始行动时调用"""
-    window.changeAnime("act-dance", False, False, True)
-
-@Slot(QWidget)
-def stop(window: QWidget):
-    """结束行动时调用"""
-    pass
+class Dance(Plugin):
+    def __init__(self):
+        super().__init__()
+        
+        self.id = "act-dance"
+        self.name = "跳舞"
+        self.description = "播放跳舞动画"
+    
+    def start(self):
+        self.window.changeAnime(self.id)
+    
+    def stop(self):
+        pass

@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout
 from PySide6.QtGui import QAction, QMouseEvent
-from PySide6.QtCore import Qt, Slot, QPoint, QTimer, QRect
+from PySide6.QtCore import Qt, Slot, Signal, QPoint, QTimer, QRect
 
 import random
 import importlib
@@ -11,12 +11,18 @@ from tool import conv
 from tool import anime
 from tool.data import LogType
 
+from tool.plugin import Plugin
+
 from window.dialogMenu import DialogMenu
 from window.stateMenu import StateMenu
 from window.actionMenu import ActionMenu
 from window.settingMenu import SettingMenu
 
 class PetWindow(QWidget):
+    pluginLoadSucceeded = Signal(str)
+    pluginInheritError = Signal(str)
+    pluginLoadFailed = Signal(str)
+    
     def __init__(self):
         super().__init__()
         
@@ -60,8 +66,10 @@ class PetWindow(QWidget):
         # 添加碰撞体
         self.collisions = { k: QRect(v["left"], v["top"], v["width"], v["height"]) for k, v in data.collision.items()}
 
-        # 添加自定义事件
-        self.acts = { k: importlib.import_module(v["path"]) for k, v in data.actPath.items()}
+        # 添加自定义行动（插件）
+        self.acts: dict[str, Plugin] = {}
+        self.currentAct: Plugin | None = None
+        self.loadPlugins()
 
         # 安装事件过滤器来捕获所有输入事件
         self.installEventFilter(self)
@@ -78,30 +86,58 @@ class PetWindow(QWidget):
         self.idleTimer.start(data.base["idle-time"])
         self.moveTimer.start(data.base["idle-move-time"])
 
+    def loadPlugins(self) -> None:
+        for k, v in data.actPath.items():
+            try:
+                # 导入模块并加载Plugin的子类
+                module = importlib.import_module(v)
+                pluginClass = None
+                for attrName in dir(module):
+                    attr = getattr(module, attrName)
+                    
+                    if isinstance(attr, type) and issubclass(attr, Plugin) and attr is not Plugin:
+                        pluginClass = attr
+                        break
+                # 实例化子类
+                if pluginClass:
+                    plugin = pluginClass()
+                    plugin.setup(self) # 安装插件，安装事件过滤器
+                    self.acts[k] = plugin
+                    self.pluginLoadSucceeded.emit(f"succeeded to load plugin \"{k}\"")
+                else:
+                    self.pluginInheritError.emit("plugin \"{k}\" is not based on the base class \"Plugin\"")
+            except Exception as e:
+                self.pluginLoadFailed.emit(f"failed to load plugin \"{k}\": {e}")
+
+    def act(self, id: str) -> None:
+        """执行行动"""
+        # 停止上一个行动
+        if id in self.acts and self.currentAct:
+            self.currentAct.stop()
+        
+        # 开始新行动
+        self.currentAct = self.acts[id]
+        self.currentAct.start()
+        self.changeState(id)
+
+    def stopAct(self) -> None:
+        if self.currentAct:
+            self.currentAct.stop()
+            self.currentAct = None
+            self.replyState("idle")
+
     def bind(self) -> None:
         """绑定子窗口及信号"""
         self.dialogMenu = DialogMenu()
         self.stateMenu = StateMenu()
-        self.actionMenu = ActionMenu()
+        self.actionMenu = ActionMenu(self)
         self.settingMenu = SettingMenu()
 
         self.settingMenu.dataUpdated.connect(self.updateData)
-
-        # 绑定actionMenu的按钮
-        for k, startBtn in self.actionMenu.actBtn.items():
-            def startAct(act):
-                if act == self.state:
-                    self.stateMenu.log("action has been already started")
-                else:
-                    self.changeState(act)
-                    self.acts[act].start(self)
-            startBtn.clicked.connect(lambda clicked, act = k: startAct(act))
         
-        def stopAct():
-            for act in data.actPath.keys():
-                self.acts[act].stop(self)
-            self.replyState("idle")
-        self.actionMenu.stopBtn.clicked.connect(stopAct)
+        self.pluginLoadSucceeded.connect(lambda text: self.stateMenu.log(text, LogType.PluginLoaded))
+        self.pluginInheritError.connect(lambda text: self.stateMenu.log(text, LogType.Error))
+        self.pluginLoadFailed.connect(lambda text: self.stateMenu.log(text, LogType.Error))
 
         # 绑定上下文菜单
         self.imgLb.dialogAct.triggered.connect(self.dialogMenu.show)
@@ -130,8 +166,7 @@ class PetWindow(QWidget):
             self.changeAnime(state, afterEvent, isContinue, isAsync)
             # 更新状态
             self.changeState(state)
-            
-    
+  
     def changeState(self, state: str) -> None:
         """更新宠物状态并切换计时器状态"""
         # 切换计时器状态

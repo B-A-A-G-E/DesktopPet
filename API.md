@@ -24,6 +24,14 @@
     - [函数 loadData() -> None](#函数-loaddata---none)
   - [模块 tool.mouse](#模块-toolmouse)
     - [函数 getCollision(widget: QWidget, pos: QPoint) -> str | None](#函数-getcollisionwidget-qwidget-pos-qpoint---str--none)
+  - [模块 tool.plugin](#模块-toolplugin)
+    - [类 Plugin(QObject)](#类-pluginqobject)
+      - [属性](#属性)
+      - [方法 setup(window: PetWindow) -> None](#方法-setupwindow-petwindow---none)
+      - [方法 teardown() -> None](#方法-teardown---none)
+      - [方法 start() -> None](#方法-start---none)
+      - [方法 stop() -> None](#方法-stop---none)
+      - [方法 eventFilter(obj, event: QEvent) -> bool](#方法-eventfilterobj-event-qevent---bool)
   - [窗口类](#窗口类)
     - [ActionMenu](#actionmenu)
     - [DialogMenu](#dialogmenu)
@@ -37,9 +45,9 @@
       - [核心方法 replyState(state: str, afterEvent: bool = False, isContinue: bool = False, isAsync: bool = True) -> None](#核心方法-replystatestate-str-afterevent-bool--false-iscontinue-bool--false-isasync-bool--true---none)
       - [核心方法 changeState(state: str) -> None](#核心方法-changestatestate-str---none)
       - [核心方法 changeAnime(state: str, afterEvent: bool = False, isContinue: bool = False, isAsync: bool = True) -> None](#核心方法-changeanimestate-str-afterevent-bool--false-iscontinue-bool--false-isasync-bool--true---none)
+      - [信号](#信号-2)
       - [信号槽绑定](#信号槽绑定)
       - [自定义行动接口](#自定义行动接口)
-        - [注册格式](#注册格式)
 
 ---
 
@@ -108,6 +116,14 @@
   - `window`: 父窗口
   - `widget`: 用于显示图片的 QLabel
 
+#### 方法 play(isContinue: bool = False, isAsync: bool = True) -> None
+
+开始或继续播放动画。
+
+- **参数**
+  - `isContinue`: 是否从上一次停止位置继续播放
+  - `isAsync`: 是否异步播放（定时器驱动）；若为 `False`，则同步阻塞播放
+
 #### 方法 stop() -> None
 
 暂停播放（保留当前帧位置）。
@@ -172,6 +188,7 @@
 | `Exit` | 2 | 退场事件 |
 | `Set` | 3 | 设置更新事件 |
 | `StateChange` | 4 | 状态切换事件 |
+| `PluginLoaded` | 5 | 插件加载事件 |
 
 ### 函数 loadData() -> None
 
@@ -201,6 +218,70 @@
 
 ---
 
+## 模块 tool.plugin
+
+插件基类，用于实现自定义行动。
+
+### 类 Plugin(QObject)
+
+所有自定义行动插件须继承此类并重写 `start` 和 `stop` 方法。
+
+#### 属性
+
+| 属性 | 类型 | 说明 |
+| :--- | :--- | :--- |
+| `id` | str | 插件唯一标识，应与文件名一致 |
+| `name` | str | 在行动面板显示的名称 |
+| `description` | str | 插件描述，用于行动面板的鼠标悬浮提示 |
+| `window` | PetWindow \| None | 关联的主窗口实例（只读） |
+
+#### 方法 setup(window: PetWindow) -> None
+
+插件安装，将插件与主窗口关联并安装事件过滤器。
+
+- **参数**
+  - `window`: 主窗口实例
+- **说明**
+  - 由 `PetWindow.loadPlugins` 自动调用，无需手动调用
+
+#### 方法 teardown() -> None
+
+插件卸载，移除事件过滤器并解除与主窗口的关联。
+
+#### 方法 start() -> None
+
+开始行动。
+
+- **说明**
+  - **必须重写**
+  - 在此实现行动开始时的逻辑（如切换动画、播放回复等）
+  - 可通过 `self.window` 访问主窗口的公开方法
+
+#### 方法 stop() -> None
+
+停止行动。
+
+- **说明**
+  - **必须重写**
+  - 在此实现行动结束时的清理逻辑
+- **注意**
+  - 不需要在 `stop` 中手动切回待机状态（行动结束时会自动切换）
+
+#### 方法 eventFilter(obj, event: QEvent) -> bool
+
+事件过滤器，用于捕获并处理窗口事件。
+
+- **参数**
+  - `obj`: 事件目标对象
+  - `event`: 事件对象
+- **返回**
+  - `True` 表示事件已被处理，不再传递；`False` 表示继续传递
+- **说明**
+  - 默认返回 `False`，子类可按需重写
+  - 事件过滤器的安装和卸载由基类的 `setup`/`teardown` 自动处理
+
+---
+
 ## 窗口类
 
 ### ActionMenu
@@ -210,6 +291,9 @@
 - **属性**
   - `actBtn`: 字典，键为动作名，值为对应的 `QPushButton`
   - `stopBtn`: 停止按钮
+  - `lb`: 字典，键为动作名，值为对应的 `QLabel`（显示插件名称）
+- **说明**
+  - 插件名称显示在 `QLabel` 中，鼠标悬浮时显示 `description` 作为提示
 
 ### DialogMenu
 
@@ -288,6 +372,14 @@
 - **说明**
   - 若 `afterEvent` 为 True，在切换前尝试播放 `after-{当前状态}` 动画（同步阻塞）
 
+#### 信号
+
+| 信号 | 触发时机 |
+| :--- | :--- |
+| `pluginLoadSucceeded(str)` | 插件加载成功，携带插件 ID |
+| `pluginInheritError(str)` | 插件未继承 Plugin 基类，携带错误信息 |
+| `pluginLoadFailed(str)` | 插件加载失败，携带异常信息 |
+
 #### 信号槽绑定
 
 - `idleTimer.timeout` → 触发 `replyState("idle")`
@@ -301,10 +393,10 @@
 
 ##### 注册格式
 
-```json
+``` json
 {
-  "act-事件名": {
-    "name": "显示名称",
-    "path": "action.模块名"
-  }
+  "act-事件名": "action.模块名"
 }
+```
+
+> ### 详细教程请参阅 customization.md。

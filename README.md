@@ -11,21 +11,24 @@
     - [base.json 基础配置](#basejson-基础配置)
     - [anime.json 动画配置](#animejson-动画配置)
     - [collision.json 碰撞体配置](#collisionjson-碰撞体配置)
-    - [state.json 状态配置](#statejson-状态配置)
-    - [dialog.json 状态配置](#dialogjson-状态配置)
-    - ["act-action"类型事件（行动）的自定义](#act-action类型事件行动的自定义)
-        - [样例](#例)
+    - [state.json 状态反馈文本配置](#statejson-状态反馈文本配置)
+    - [dialog.json 对话文本配置](#dialogjson-对话文本配置)
+    - [自定义行动（插件开发）](#自定义行动插件开发)
 - [更新日志](#更新日志)
-    - [v0.3.2.1（最新）](#v0321-最新)
+    - [v0.4（最新）](#v04-最新)
+    - [v0.3.2.1](#v0321)
     - [v0.3.1](#v031)
     - [v0.2](#v02)
     - [v0.1](#v01)
+
 ---
 
 ## 项目简介
-基于 PySide6 开发的桌面电子宠物程序，支持自定义动画、交互反馈和扩展行为。宠物会随机移动、响应点击拖拽、通过对话菜单互动，并能执行自定义行为
+
+基于 PySide6 开发的桌面电子宠物程序，支持自定义动画、交互反馈和扩展行为。宠物会随机移动、响应点击拖拽、通过对话菜单互动，并能执行自定义行动（插件）。
 
 ## 环境依赖
+
 - Python 3.8+
 - PySide6
 
@@ -34,16 +37,19 @@ pip install pyside6
 ```
 
 ## 项目结构
+
 ```
 .
 ├── main.py                 # 程序入口
 ├── log.log                 # 运行日志
 ├── README.md
+├── API.md                  # API 文档
+├── customization.md        # 自定义教程
 ├── .gitignore
 │
 ├── data/                   # 配置文件目录
 │   ├── base.json           # 基础配置
-    ├── import.json         # 动作导入配置
+│   ├── import.json         # 插件注册配置
 │   ├── anime.json          # 动画配置
 │   ├── collision.json      # 碰撞体配置
 │   ├── state.json          # 状态反馈文本
@@ -57,200 +63,220 @@ pip install pyside6
 │   ├── stroke/             # 抚摸动画帧
 │   ├── drag/               # 拖拽动画帧
 │   ├── after-stroke/       # 抚摸后动画帧
-│   └── after-drag/         # 拖拽后动画帧
+│   ├── after-drag/         # 拖动后动画帧
 │
 ├── tool/                   # 工具模块
 │   ├── anime.py            # 动画播放引擎
 │   ├── data.py             # 数据加载与全局变量
-│   └── conv.py             # 对话回复生成器
+│   ├── conv.py             # 对话回复生成器
+│   ├── mouse.py            # 鼠标交互辅助
+│   └── plugin.py           # 插件基类
 │
 ├── window/                 # 窗口模块
 │   ├── petWindow.py        # 主窗口（宠物本体）
-│   ├── dialogMenu.py       # 对话菜单
-│   ├── stateMenu.py        # 状态日志菜单
-│   ├── actionMenu.py       # 行动菜单
-│   └── settingMenu.py      # 设置菜单
+│   ├── dialogMenu.py       # 对话面板
+│   ├── stateMenu.py        # 状态日志面板
+│   ├── actionMenu.py       # 行动面板
+│   └── settingMenu.py      # 设置面板
 │
-└── action/                 # 自定义动作模块
+└── action/                 # 自定义行动（插件）目录
 ```
 
 ## API
-- [Desktop Pet API](./API.md)
+
+详见 [API.md](./API.md)。
 
 ## 操作简介（宠物本体）
-操作|反馈
-:---:|:---:
-左键拖拽|切换 `drag` 状态，宠物跟随鼠标移动
-左键点击`stroke`碰撞区并拖拽|触发 `stroke` 状态（可配置碰撞体）
-闲置等待|自动进入 `idle` 状态，随机移动
-右键菜单|打开对话/状态/行动/设置面板
+
+| 操作 | 反馈 |
+| :---: | :---: |
+| 左键拖拽 | 切换 `drag` 状态，宠物跟随鼠标移动 |
+| 左键点击 `stroke` 碰撞区并拖拽 | 触发 `stroke` 状态（可配置碰撞体） |
+| 闲置等待 | 自动进入 `idle` 状态，随机移动 |
+| 右键菜单 | 打开对话/状态/行动/设置面板 |
 
 ## 核心机制
+
 1. 动画系统
     - 基于帧序列图片播放，支持循环/单次播放
     - 窗口自动适应图片大小
 2. 状态机
     - 状态切换时触发对应的反馈文本和动画
-    - 支持 after-state 后置事件（如抚摸后播放特殊动画）
-
+    - 支持 `after-{state}` 后续事件（如抚摸后播放特殊动画）
 3. 对话系统
-    - 随机从 dialog.json 抽取问题选项
-    - 回复文本从 state.json 或 dialog.json 随机选取
-4. 自定义行动
-    - 通过 action/ 目录添加模块
-    - 在 import.json 中注册后即可在行动面板调用
-5. 设置菜单
+    - 随机从 `dialog.json` 抽取问题选项
+    - 回复文本从 `state.json` 或 `dialog.json` 随机选取
+4. 自定义行动（插件系统）
+    - 通过 `action/` 目录添加插件模块
+    - 在 `import.json` 中注册后即可在行动面板调用
+    - 插件须继承 `tool.plugin.Plugin` 基类
+5. 设置面板
     - 可视化编辑所有 JSON 配置文件
     - 支持动态增删状态/对话文本条目
 
 ## 自定义
+
 ### base.json 基础配置
-键|说明|默认值
-:---:|:---:|:---:
-log-path|日志保存路径|./log.log
-load-failed-img-path|加载失败占位图|./img/load_failed.png
-quesSelecter-item-count|对话菜单最大显示问题数|10
-idle-time|待机判定时间(ms)|10000
-idle-move-time|随机移动间隔(ms)|15000
-move-min-step|移动最小距离(xp)|200
-move-max-step|移动最大距离(xp)|3000
-move-step-time|步进间隔(ms)|20
-move-speed|移动速度(px/步)|10
+
+| 键 | 说明 | 默认值 |
+| :---: | :---: | :---: |
+| `log-path` | 日志保存路径 | `./log.log` |
+| `load-failed-img-path` | 加载失败占位图路径 | `./img/load_failed.png` |
+| `quesSelecter-item-count` | 对话面板最大显示问题数 | `10` |
+| `idle-time` | 待机判定时间（毫秒） | `10000` |
+| `idle-move-time` | 随机移动间隔（毫秒） | `15000` |
+| `move-min-step` | 移动最小距离（像素） | `200` |
+| `move-max-step` | 移动最大距离（像素） | `3000` |
+| `move-step-time` | 步进间隔（毫秒） | `20` |
+| `move-speed` | 移动速度（像素/步） | `10` |
 
 ---
 
 ### anime.json 动画配置
-```json
+
+``` json
 "状态名": {
-    "path": "文件夹路径",   // 帧图片存放路径(str)
-    "fps": 30,                  // 播放帧率(int)
-    "loop": true                // 是否循环播放(bool)
+    "path": "./img/文件夹路径",
+    "fps": 30,
+    "loop": true
 }
 ```
-> 帧图片需按数字顺序命名（如 0.png, 1.png, 2.png...）
+
+| 键 | 类型 | 说明 |
+| :--- | :--- | :--- |
+| `path` | str | 帧图片存放文件夹路径 |
+| `fps` | int | 播放帧率（帧/秒） |
+| `loop` | bool | 是否循环播放 |
+
+> **注意**：
+> - 状态名建议使用小写字母和连字符（如 `act-dance`），以保持统一风格
+> - 帧图片需按数字顺序命名（如 `0.png`, `1.png`, `2.png`...）
 
 ---
 
 ### collision.json 碰撞体配置
-```json
-"状态名": {
-    "left": 11,     // 碰撞区相对于窗口左上角的X偏移(int)
-    "top": 30,      // 碰撞区相对于窗口左上角的Y偏移(int)
-    "width": 135,   // 碰撞区宽度(int)
-    "height": 30    // 碰撞区高度(int)
-}
-```
 
----
-
-### state.json 状态配置
-
-``` python
-"状态名": [
-    "状态反馈文本"
-]
-```
-
----
-
-### dialog.json 状态配置
-
-``` python
-"问题": [
-    "回复"
-]
-```
-
----
-
-### "act-action"类型事件（行动）的自定义
-1. 新建.py文件（为统一格式，文件名最好为 **"act-事件名.py"**）
-2. 在 import.json文件中**添加要导入模块（包含start与stop槽函数）相对于main.py的模块名称**
-3. （可选）在./data/state.json中注册 **"act-事件名"** 状态
-4. （可选）在./data/anime.json中配置 **"act-事件名"** 动画(**注意在设定的路径下先添加好动画**)
-5. 在新建的文件内输入基础模板
-    ``` python
-    from PySide6.QtWidgets import QWidget
-    from PySide6.QtCore import Slot
-
-    @Slot(QWidget)
-    def start(window: QWidget):
-        """开始行动时调用"""
-        pass
-
-    @Slot(QWidget)
-    def stop(window: QWidget):
-        """结束行动时调用"""
-        pass
-    ```
-6. 自定义事件逻辑
-
-- 值得注意的是，行动面板开始自定义的行动时**不会进行回复或播放动画**（因`ActionMenu`直接调用`PetWindow`的`changeState`函数）；"act-action"事件会**阻塞状态切换**
-
----
-
-#### 例:  
-./data/base.json中：`"action-import-json-path": "./action/import.json"`  
-
-./data/state.json中：`"act-dance": ["I'm dancing~"]`
-
-./action/import.json:
 ``` json
-{
-    "act-dance": 
-    {   "name": "跳舞",
-        "path": "action.act-dance"
-    }
+"状态名": {
+    "left": 11,
+    "top": 30,
+    "width": 135,
+    "height": 30
 }
 ```
 
-./action/act-dance.py:
-``` python
-from PySide6.QtWidgets import QWidget
-from PySide6.QtCore import Slot
+| 键 | 类型 | 说明 |
+| :--- | :--- | :--- |
+| `left` | int | 碰撞区相对于窗口左上角的 X 偏移（像素） |
+| `top` | int | 碰撞区相对于窗口左上角的 Y 偏移（像素） |
+| `width` | int | 碰撞区宽度（像素） |
+| `height` | int | 碰撞区高度（像素） |
 
-@Slot(QWidget)
-def start(window: QWidget):
-    """开始行动时调用"""
-    print("dancing now")
+---
 
-@Slot(QWidget)
-def stop(window: QWidget):
-    """结束行动时调用"""
-    print("stoped dancing")
+### state.json 状态反馈文本配置
+
+``` json
+"状态名": [
+    "反馈1",
+    "反馈2"
+]
 ```
+
+- 状态切换时从对应数组中随机选取一条回复
+
+---
+
+### dialog.json 对话文本配置
+
+``` json
+"问题": [
+    "回复1",
+    "回复2"
+]
+```
+
+- 用户在对话面板选择问题后，从对应回复数组中随机选取一条
+
+---
+
+### 自定义行动（插件开发）
+
+桌面宠物通过插件系统支持自定义交互行为，详细教程请参阅 [customization.md](./customization.md)。
+
+**快速上手**：
+
+1. 在 `action/` 目录新建 Python 文件（如 `act-my-action.py`）
+2. 编写继承自 `tool.plugin.Plugin` 的类，重写 `start` 和 `stop` 方法
+3. 在 `./data/import.json` 中注册插件
+4. （可选）配置动画和状态反馈文本
+
+**插件模板**：
+
+``` python
+# action/act-action.py
+from tool.plugin import Plugin
+
+class MyAction(Plugin):
+    def __init__(self):
+        super().__init__()
+        self.id = "act-action"
+        self.name = "Action"
+    
+    def start(self):
+        pass
+    
+    def stop(self):
+        pass
+```
+
+> **注意**：
+> - 行动开始后会阻塞其他状态切换，直至调用 `stop` 或点击“结束”按钮
+> - 可通过 `self.window` 访问主窗口的公开方法
+
+---
 
 ## 更新日志
-版本号格式：**主版本号.次版本号\[.修订版本号\]**
 
-### v0.3.2.1 （最新）
+版本号格式：**主版本号.次版本号[.修订版本号]**
 
-1. 拆分了`PetWindow`的`replyAction`函数
-2. 迁移 import.json文件到./data/
-3. 修复了mouse.py中`getCollision`传参过少导致报错的问题
-4. 修复鼠标抬起必定切回待机的bug
+### v0.4.1（最新）
+
+1. 完全重写插件的实现逻辑（由纯函数改为类继承）
+2. 丰富插件功能（事件过滤器、插件生命周期管理）
+3. 丰富日志系统（新增 `PluginLoaded` 日志类型）
+4. 行动面板新增提示（`ToolTip`）
+5. 重写文档
+
+### v0.3.2.1
+
+1. 拆分了 `PetWindow` 的 `replyAction` 函数
+2. 迁移 `import.json` 文件到 `./data/`
+3. 修复了 `mouse.py` 中 `getCollision` 传参过少导致报错的问题
+4. 修复鼠标抬起必定切回待机的 bug
 5. 预留了两个行动
-5. 让D指导写了篇API文档
+6. 让D指导写了篇 API 文档
 
 ### v0.3.1
+
 1. 加入行动自定义功能与行动面板
-2. 将部分含"action"的变量/函数等的命名规范为"state"
+2. 将部分含 "action" 的变量/函数等的命名规范为 "state"
 3. 丰富日志系统
 4. 优化判定，防崩溃
-5. 重写了readme文件
-6. 吃点泡面凑合凑合
+5. 重写了 README 文件
 
 ### v0.2
+
 1. 加入待机时随机移动的功能
-2. 加入"after-state"类型事件
+2. 加入 "after-state" 类型事件
 3. 丰富日志系统
-4. 修复动画切换异常等bug
-5. 俗手偶得，获得更多bug
-6. 借助ai完善设置界面
+4. 修复动画切换异常等 bug
+5. 俗手偶得，获得更多 bug
+6. 借助 AI 完善设置界面
 7. 基本确保自定义功能稳定运行
-8. 用ai给几个我也看不懂的地方写注释
-9. 晚上可乐配饺子
+8. 用 AI 给几个我也看不懂的地方写注释
 
 ### v0.1
+
 1. 新建项目并实现基本功能  
 （时间较久远，记不清修改）

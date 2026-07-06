@@ -14,6 +14,7 @@ class LogType(Enum):
     Exit = 2
     Set = 3
     StateChange = 4
+    PluginLoaded = 5
 
 
 def loadData() -> None:
