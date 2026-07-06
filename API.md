@@ -10,7 +10,7 @@
     - [函数 showLoadFailedMsg(window: QWidget, widget: QLabel, path: str = "") -> None](#函数-showloadfailedmsgwindow-qwidget-widget-qlabel-path-str----none)
     - [类 Anime(QObject)](#类-animeqobject)
       - [信号](#信号)
-      - [初始化 \_\_init\_\_(path: str, fps: int, loop: bool, window: QWidget, widget: QLabel)](#初始化-__init__path-str-fps-int-loop-bool-window-qwidget-widget-qlabel)
+      - [初始化 __init__(path: str, fps: int, loop: bool, window: QWidget, widget: QLabel)](#初始化-__init__path-str-fps-int-loop-bool-window-qwidget-widget-qlabel)
       - [方法 play(isContinue: bool = False, isAsync: bool = True) -> None](#方法-playiscontinue-bool--false-isasync-bool--true---none)
       - [方法 stop() -> None](#方法-stop---none)
       - [方法 over() -> None](#方法-over---none)
@@ -34,6 +34,7 @@
       - [方法 eventFilter(obj, event: QEvent) -> bool](#方法-eventfilterobj-event-qevent---bool)
   - [窗口类](#窗口类)
     - [ActionMenu](#actionmenu)
+      - [关键属性](#关键属性)
     - [DialogMenu](#dialogmenu)
       - [关键方法](#关键方法)
     - [StateMenu](#statemenu)
@@ -45,9 +46,12 @@
       - [核心方法 replyState(state: str, afterEvent: bool = False, isContinue: bool = False, isAsync: bool = True) -> None](#核心方法-replystatestate-str-afterevent-bool--false-iscontinue-bool--false-isasync-bool--true---none)
       - [核心方法 changeState(state: str) -> None](#核心方法-changestatestate-str---none)
       - [核心方法 changeAnime(state: str, afterEvent: bool = False, isContinue: bool = False, isAsync: bool = True) -> None](#核心方法-changeanimestate-str-afterevent-bool--false-iscontinue-bool--false-isasync-bool--true---none)
+      - [核心方法 loadPlugins() -> None](#核心方法-loadplugins---none)
+      - [核心方法 act(id: str) -> None](#核心方法-actid-str---none)
+      - [核心方法 stopAct() -> None](#核心方法-stopact---none)
+      - [核心方法 updateData() -> None](#核心方法-updatedata---none)
       - [信号](#信号-2)
-      - [信号槽绑定](#信号槽绑定)
-      - [自定义行动接口](#自定义行动接口)
+      - [属性](#属性-1)
 
 ---
 
@@ -107,7 +111,7 @@
 | `overed()` | 动画播放结束（停止或完成） |
 | `loadErr(str)` | 加载帧图片失败时，携带错误信息 |
 
-#### 初始化 \_\_init\_\_(path: str, fps: int, loop: bool, window: QWidget, widget: QLabel)
+#### 初始化 __init__(path: str, fps: int, loop: bool, window: QWidget, widget: QLabel)
 
 - **参数**
   - `path`: 帧图片所在文件夹路径
@@ -175,7 +179,7 @@
 | `collision` | dict | `./data/collision.json` |
 | `state` | dict | `./data/state.json` |
 | `dialog` | dict | `./data/dialog.json` |
-| `actPath` | dict | `./data/import.json` |
+| `actPath` | dict | `./data/plugin.json` |
 
 ### 枚举 LogType
 
@@ -233,7 +237,8 @@
 | `id` | str | 插件唯一标识，应与文件名一致 |
 | `name` | str | 在行动面板显示的名称 |
 | `description` | str | 插件描述，用于行动面板的鼠标悬浮提示 |
-| `window` | PetWindow \| None | 关联的主窗口实例（只读） |
+| `auto` | bool | 是否在程序启动时自动运行，默认为 `False` |
+| `_window` | PetWindow \| None | 关联的主窗口实例（内部使用，通过 `window()` 访问） |
 
 #### 方法 setup(window: PetWindow) -> None
 
@@ -255,7 +260,7 @@
 - **说明**
   - **必须重写**
   - 在此实现行动开始时的逻辑（如切换动画、播放回复等）
-  - 可通过 `self.window` 访问主窗口的公开方法
+  - 可通过 `self.window()` 访问主窗口的公开方法
 
 #### 方法 stop() -> None
 
@@ -288,10 +293,14 @@
 
 行动面板，显示 `data.actPath` 中注册的所有自定义行动按钮。
 
-- **属性**
-  - `actBtn`: 字典，键为动作名，值为对应的 `QPushButton`
-  - `stopBtn`: 停止按钮
-  - `lb`: 字典，键为动作名，值为对应的 `QLabel`（显示插件名称）
+#### 关键属性
+
+| 属性 | 类型 | 说明 |
+| :--- | :--- | :--- |
+| `actBtn` | dict | 键为动作 ID，值为对应的 `QPushButton` |
+| `stopBtn` | QPushButton | 停止按钮 |
+| `lb` | dict | 键为动作 ID，值为对应的 `QLabel`（显示插件名称） |
+
 - **说明**
   - 插件名称显示在 `QLabel` 中，鼠标悬浮时显示 `description` 作为提示
 
@@ -372,6 +381,36 @@
 - **说明**
   - 若 `afterEvent` 为 True，在切换前尝试播放 `after-{当前状态}` 动画（同步阻塞）
 
+#### 核心方法 loadPlugins() -> None
+
+加载 `data.actPath` 中注册的所有插件。
+
+- **行为**
+  - 遍历 `actPath`，导入模块并实例化 `Plugin` 子类
+  - 普通插件存入 `self.acts`，自动插件存入 `self.autoActs` 并立即启动
+  - 发射 `pluginLoadSucceeded`、`pluginInheritError` 或 `pluginLoadFailed` 信号
+
+#### 核心方法 act(id: str) -> None
+
+执行指定 ID 的行动。
+
+- **参数**
+  - `id`: 插件 ID
+- **行为**
+  - 停止当前正在运行的行动
+  - 安装新插件并调用其 `start` 方法
+
+#### 核心方法 stopAct() -> None
+
+停止当前正在运行的行动，切换回 `idle` 状态。
+
+#### 核心方法 updateData() -> None
+
+重新加载配置数据并刷新动画和碰撞体。
+
+- **说明**
+  - 由 `SettingMenu.dataUpdated` 信号触发调用
+
 #### 信号
 
 | 信号 | 触发时机 |
@@ -380,23 +419,15 @@
 | `pluginInheritError(str)` | 插件未继承 Plugin 基类，携带错误信息 |
 | `pluginLoadFailed(str)` | 插件加载失败，携带异常信息 |
 
-#### 信号槽绑定
+#### 属性
 
-- `idleTimer.timeout` → 触发 `replyState("idle")`
-- `moveTimer.timeout` → 触发 `moveRandomly()` 随机移动
-- 上下文菜单触发对应面板的 `show()`
-- 动画 `loadErr` 信号 → 写入状态日志
-
-#### 自定义行动接口
-
-行动模块需放置在 `action/` 目录下，并在 `./data/import.json` 中注册。
-
-##### 注册格式
-
-``` json
-{
-  "act-事件名": "action.模块名"
-}
-```
+| 属性 | 类型 | 说明 |
+| :--- | :--- | :--- |
+| `state` | str | 当前状态 |
+| `animes` | dict | 动画对象字典，键为状态名 |
+| `collisions` | dict | 碰撞体字典，键为状态名 |
+| `acts` | dict | 普通插件字典，键为插件 ID |
+| `autoActs` | dict | 自动启动插件字典，键为插件 ID |
+| `currentAct` | Plugin \| None | 当前正在运行的插件 |
 
 > ### 详细教程请参阅 [customization.md](./customization.md)。

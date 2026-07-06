@@ -9,7 +9,7 @@ class Dance(Plugin):
         self.description = "播放跳舞动画"
     
     def start(self):
-        self.window.changeAnime(self.id)
+        self.window().changeAnime(self.id)
     
     def stop(self):
         pass

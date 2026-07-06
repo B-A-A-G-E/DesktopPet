@@ -16,11 +16,11 @@ class ActionMenu(QWidget):
         self.lb = {}
         self.actBtn = {}
 
-        for k in data.actPath.keys():
+        for k, v in self.petWindow.acts.items():
             self.hl[k] = QHBoxLayout()
 
-            self.lb[k] = QLabel(self.petWindow.acts[k].name)
-            self.lb[k].setToolTip(self.petWindow.acts[k].description)
+            self.lb[k] = QLabel(v.name)
+            self.lb[k].setToolTip(v.description)
             self.actBtn[k] = QPushButton("执行")
             
             self.hl[k].addWidget(self.lb[k])

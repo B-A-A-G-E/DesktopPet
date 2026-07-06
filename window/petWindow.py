@@ -52,7 +52,6 @@ class PetWindow(QWidget):
         self.setLayout(self.mainlayout)
 
         # 辅助变量
-        self.dragPosition = QPoint() # 记录鼠标按下时的位置
         self.state = "idle" # 当前状态（触发特定事件&防止重复触发回复）
         self.idleTimer = QTimer() # 触发闲置（无操作）时间
         self.moveTimer = QTimer() # 触发随机移动时间
@@ -68,6 +67,7 @@ class PetWindow(QWidget):
 
         # 添加自定义行动（插件）
         self.acts: dict[str, Plugin] = {}
+        self.autoActs: dict[str, Plugin] = {}
         self.currentAct: Plugin | None = None
         self.loadPlugins()
 
@@ -101,30 +101,17 @@ class PetWindow(QWidget):
                 # 实例化子类
                 if pluginClass:
                     plugin = pluginClass()
-                    plugin.setup(self) # 安装插件，安装事件过滤器
-                    self.acts[k] = plugin
+                    if plugin.auto:
+                        self.autoActs[k] = plugin
+                        self.autoActs[k].setup(self)
+                        self.autoActs[k].start()
+                    else:
+                        self.acts[k] = plugin
                     self.pluginLoadSucceeded.emit(f"succeeded to load plugin \"{k}\"")
                 else:
                     self.pluginInheritError.emit("plugin \"{k}\" is not based on the base class \"Plugin\"")
             except Exception as e:
                 self.pluginLoadFailed.emit(f"failed to load plugin \"{k}\": {e}")
-
-    def act(self, id: str) -> None:
-        """执行行动"""
-        # 停止上一个行动
-        if id in self.acts and self.currentAct:
-            self.currentAct.stop()
-        
-        # 开始新行动
-        self.currentAct = self.acts[id]
-        self.currentAct.start()
-        self.changeState(id)
-
-    def stopAct(self) -> None:
-        if self.currentAct:
-            self.currentAct.stop()
-            self.currentAct = None
-            self.replyState("idle")
 
     def bind(self) -> None:
         """绑定子窗口及信号"""
@@ -154,6 +141,28 @@ class PetWindow(QWidget):
         for anime in self.animes.values():
             anime.loadErr.connect(lambda text: self.stateMenu.log(text, LogType.Error))
     
+    def act(self, id: str) -> None:
+        """执行行动"""
+        if id != self.state:
+            # 停止上一个行动
+            if id in self.acts and self.currentAct:
+                self.currentAct.stop()
+                self.currentAct.teardown() # 卸载插件，卸载事件过滤器
+            
+            # 更新状态
+            self.changeState(id)
+            
+            # 开始新行动
+            self.currentAct = self.acts[id]
+            self.currentAct.setup(self) # 安装插件，安装事件过滤器
+            self.currentAct.start()
+
+    def stopAct(self) -> None:
+        if self.currentAct:
+            self.currentAct.stop()
+            self.currentAct = None
+            self.replyState("idle")
+        
     def replyState(self, state: str, afterEvent: bool = False, isContinue: bool = False, isAsync: bool = True) -> None:
         """
         执行对应行动时进行响应\n
@@ -240,28 +249,3 @@ class PetWindow(QWidget):
         # dialogWindow
         self.dialogMenu.resetQuesSelecter()
         self.stateMenu.log("Data is updated", LogType.Set)
-
-    def mousePressEvent(self, event: QMouseEvent):
-        """鼠标按下时记录位置"""
-        self.moveTimer.start(data.base["idle-move-time"])
-        self.step = 0
-        self.dir = QPoint(0, 0)
-        if event.button() == Qt.MouseButton.LeftButton:
-            self.dragPosition = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
-            event.accept()
-    
-    def mouseMoveEvent(self, event: QMouseEvent):
-        if event.buttons() == Qt.MouseButton.LeftButton and "act-" not in self.state and "after-" not in self.state:
-            collision = mouse.getCollision(self, event.position().toPoint())
-            if self.state != "drag" and collision:
-                event.accept()
-                self.replyState(collision)
-            else:
-                self.move(event.globalPosition().toPoint() - self.dragPosition)
-                event.accept()
-                self.replyState("drag")
-    
-    def mouseReleaseEvent(self, event: QMouseEvent):
-        if self.state != "idle" and "act-" not in self.state and "after-" not in self.state:
-            self.replyState("idle", True)
-        return super().mouseReleaseEvent(event)

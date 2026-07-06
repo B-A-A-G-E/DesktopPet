@@ -11,11 +11,11 @@ class Plugin(QObject):
     def __init__(self):
         super().__init__()
         self.id: str = "plugin-plugin"
+        self.auto: bool = False
         self.name: str = "未命名插件"
         self.description: str = ""
         self._window: "PetWindow | None" = None
     
-    @property
     def window(self) -> "PetWindow | None":
         return self._window
     

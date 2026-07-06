@@ -15,7 +15,7 @@
     - [dialog.json 对话文本配置](#dialogjson-对话文本配置)
     - [自定义行动（插件开发）](#自定义行动插件开发)
 - [更新日志](#更新日志)
-    - [v0.4.1（最新）](#v041最新)
+    - [v0.4.2（最新）](#v042最新)
     - [v0.3.2.1](#v0321)
     - [v0.3.1](#v031)
     - [v0.2](#v02)
@@ -49,7 +49,7 @@ pip install pyside6
 │
 ├── data/                   # 配置文件目录
 │   ├── base.json           # 基础配置
-│   ├── import.json         # 插件注册配置
+│   ├── plugin.json         # 插件注册配置
 │   ├── anime.json          # 动画配置
 │   ├── collision.json      # 碰撞体配置
 │   ├── state.json          # 状态反馈文本
@@ -100,6 +100,7 @@ pip install pyside6
 1. 动画系统
     - 基于帧序列图片播放，支持循环/单次播放
     - 窗口自动适应图片大小
+    - 支持异步（定时器驱动）和同步（阻塞）两种播放模式
 2. 状态机
     - 状态切换时触发对应的反馈文本和动画
     - 支持 `after-{state}` 后续事件（如抚摸后播放特殊动画）
@@ -108,8 +109,9 @@ pip install pyside6
     - 回复文本从 `state.json` 或 `dialog.json` 随机选取
 4. 自定义行动（插件系统）
     - 通过 `action/` 目录添加插件模块
-    - 在 `import.json` 中注册后即可在行动面板调用
+    - 在 `plugin.json` 中注册后即可在行动面板调用
     - 插件须继承 `tool.plugin.Plugin` 基类
+    - 支持自动启动插件（`auto = True`）
 5. 设置面板
     - 可视化编辑所有 JSON 配置文件
     - 支持动态增删状态/对话文本条目
@@ -208,7 +210,7 @@ pip install pyside6
 
 1. 在 `action/` 目录新建 Python 文件（如 `act-my-action.py`）
 2. 编写继承自 `tool.plugin.Plugin` 的类，重写 `start` 和 `stop` 方法
-3. 在 `./data/import.json` 中注册插件
+3. 在 `./data/plugin.json` 中注册插件
 4. （可选）配置动画和状态反馈文本
 
 **插件模板**：
@@ -222,17 +224,19 @@ class MyAction(Plugin):
         super().__init__()
         self.id = "act-action"
         self.name = "Action"
-    
+        self.description = "This is an action"  # 可选，用于鼠标悬浮提示
+
     def start(self):
         pass
-    
+
     def stop(self):
         pass
 ```
 
 > **注意**：
-> - 行动开始后会阻塞其他状态切换，直至调用 `stop` 或点击“结束”按钮
+> - 行动开始后会阻塞其他状态切换，直至调用 `stop` 或点击"结束"按钮
 > - 可通过 `self.window` 访问主窗口的公开方法
+> - 设置 `self.auto = True` 可使插件在程序启动时自动运行
 
 ---
 
@@ -240,18 +244,19 @@ class MyAction(Plugin):
 
 版本号格式：**主版本号.次版本号[.修订版本号]**
 
-### v0.4.1（最新）
+### v0.4.2（最新）
 
 1. 完全重写插件的实现逻辑（由纯函数改为类继承）
 2. 丰富插件功能（事件过滤器、插件生命周期管理）
 3. 丰富日志系统（新增 `PluginLoaded` 日志类型）
 4. 行动面板新增提示（`ToolTip`）
-5. 重写文档
+5. 加入自启动插件
+6. 将`stroke`与`drag`事件重写为插件
 
 ### v0.3.2.1
 
 1. 拆分了 `PetWindow` 的 `replyAction` 函数
-2. 迁移 `import.json` 文件到 `./data/`
+2. 迁移 `plugin.json` 文件到 `./data/`
 3. 修复了 `mouse.py` 中 `getCollision` 传参过少导致报错的问题
 4. 修复鼠标抬起必定切回待机的 bug
 5. 预留了两个行动
@@ -278,5 +283,5 @@ class MyAction(Plugin):
 
 ### v0.1
 
-1. 新建项目并实现基本功能  
+1. 新建项目并实现基本功能
 （时间较久远，记不清修改）

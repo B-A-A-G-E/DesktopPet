@@ -9,7 +9,7 @@ class UseFan(Plugin):
         self.description = "播放吹风扇动画"
     
     def start(self):
-        self.window.changeAnime(self.id)
+        self.window().changeAnime(self.id)
     
     def stop(self):
         pass
