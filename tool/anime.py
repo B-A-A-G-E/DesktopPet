@@ -62,10 +62,6 @@ class Anime(QObject):
         self.timer = QTimer()
         self.timer.timeout.connect(self.nextImg)
     
-    def setFps(self, fps: int) -> None:
-        self.fps = fps
-        self.timer.setInterval(1000 // fps)
-    
     def play(self, isContinue: bool = False, isAsync: bool = True) -> None:
         """开始或继续播放动画"""
         if not isContinue:

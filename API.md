@@ -113,17 +113,6 @@
 
 更新帧率，并同步调整定时器间隔。
 
-#### 方法 play(isContinue: bool = False, isAsync: bool = True) -> None
-
-开始或继续播放动画。
-
-- **参数**
-  - `isContinue`: 是否从上一次停止的位置继续（若为 False，则从第 0 帧开始）
-  - `isAsync`: 是否异步播放（定时器驱动），若为 False 则同步阻塞播放
-- **说明**
-  - 同步模式下，使用 `time.sleep` 控制帧率，并调用 `QApplication.processEvents()` 更新界面
-  - 同步播放结束时自动发射 `finished` 和 `overed` 信号
-
 #### 方法 stop() -> None
 
 暂停播放（保留当前帧位置）。
