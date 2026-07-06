@@ -109,7 +109,6 @@ pip install pyside6
 :---:|:---:|:---:
 log-path|日志保存路径|./log.log
 load-failed-img-path|加载失败占位图|./img/load_failed.png
-action-import-json-path|动作导入配置路径|./action/import.json
 quesSelecter-item-count|对话菜单最大显示问题数|10
 idle-time|待机判定时间(ms)|10000
 idle-move-time|随机移动间隔(ms)|15000
