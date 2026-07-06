@@ -28,5 +28,15 @@
     "path": "./img/after-stroke",
     "fps": 50,
     "loop": false
+  },
+  "act-dance": {
+    "path": "./img/act-dance",
+    "fps": 20,
+    "loop": true
+  },
+  "act-use-fan": {
+    "path": "./img/act-use-fan",
+    "fps": 20,
+    "loop": true
   }
 }

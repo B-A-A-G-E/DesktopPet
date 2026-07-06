@@ -2,5 +2,9 @@
     "act-dance": 
     {   "name": "跳舞",
         "path": "action.act-dance"
+    },
+    "act-use-fan": 
+    {   "name": "吹风扇",
+        "path": "action.act-use-fan"
     }
 }

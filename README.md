@@ -13,10 +13,10 @@
     - [collision.json 碰撞体配置](#collisionjson-碰撞体配置)
     - [state.json 状态配置](#statejson-状态配置)
     - [dialog.json 状态配置](#dialogjson-状态配置)
-    - ["act-event"类型事件（行动）的自定义](#act-event类型事件行动的自定义)
+    - ["act-action"类型事件（行动）的自定义](#act-action类型事件行动的自定义)
         - [样例](#例)
 - [更新日志](#更新日志)
-    - [v0.3.2（最新）](#v032-最新)
+    - [v0.3.2.1（最新）](#v0321-最新)
     - [v0.3.1](#v031)
     - [v0.2](#v02)
     - [v0.1](#v01)
@@ -164,7 +164,7 @@ move-speed|移动速度(px/步)|10
 
 ---
 
-### "act-event"类型事件（行动）的自定义
+### "act-action"类型事件（行动）的自定义
 1. 新建.py文件（为统一格式，文件名最好为 **"act-事件名.py"**）
 2. 在 import.json文件中**添加要导入模块（包含start与stop槽函数）相对于main.py的模块名称**
 3. （可选）在./data/state.json中注册 **"act-事件名"** 状态
@@ -186,7 +186,8 @@ move-speed|移动速度(px/步)|10
     ```
 6. 自定义事件逻辑
 
-- 值得注意的是，行动面板开始自定义的行动时**不会进行回复或播放动画**（因`ActionMenu`直接调用`PetWindow`的`changeState`函数）
+- 值得注意的是，行动面板开始自定义的行动时**不会进行回复或播放动画**（因`ActionMenu`直接调用`PetWindow`的`changeState`函数）；"act-action"事件会**阻塞状态切换**
+
 ---
 
 #### 例:  
@@ -223,12 +224,14 @@ def stop(window: QWidget):
 ## 更新日志
 版本号格式：**主版本号.次版本号\[.修订版本号\]**
 
-### v0.3.2 （最新）
+### v0.3.2.1 （最新）
 
 1. 拆分了`PetWindow`的`replyAction`函数
 2. 迁移 import.json文件到./data/
 3. 修复了mouse.py中`getCollision`传参过少导致报错的问题
-4. D指导写了篇API文档
+4. 修复鼠标抬起必定切回待机的bug
+5. 预留了两个行动
+5. 让D指导写了篇API文档
 
 ### v0.3.1
 1. 加入行动自定义功能与行动面板

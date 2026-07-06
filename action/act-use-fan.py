@@ -4,7 +4,7 @@ from PySide6.QtCore import Slot
 @Slot(QWidget)
 def start(window: QWidget):
     """开始行动时调用"""
-    window.changeAnime("act-dance", False, False, True)
+    window.changeAnime("act-use-fan", False, False, True)
 
 @Slot(QWidget)
 def stop(window: QWidget):

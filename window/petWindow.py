@@ -89,13 +89,13 @@ class PetWindow(QWidget):
 
         # 绑定actionMenu的按钮
         for k, startBtn in self.actionMenu.actBtn.items():
-            def startAct(act = k):
-                if k == self.state:
+            def startAct(act):
+                if act == self.state:
                     self.stateMenu.log("action has been already started")
                 else:
                     self.changeState(act)
                     self.acts[act].start(self)
-            startBtn.clicked.connect(lambda: startAct())
+            startBtn.clicked.connect(lambda clicked, act = k: startAct(act))
         
         def stopAct():
             for act in data.actPath.keys():
@@ -216,7 +216,7 @@ class PetWindow(QWidget):
             event.accept()
     
     def mouseMoveEvent(self, event: QMouseEvent):
-        if event.buttons() == Qt.MouseButton.LeftButton:
+        if event.buttons() == Qt.MouseButton.LeftButton and "act-" not in self.state and "after-" not in self.state:
             collision = mouse.getCollision(self, event.position().toPoint())
             if self.state != "drag" and collision:
                 event.accept()
@@ -227,6 +227,6 @@ class PetWindow(QWidget):
                 self.replyState("drag")
     
     def mouseReleaseEvent(self, event: QMouseEvent):
-        if self.state != "idle":
+        if self.state != "idle" and "act-" not in self.state and "after-" not in self.state:
             self.replyState("idle", True)
         return super().mouseReleaseEvent(event)

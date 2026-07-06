@@ -28,14 +28,19 @@
   - [窗口类](#窗口类)
     - [ActionMenu](#actionmenu)
     - [DialogMenu](#dialogmenu)
+      - [关键方法](#关键方法)
     - [StateMenu](#statemenu)
+      - [关键方法](#关键方法-1)
     - [SettingMenu](#settingmenu)
+      - [信号](#信号-1)
+      - [关键方法](#关键方法-2)
     - [PetWindow](#petwindow)
       - [核心方法 replyState(state: str, afterEvent: bool = False, isContinue: bool = False, isAsync: bool = True) -> None](#核心方法-replystatestate-str-afterevent-bool--false-iscontinue-bool--false-isasync-bool--true---none)
       - [核心方法 changeState(state: str) -> None](#核心方法-changestatestate-str---none)
       - [核心方法 changeAnime(state: str, afterEvent: bool = False, isContinue: bool = False, isAsync: bool = True) -> None](#核心方法-changeanimestate-str-afterevent-bool--false-iscontinue-bool--false-isasync-bool--true---none)
       - [信号槽绑定](#信号槽绑定)
       - [自定义行动接口](#自定义行动接口)
+        - [注册格式](#注册格式)
 
 ---
 
@@ -226,9 +231,13 @@
 
 对话面板，随机展示问题列表，用户选择后随机回复。
 
-- **关键方法**
-  - `resetQuesSelecter()`: 从 `data.dialog` 中随机抽取指定数量的问题填充下拉框
-  - `addLine(content: str)`: 向回复框追加一行文本
+#### 关键方法
+
+| 方法 | 说明 |
+| :--- | :--- |
+| `resetQuesSelecter()` | 从 `data.dialog` 中随机抽取指定数量的问题填充下拉框 |
+| `addLine(content: str)` | 向回复框追加一行文本 |
+
 - **行为**
   - 提问后自动从列表中移除该问题，并从剩余问题中随机补充
 
@@ -236,18 +245,28 @@
 
 状态日志面板，显示运行日志并支持写入文件。
 
-- **关键方法**
-  - `log(text: str, type: LogType = None) -> None`: 添加日志条目，格式为 `时间  LogType.xxx:    文本`
+#### 关键方法
+
+| 方法 | 说明 |
+| :--- | :--- |
+| `log(text: str, type: LogType = None)` | 添加日志条目，格式为 `时间  LogType.xxx:    文本` |
 
 ### SettingMenu
 
 设置面板，可视化编辑所有 JSON 配置文件。
 
-- **信号**
-  - `dataUpdated()`: 应用配置后发射，用于通知主窗口刷新数据
-- **关键方法**
-  - `apply()`: 读取所有输入框内容，更新 `data` 全局变量并写回 JSON 文件
-  - `cancel()`: 关闭窗口，不保存更改
+#### 信号
+
+| 信号 | 触发时机 |
+| :--- | :--- |
+| `dataUpdated()` | 应用配置后发射，用于通知主窗口刷新数据 |
+
+#### 关键方法
+
+| 方法 | 说明 |
+| :--- | :--- |
+| `apply()` | 读取所有输入框内容，更新 `data` 全局变量并写回 JSON 文件 |
+| `cancel()` | 关闭窗口，不保存更改 |
 
 ### PetWindow
 
@@ -296,7 +315,8 @@
 
 行动模块需放置在 `action/` 目录下，并在 `./data/import.json` 中注册。
 
-**注册格式**
+##### 注册格式
+
 ```json
 {
   "act-事件名": {
