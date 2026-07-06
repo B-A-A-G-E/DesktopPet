@@ -11,7 +11,6 @@
     - [类 Anime(QObject)](#类-animeqobject)
       - [信号](#信号)
       - [初始化 \_\_init\_\_(path: str, fps: int, loop: bool, window: QWidget, widget: QLabel)](#初始化-__init__path-str-fps-int-loop-bool-window-qwidget-widget-qlabel)
-      - [方法 setFps(fps: int) -> None](#方法-setfpsfps-int---none)
       - [方法 play(isContinue: bool = False, isAsync: bool = True) -> None](#方法-playiscontinue-bool--false-isasync-bool--true---none)
       - [方法 stop() -> None](#方法-stop---none)
       - [方法 over() -> None](#方法-over---none)
@@ -108,10 +107,6 @@
   - `loop`: 是否循环播放
   - `window`: 父窗口
   - `widget`: 用于显示图片的 QLabel
-
-#### 方法 setFps(fps: int) -> None
-
-更新帧率，并同步调整定时器间隔。
 
 #### 方法 stop() -> None
 
