@@ -80,6 +80,7 @@ pip install pyside6
 │   └── settingMenu.py      # 设置面板
 │
 └── action/                 # 自定义行动（插件）目录
+│   └── act-stroke-drag.py  # 摸头与拖拽事件
 ```
 
 ## API
