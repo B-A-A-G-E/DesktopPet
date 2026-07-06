@@ -399,4 +399,4 @@
 }
 ```
 
-> ### 详细教程请参阅 customization.md。
+> ### 详细教程请参阅 [customization.md](./customization.md)。

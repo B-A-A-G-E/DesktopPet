@@ -1,0 +1,2 @@
+# md不计入主语言比例
+*.md linguist-documentation
