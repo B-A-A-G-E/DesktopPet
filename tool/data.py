@@ -33,7 +33,7 @@ def loadData() -> None:
         state = json.load(f)
     with open("./data/dialog.json", "r", encoding = "utf-8") as f:
         dialog = json.load(f)
-    with open(base["action-import-json-path"], "r", encoding = "utf-8") as f:
+    with open("./data/import.json", "r", encoding = "utf-8") as f:
         actPath = json.load(f)
 
 loadData()

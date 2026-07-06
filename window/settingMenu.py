@@ -90,8 +90,7 @@ class SettingMenu(QWidget):
         # 字段配置: (显示名称, 数据键, 是否整数)
         fields = [
             ("日志保存路径", "log-path", False),
-            ("加载失败图片路径", "load-failed-img-path", False),
-            ("行动事件路径", "action-import-json-path", False),
+            ("加载失败占位图路径", "load-failed-img-path", False),
             ("询问框最大问题数", "quesSelecter-item-count", True),
             ("待机判定时间（毫秒）", "idle-time", True),
             ("待机移动时间（毫秒）", "idle-move-time", True),

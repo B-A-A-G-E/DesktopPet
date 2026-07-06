@@ -70,7 +70,7 @@ class PetWindow(QWidget):
         self.bind()
 
         # 入场并切换待机
-        #self.replyState("entre", False, False)
+        #self.replyState("entre", False, False, False)
         #self.stateMenu.log("Succeed to entre", LogType.Entre)
         self.replyState("idle")
 
@@ -93,7 +93,7 @@ class PetWindow(QWidget):
                 if k == self.state:
                     self.stateMenu.log("action has been already started")
                 else:
-                    self.replyState(act)
+                    self.changeState(act)
                     self.acts[act].start(self)
             startBtn.clicked.connect(lambda: startAct())
         
@@ -118,32 +118,42 @@ class PetWindow(QWidget):
         for anime in self.animes.values():
             anime.loadErr.connect(lambda text: self.stateMenu.log(text, LogType.Error))
     
-    def replyState(self, state: str, afterEvent: bool = False, isAsync: bool = True) -> None:
+    def replyState(self, state: str, afterEvent: bool = False, isContinue: bool = False, isAsync: bool = True) -> None:
         """
         执行对应行动时进行响应\n
         若afterEvent为True，则先回应当前状态的after-event事件(动画只能同步播放)\n
         """
         if self.state != state or (state == "idle" and self.state == "idle"):
-            # 切换计时器状态
-            if state != "idle":
-                self.idleTimer.stop()
-                self.moveTimer.stop()
-            else:
-                self.idleTimer.start(data.base["idle-time"])
-                if not self.moveTimer.isActive():
-                    self.moveTimer.start(data.base["idle-move-time"])
             # 在dialogMenu回复
             self.dialogMenu.addLine(conv.replyText("state", state))
             # 切换动画
-            if state in self.animes.keys():
-                self.currentAnime.over()
-                if afterEvent and f"after-{self.state}" in self.animes.keys():
-                    self.replyState(f"after-{self.state}", False, False)
-                self.currentAnime = self.animes[state]
-                self.currentAnime.play(False, isAsync)
+            self.changeAnime(state, afterEvent, isContinue, isAsync)
             # 更新状态
-            self.state = state
-            self.stateMenu.log(self.state, LogType.StateChange)
+            self.changeState(state)
+            
+    
+    def changeState(self, state: str) -> None:
+        """更新宠物状态并切换计时器状态"""
+        # 切换计时器状态
+        if state != "idle":
+            self.idleTimer.stop()
+            self.moveTimer.stop()
+        else:
+            self.idleTimer.start(data.base["idle-time"])
+            if not self.moveTimer.isActive():
+                self.moveTimer.start(data.base["idle-move-time"])
+        # 更新状态
+        self.state = state
+        self.stateMenu.log(self.state, LogType.StateChange)
+    
+    def changeAnime(self, state: str, afterEvent: bool = False, isContinue: bool = False, isAsync: bool = True) -> None:
+        """切换动画"""
+        if state in self.animes.keys():
+            self.currentAnime.over()
+            if afterEvent and f"after-{self.state}" in self.animes.keys():
+                self.replyState(f"after-{self.state}", False, False, False)
+            self.currentAnime = self.animes[state]
+            self.currentAnime.play(isContinue, isAsync)
     
     @Slot()
     def moveRandomly(self) -> None:
@@ -207,7 +217,7 @@ class PetWindow(QWidget):
     
     def mouseMoveEvent(self, event: QMouseEvent):
         if event.buttons() == Qt.MouseButton.LeftButton:
-            collision = mouse.getCollision(event.position().toPoint())
+            collision = mouse.getCollision(self, event.position().toPoint())
             if self.state != "drag" and collision:
                 event.accept()
                 self.replyState(collision)
