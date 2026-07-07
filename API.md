@@ -27,8 +27,10 @@
   - [模块 tool.plugin](#模块-toolplugin)
     - [类 Plugin(QObject)](#类-pluginqobject)
       - [属性](#属性)
+      - [信号](#信号-1)
       - [方法 setup(window: PetWindow) -> None](#方法-setupwindow-petwindow---none)
       - [方法 teardown() -> None](#方法-teardown---none)
+      - [方法 window() -> PetWindow | None](#方法-window---petwindow--none)
       - [方法 start() -> None](#方法-start---none)
       - [方法 stop() -> None](#方法-stop---none)
       - [方法 eventFilter(obj, event: QEvent) -> bool](#方法-eventfilterobj-event-qevent---bool)
@@ -40,7 +42,7 @@
     - [StateMenu](#statemenu)
       - [关键方法](#关键方法-1)
     - [SettingMenu](#settingmenu)
-      - [信号](#信号-1)
+      - [信号](#信号-2)
       - [关键方法](#关键方法-2)
     - [PetWindow](#petwindow)
       - [核心方法 replyState(state: str, afterEvent: bool = False, isContinue: bool = False, isAsync: bool = True) -> None](#核心方法-replystatestate-str-afterevent-bool--false-iscontinue-bool--false-isasync-bool--true---none)
@@ -48,9 +50,10 @@
       - [核心方法 changeAnime(state: str, afterEvent: bool = False, isContinue: bool = False, isAsync: bool = True) -> None](#核心方法-changeanimestate-str-afterevent-bool--false-iscontinue-bool--false-isasync-bool--true---none)
       - [核心方法 loadPlugins() -> None](#核心方法-loadplugins---none)
       - [核心方法 act(id: str) -> None](#核心方法-actid-str---none)
+      - [核心方法 getAct(id: str) -> Plugin | None](#核心方法-getactid-str---plugin--none)
       - [核心方法 stopAct() -> None](#核心方法-stopact---none)
       - [核心方法 updateData() -> None](#核心方法-updatedata---none)
-      - [信号](#信号-2)
+      - [信号](#信号-3)
       - [属性](#属性-1)
 
 ---
@@ -240,6 +243,13 @@
 | `auto` | bool | 是否在程序启动时自动运行，默认为 `False` |
 | `_window` | PetWindow \| None | 关联的主窗口实例（内部使用，通过 `window()` 访问） |
 
+#### 信号
+
+| 信号 | 触发时机 |
+| :--- | :--- |
+| `started()` | 插件 `start` 方法被调用时发射 |
+| `stopped()` | 插件 `stop` 方法被调用时发射 |
+
 #### 方法 setup(window: PetWindow) -> None
 
 插件安装，将插件与主窗口关联并安装事件过滤器。
@@ -247,28 +257,39 @@
 - **参数**
   - `window`: 主窗口实例
 - **说明**
-  - 由 `PetWindow.loadPlugins` 自动调用，无需手动调用
+  - 由 `PetWindow.loadPlugins` 或 `PetWindow.act` 自动调用，无需手动调用
+  - **初始化中涉及主窗口的操作应在此方法中进行，并先调用 `super().setup(window)`**
 
 #### 方法 teardown() -> None
 
 插件卸载，移除事件过滤器并解除与主窗口的关联。
+
+- **说明**
+  - 由 `PetWindow.act` 在切换行动时自动调用
+
+#### 方法 window() -> PetWindow | None
+
+获取关联的主窗口实例。
+
+- **返回**
+  - 关联的 `PetWindow` 实例，若未安装则返回 `None`
 
 #### 方法 start() -> None
 
 开始行动。
 
 - **说明**
-  - **必须重写**
   - 在此实现行动开始时的逻辑（如切换动画、播放回复等）
   - 可通过 `self.window()` 访问主窗口的公开方法
+  - 发射 `started` 信号
 
 #### 方法 stop() -> None
 
 停止行动。
 
 - **说明**
-  - **必须重写**
   - 在此实现行动结束时的清理逻辑
+  - 发射 `stopped` 信号
 - **注意**
   - 不需要在 `stop` 中手动切回待机状态（行动结束时会自动切换）
 
@@ -291,7 +312,7 @@
 
 ### ActionMenu
 
-行动面板，显示 `data.actPath` 中注册的所有自定义行动按钮。
+行动面板，显示 `data.actPath` 中注册的所有非自启动行动按钮。
 
 #### 关键属性
 
@@ -303,6 +324,7 @@
 
 - **说明**
   - 插件名称显示在 `QLabel` 中，鼠标悬浮时显示 `description` 作为提示
+  - 仅显示 `self.auto = False` 的插件（自启动插件不会出现在行动面板中）
 
 ### DialogMenu
 
@@ -344,6 +366,8 @@
 | :--- | :--- |
 | `apply()` | 读取所有输入框内容，更新 `data` 全局变量并写回 JSON 文件 |
 | `cancel()` | 关闭窗口，不保存更改 |
+| `addPage(page: QWidget, label: str)` | 向设置面板添加自定义标签页（供插件扩展使用） |
+| `getPage(label: str)` | 获取指定标签名的自定义页面，若不存在则返回 `None` |
 
 ### PetWindow
 
@@ -365,12 +389,13 @@
 
 #### 核心方法 changeState(state: str) -> None
 
-更新状态并管理计时器（闲置计时器和随机移动计时器）。
+更新状态并管理计时器（闲置计时器）。
 
 - **行为**
-  - 非 `idle` 状态：停止所有闲置计时器
-  - `idle` 状态：启动闲置计时器和随机移动计时器
+  - 非 `idle` 状态：停止闲置计时器
+  - `idle` 状态：启动闲置计时器
   - 记录状态变更日志
+  - 发射 `stateChanged` 信号
 
 #### 核心方法 changeAnime(state: str, afterEvent: bool = False, isContinue: bool = False, isAsync: bool = True) -> None
 
@@ -387,7 +412,8 @@
 
 - **行为**
   - 遍历 `actPath`，导入模块并实例化 `Plugin` 子类
-  - 普通插件存入 `self.acts`，自动插件存入 `self.autoActs` 并立即启动
+  - 普通插件（`auto = False`）存入 `self.acts`
+  - 自动插件（`auto = True`）存入 `self.autoActs`，调用 `setup` 并立即启动
   - 发射 `pluginLoadSucceeded`、`pluginInheritError` 或 `pluginLoadFailed` 信号
 
 #### 核心方法 act(id: str) -> None
@@ -397,12 +423,26 @@
 - **参数**
   - `id`: 插件 ID
 - **行为**
-  - 停止当前正在运行的行动
-  - 安装新插件并调用其 `start` 方法
+  - 若当前有正在运行的行动，调用其 `stop` 和 `teardown` 方法
+  - 更新状态为目标 ID
+  - 调用目标插件的 `setup` 和 `start` 方法
+
+#### 核心方法 getAct(id: str) -> Plugin | None
+
+根据 ID 获取插件实例（遍历 `acts` 和 `autoActs`）。
+
+- **参数**
+  - `id`: 插件 ID
+- **返回**
+  - 插件实例，若未找到则返回 `None`
 
 #### 核心方法 stopAct() -> None
 
 停止当前正在运行的行动，切换回 `idle` 状态。
+
+- **说明**
+  - 由 `ActionMenu` 的停止按钮或插件自身发射 `stopped` 信号触发
+  - 将 `currentAct` 置为 `None` 并调用 `replyState("idle")`
 
 #### 核心方法 updateData() -> None
 
@@ -410,6 +450,8 @@
 
 - **说明**
   - 由 `SettingMenu.dataUpdated` 信号触发调用
+  - 重新从 `data.anime` 和 `data.collision` 构建动画对象和碰撞体
+  - 调用 `dialogMenu.resetQuesSelecter()` 刷新对话选项
 
 #### 信号
 
@@ -418,6 +460,7 @@
 | `pluginLoadSucceeded(str)` | 插件加载成功，携带插件 ID |
 | `pluginInheritError(str)` | 插件未继承 Plugin 基类，携带错误信息 |
 | `pluginLoadFailed(str)` | 插件加载失败，携带异常信息 |
+| `stateChanged(str)` | 状态变更时发射，携带新状态名 |
 
 #### 属性
 
@@ -426,8 +469,13 @@
 | `state` | str | 当前状态 |
 | `animes` | dict | 动画对象字典，键为状态名 |
 | `collisions` | dict | 碰撞体字典，键为状态名 |
-| `acts` | dict | 普通插件字典，键为插件 ID |
-| `autoActs` | dict | 自动启动插件字典，键为插件 ID |
+| `acts` | dict | 普通插件字典（`auto = False`），键为插件 ID |
+| `autoActs` | dict | 自动启动插件字典（`auto = True`），键为插件 ID |
 | `currentAct` | Plugin \| None | 当前正在运行的插件 |
+| `idleTimer` | QTimer | 闲置判定计时器 |
+| `dialogMenu` | DialogMenu | 对话面板实例 |
+| `stateMenu` | StateMenu | 状态日志面板实例 |
+| `actionMenu` | ActionMenu | 行动面板实例 |
+| `settingMenu` | SettingMenu | 设置面板实例 |
 
 > ### 详细教程请参阅 [customization.md](./customization.md)。

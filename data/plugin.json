@@ -1,5 +1,6 @@
 {
     "act-stroke": "action.act-stroke",
     "act-drag": "action.act-drag",
+    "act-move-randomly": "action.act-move-randomly.act-move-randomly",
     "act-use-fan": "action.act-use-fan"
 }

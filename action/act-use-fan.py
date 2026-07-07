@@ -4,7 +4,7 @@ from PySide6.QtGui import QMouseEvent
 from tool.plugin import Plugin
 from tool.mouse import getCollision
 
-class MyAction(Plugin):
+class UseFan(Plugin):
     def __init__(self):
         super().__init__()
         self.id = "act-use-fan"
@@ -13,9 +13,7 @@ class MyAction(Plugin):
 
     def start(self):
         self.window().changeAnime("using-fan")
-
-    def stop(self):
-        self.window().replyState("idle")
+        super().start()
 
     def eventFilter(self, obj, event: QEvent):
         if event.type() == QEvent.Type.MouseButtonPress:
@@ -23,4 +21,4 @@ class MyAction(Plugin):
             if mouseEvent.button() == Qt.MouseButton.LeftButton and getCollision(self.window(), mouseEvent.position().toPoint()):
                 self.window().changeAnime("turn-off-fan", isAsync = False)
                 self.stop()
-        return False
+        return super().eventFilter(obj, event)

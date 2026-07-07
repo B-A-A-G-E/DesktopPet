@@ -133,9 +133,6 @@
 | `width` | int | 碰撞区宽度（像素） |
 | `height` | int | 碰撞区高度（像素） |
 
-> **说明**：
-> - 碰撞体通常与特定状态绑定（如 `stroke`），当鼠标左键点击该区域时触发对应状态
-
 ---
 
 ## 自定义状态反馈文本
@@ -190,7 +187,7 @@
 ### 步骤概览
 
 1. 在 `action/` 目录下新建 Python 文件（建议以 `act-` 为前缀）
-2. 编写继承自 `tool.plugin.Plugin` 的类，重写 `start` 和 `stop` 方法
+2. 编写继承自 `tool.plugin.Plugin` 的类
 3. 在 `./data/plugin.json` 中注册插件
 4. （可选）准备对应的动画资源和状态反馈文本
 
@@ -220,7 +217,7 @@ class Action(Plugin):
     def __init__(self):
         super().__init__()
 
-        # 必须设置 id 和 name
+        # 必须设置id，非自启动插件必须设置name
         self.id = "act-action"   # 应与文件名一致
         self.auto = False           # 是否在程序启动时自动运行，默认为 False
         self.name = "行动"       # 在行动面板显示的名称
@@ -228,18 +225,20 @@ class Action(Plugin):
 
     def start(self):
         """开始行动"""
-        pass
+        # do something here
+        super().start()
 
     def stop(self):
         """结束行动"""
-        pass
+        # do something here
+        super().stop()
 ```
 
-**关键说明**：
-- `self.window` 是关联的 `PetWindow` 实例，可调用其公开方法
-- `start` 和 `stop` **必须重写**，否则会抛出 `NotImplementedError`
-- 行动开始后，**会阻塞其他状态切换**（包括鼠标交互），直至插件调用 `stop` 或用户点击行动面板的"结束"按钮
-- 不需要在 `stop` 中手动切回待机状态（行动结束时会自动切换）
+> **关键说明**：
+> - `self.window()` 是关联的 `PetWindow` 实例，可调用其公开方法
+> - 行动开始后，**会阻塞其他状态切换**（包括鼠标交互），直至插件调用 `stop` 或用户点击行动面板的"结束"按钮
+> - 不需要在 `stop` 中手动切回待机状态（行动结束时会自动切换）
+> - **初始化中涉及主窗口的操作应移至`setup`，并先调用`super().setup(window)`（主窗口还未完成初始化）**
 
 #### 3. 注册插件
 
@@ -247,7 +246,7 @@ class Action(Plugin):
 
 ``` json
 {
-    "act-action": "action.act-maction"
+    "act-action": "action.act-action"
 }
 ```
 
@@ -266,7 +265,7 @@ class Action(Plugin):
 }
 ```
 
-在 `start` 中调用 `self.window.changeAnime(self.id)` 即可播放。
+在 `start` 中调用 `self.window().changeAnime(self.id)` 即可播放。
 
 #### 5. 准备状态反馈文本（可选）
 
@@ -279,7 +278,7 @@ class Action(Plugin):
 ]
 ```
 
-在 `start` 中调用 `self.window.dialogMenu.addLine` 手动显示回复，或通过 `conv.replyText("state", self.id)` 获取随机回复。
+在 `start` 中调用 `self.window().dialogMenu.addLine` 手动显示回复，或通过 `conv.replyText("state", self.id)` 获取随机回复。
 
 ### 完整示例：跳舞插件
 
@@ -300,13 +299,14 @@ class Dance(Plugin):
 
     def start(self):
         # 切换动画
-        self.window.changeAnime(self.id)
+        self.window().changeAnime(self.id)
         # 获取并显示随机回复
         reply = conv.replyText("state", self.id)
-        self.window.dialogMenu.addLine(reply)
+        self.window().dialogMenu.addLine(reply)
+        super().start()
 
     def stop(self):
-        pass
+        super().stop()
 ```
 
 #### 注册
@@ -353,10 +353,10 @@ class AutoAction(Plugin):
 
     def start(self):
         # 自动执行的任务
-        pass
+        super().start()
 
     def stop(self):
-        pass
+        super().stop()
 ```
 
 > **注意**：
@@ -391,15 +391,18 @@ class Action(Plugin):
 A: 检查以下几点：
 1. 文件名和 `plugin.json` 中的键是否一致
 2. 模块导入路径是否正确（如 `action.act-xxx`）
-3. 插件类是否继承自 `Plugin` 并重写了 `start` 和 `stop`
+
+**Q: 在`__init__`/`setup`中获取主窗口（`self.window()`）报错：AttributeError: 'NoneType' object has no attribute 'xxx'怎么办**
+
+A: 主窗口还未完成初始化，**初始化中涉及主窗口的操作应移至`setup`，并先调用`super().setup(window)`**
 
 **Q: 行动开始后宠物不响应鼠标操作？**
 
-A: 这是正常行为——行动会阻塞其他状态切换，直至插件调用 `stop` 或用户点击「结束」按钮。你可以在 `start` 中决定是否允许某些交互。
+A: 非自启动行动会阻塞其他状态的自动切换，直至插件调用 `stop` 或用户点击「结束」按钮。可以在 `start` 中决定是否允许某些交互。
 
 **Q: 如何让行动在结束后自动恢复待机？**
 
-A: 若在行动面板中结束，无需处理，行动结束时会自动切换回 `idle` 状态；若行动自行结束，调用`self.window().replyState("idle")`或`self.window().replyState("idle")`
+A: 无需处理，行动结束时会自动切换回 `idle` 状态.
 
 **Q: 动画不播放怎么办？**
 
@@ -410,4 +413,4 @@ A: 检查：
 
 **Q: 自动启动插件和普通插件有什么区别？**
 
-A: `auto = True` 的插件在程序启动时自动运行，不会出现在行动面板中，适合后台任务；普通插件需要在行动面板中手动点击执行。
+A: `auto = True` 的插件在程序启动时自动运行，不会出现在行动面板中，不阻塞其他状态的自动切换，适合后台任务；普通插件需要在行动面板中手动点击执行，阻塞切换。

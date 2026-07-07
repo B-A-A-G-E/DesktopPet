@@ -1,12 +1,10 @@
 from PySide6.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout
-from PySide6.QtGui import QAction, QMouseEvent
-from PySide6.QtCore import Qt, Slot, Signal, QPoint, QTimer, QRect
+from PySide6.QtGui import QAction
+from PySide6.QtCore import Qt, Slot, Signal, QTimer, QRect
 
-import random
 import importlib
 
 from tool import data
-from tool import mouse
 from tool import conv
 from tool import anime
 from tool.data import LogType
@@ -22,6 +20,8 @@ class PetWindow(QWidget):
     pluginLoadSucceeded = Signal(str)
     pluginInheritError = Signal(str)
     pluginLoadFailed = Signal(str)
+
+    stateChanged = Signal(str)
     
     def __init__(self):
         super().__init__()
@@ -54,9 +54,6 @@ class PetWindow(QWidget):
         # 辅助变量
         self.state = "idle" # 当前状态（触发特定事件&防止重复触发回复）
         self.idleTimer = QTimer() # 触发闲置（无操作）时间
-        self.moveTimer = QTimer() # 触发随机移动时间
-        self.step = 0 # 移动步数
-        self.dir = QPoint(0, 0) # 移动方向
 
         # 添加动画
         self.animes = { k: anime.Anime(v["path"], v["fps"], v["loop"], self, self.imgLb) for k, v in data.anime.items()}
@@ -78,13 +75,17 @@ class PetWindow(QWidget):
         self.bind()
 
         # 入场并切换待机
-        #self.replyState("entre", False, False, False)
         #self.stateMenu.log("Succeed to entre", LogType.Entre)
+        #self.replyState("entre", isAsync = False)
         self.replyState("idle")
 
         # 开始计时
         self.idleTimer.start(data.base["idle-time"])
-        self.moveTimer.start(data.base["idle-move-time"])
+
+        # 安装并开始行动
+        for act in self.autoActs.values():
+            act.setup(self)
+            act.start()
 
     def loadPlugins(self) -> None:
         for k, v in data.actPath.items():
@@ -101,10 +102,9 @@ class PetWindow(QWidget):
                 # 实例化子类
                 if pluginClass:
                     plugin = pluginClass()
+                    plugin.stopped.connect(self.stopAct)
                     if plugin.auto:
                         self.autoActs[k] = plugin
-                        self.autoActs[k].setup(self)
-                        self.autoActs[k].start()
                     else:
                         self.acts[k] = plugin
                     self.pluginLoadSucceeded.emit(f"succeeded to load plugin \"{k}\"")
@@ -133,9 +133,8 @@ class PetWindow(QWidget):
         self.imgLb.actAct.triggered.connect(self.actionMenu.show)
         self.imgLb.exitAct.triggered.connect(QApplication.quit)
 
-        # 绑定idle相关计时器
+        # 绑定idle计时器
         self.idleTimer.timeout.connect(lambda: self.replyState("idle"))
-        self.moveTimer.timeout.connect(self.moveRandomly)
 
         # 绑定动画加载失败信号
         for anime in self.animes.values():
@@ -156,12 +155,6 @@ class PetWindow(QWidget):
             self.currentAct = self.acts[id]
             self.currentAct.setup(self) # 安装插件，安装事件过滤器
             self.currentAct.start()
-
-    def stopAct(self) -> None:
-        if self.currentAct:
-            self.currentAct.stop()
-            self.currentAct = None
-            self.replyState("idle")
         
     def replyState(self, state: str, afterEvent: bool = False, isContinue: bool = False, isAsync: bool = True) -> None:
         """
@@ -181,65 +174,36 @@ class PetWindow(QWidget):
         # 切换计时器状态
         if state != "idle":
             self.idleTimer.stop()
-            self.moveTimer.stop()
         else:
             self.idleTimer.start(data.base["idle-time"])
-            if not self.moveTimer.isActive():
-                self.moveTimer.start(data.base["idle-move-time"])
         # 更新状态
         self.state = state
         self.stateMenu.log(self.state, LogType.StateChange)
+        self.stateChanged.emit(state)
     
     def changeAnime(self, name: str, afterEvent: bool = False, isContinue: bool = False, isAsync: bool = True) -> None:
         """切换动画"""
         if name in self.animes.keys():
             self.currentAnime.over()
             if afterEvent and f"after-{self.state}" in self.animes.keys():
-                self.replyState(f"after-{self.state}", False, False, False)
+                self.replyState(f"after-{self.state}", isAsync = False)
             self.currentAnime = self.animes[name]
             self.currentAnime.play(isContinue, isAsync)
     
+    def getAct(self, id: str) -> Plugin | None:
+        for k, v in self.acts.items():
+            if k == id:
+                return v
+        for k, v in self.autoActs.items():
+            if k == id:
+                return v
+        return None
+
     @Slot()
-    def moveRandomly(self) -> None:
-        if self.state == "idle":
-            self.moveTimer.stop()
+    def stopAct(self) -> None:
+        self.currentAct = None
+        self.replyState("idle")
 
-            currentGeo = self.geometry()
-            width, height = currentGeo.width(), currentGeo.height()
-
-            self.dir = QPoint(0, 0)
-            while self.dir.x() == 0 and self.dir.y() == 0:
-                self.dir.setX(random.randint(-1, 1))
-                self.dir.setY(random.randint(-1, 1))
-
-            # 获取当前屏幕的可用区域（排除任务栏）
-            screenGeo = QApplication.primaryScreen().availableGeometry()
-
-            # 生成移动距离
-            self.step = random.randint(data.base["move-min-step"], data.base["move-max-step"])
-
-            self.moveWindow(width, height, screenGeo)
-
-    @Slot(int, int, QRect)
-    def moveWindow(self, width: int, height: int, screenGeo: QRect) -> None:
-        if self.step > 0 and self.state == "idle":
-            # 控制斜向移动与水平/竖直移动速度相同
-            newX = self.x() + self.dir.x() * data.base["move-speed"] * (0.5 if self.dir.x() != 0 and self.dir.y() != 0 else 1)
-            newY = self.y() + self.dir.y() * data.base["move-speed"] * (0.5 if self.dir.x() != 0 and self.dir.y() != 0 else 1)
-
-            # 检查新位置是否在屏幕范围内
-            if (screenGeo.left() <= newX <= screenGeo.right() - width) and (screenGeo.top() <= newY <= screenGeo.bottom() - height):
-                self.move(newX, newY)
-                self.step -= 1
-            else:
-                self.dir = QPoint(0, 0)
-                while self.dir.x() == 0 and self.dir.y() == 0:
-                    self.dir.setX(random.randint(-1, 1))
-                    self.dir.setY(random.randint(-1, 1))
-            QTimer.singleShot(data.base["move-step-time"], lambda: self.moveWindow(width, height, screenGeo))
-        else:
-            self.moveTimer.start(data.base["idle-move-time"])
-    
     @Slot()
     def updateData(self) -> None:
         """更新数据"""

@@ -1,12 +1,14 @@
 # tool/plugin_base.py
 from typing import TYPE_CHECKING
-from PySide6.QtCore import QObject, QEvent
+from PySide6.QtCore import QObject, Signal, QEvent
 
 if TYPE_CHECKING:
     from window.petWindow import PetWindow
 
 class Plugin(QObject):
     """插件基类"""
+    started = Signal()
+    stopped = Signal()
     
     def __init__(self):
         super().__init__()
@@ -32,11 +34,11 @@ class Plugin(QObject):
     
     def start(self) -> None:
         """开始行动"""
-        raise NotImplementedError("function \"start(self, window: PetWindow) should be overrided\"")
+        self.started.emit()
     
     def stop(self) -> None:
         """停止行动"""
-        raise NotImplementedError("function \"stop(self, window: PetWindow) should be overrided\"")
+        self.stopped.emit()
     
     def eventFilter(self, obj, event: QEvent) -> bool:
         return False

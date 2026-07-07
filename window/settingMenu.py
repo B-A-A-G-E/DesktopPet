@@ -62,6 +62,8 @@ class SettingMenu(QWidget):
         self.setWindowTitle("Setting Menu")
         self.resize(600, 450)
 
+        self.otherPage: dict = {} # 插件传入的页面
+
         self.lyt = QVBoxLayout()
         self.tabW = QTabWidget()
 
@@ -91,12 +93,7 @@ class SettingMenu(QWidget):
         fields = [
             ("日志保存路径", "log-path", False),
             ("询问框最大问题数", "quesSelecter-item-count", True),
-            ("待机判定时间（毫秒）", "idle-time", True),
-            ("待机移动时间（毫秒）", "idle-move-time", True),
-            ("移动最小步长", "move-min-step", True),
-            ("移动最大步长", "move-max-step", True),
-            ("移动步进时间（毫秒）", "move-step-time", True),
-            ("移动速度（像素/步）", "move-speed", True),
+            ("待机判定时间（毫秒）", "idle-time", True)
         ]
 
         self.pg1.edits = {}
@@ -333,7 +330,7 @@ class SettingMenu(QWidget):
                     lambda checked, k=key, i=idx: self.removeDialogRow(k, i)
                 )
 
-    def clearLayout(self, layout):
+    def clearLayout(self, layout) -> None:
         """清空布局中的所有控件"""
         if layout is not None:
             while layout.count():
@@ -391,3 +388,15 @@ class SettingMenu(QWidget):
 
     def cancel(self) -> None:
         self.close()
+
+    def addPage(self, page: QWidget, label: str) -> None:
+        self.otherPage[label] = page
+        self.tabW.addTab(page, label)
+    
+    def getPage(self, label: str):
+        """获取插件传入的页面"""
+        if label in self.otherPage.keys():
+            return self.otherPage[label]
+        else:
+            return None
+        

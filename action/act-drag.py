@@ -2,10 +2,9 @@ from PySide6.QtCore import Qt, QEvent, QPoint
 from PySide6.QtGui import QMouseEvent
 
 from tool.plugin import Plugin
-from tool import data
 from tool import mouse
 
-class Stroke_Drag(Plugin):
+class Drag(Plugin):
     def __init__(self):
         super().__init__()
         
@@ -14,12 +13,6 @@ class Stroke_Drag(Plugin):
         
         self.dragPosition = QPoint() # 记录鼠标按下时的位置
     
-    def start(self):
-        pass
-    
-    def stop(self):
-        pass
-
     def eventFilter(self, obj, event: QEvent):
         if event.type() == QEvent.Type.MouseButtonPress:
             self.mousePressEvent(event)
@@ -27,12 +20,9 @@ class Stroke_Drag(Plugin):
             self.mouseMoveEvent(event)
         elif event.type() == QEvent.Type.MouseButtonRelease:
             self.mouseReleaseEvent(event)
-        return False
+        return super().eventFilter(obj, event)
     
     def mousePressEvent(self, event: QMouseEvent):
-        # 终止自动移动
-        self.window().step = 0
-        self.window().dir = QPoint(0, 0)
         # 记录左键按下时的窗口坐标
         if event.button() == Qt.MouseButton.LeftButton:
             event.accept()

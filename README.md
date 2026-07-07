@@ -15,7 +15,7 @@
     - [dialog.json 对话文本配置](#dialogjson-对话文本配置)
     - [自定义行动（插件开发）](#自定义行动插件开发)
 - [更新日志](#更新日志)
-    - [v0.4.2（最新）](#v042最新)
+    - [v0.4.3（最新）](#v043最新)
     - [v0.3.2.1](#v0321)
     - [v0.3.1](#v031)
     - [v0.2](#v02)
@@ -60,10 +60,11 @@ pip install pyside6
 │   ├── entre/              # 入场动画帧
 │   ├── exit/               # 退场动画帧
 │   ├── idle/               # 待机动画帧
-│   ├── stroke/             # 抚摸动画帧
-│   ├── drag/               # 拖拽动画帧
-│   ├── after-stroke/       # 抚摸后动画帧
-│   ├── after-drag/         # 拖动后动画帧
+│   ├── act-stroke/         # 抚摸动画帧
+│   ├── act-drag/           # 拖拽动画帧
+│   ├── after-act-stroke/   # 抚摸后动画帧
+│   ├── using-fan/          # 吹风扇动画帧
+│   └── turn-off-fan/       # 关风扇动画帧
 │
 ├── tool/                   # 工具模块
 │   ├── anime.py            # 动画播放引擎
@@ -80,7 +81,12 @@ pip install pyside6
 │   └── settingMenu.py      # 设置面板
 │
 └── action/                 # 自定义行动（插件）目录
-│   └── act-stroke-drag.py  # 摸头与拖拽事件
+    ├── act-stroke.py       # 抚摸事件
+    ├── act-drag.py         # 拖拽事件
+    ├── act-move-randomly/  # 随机移动事件目录
+    │   ├── act-move-randomly.py  # 随机移动事件
+    │   └── data.json       # 配置文件
+    └── act-use-fan.py      # 吹风扇行动
 ```
 
 ## API
@@ -91,8 +97,8 @@ pip install pyside6
 
 | 操作 | 反馈 |
 | :---: | :---: |
-| 左键拖拽 | 切换 `drag` 状态，宠物跟随鼠标移动 |
-| 左键点击 `stroke` 碰撞区并拖拽 | 触发 `stroke` 状态（可配置碰撞体） |
+| 左键拖拽 | 切换 `act-drag` 状态，宠物跟随鼠标移动 |
+| 左键点击 `head` 碰撞区 | 触发 `act-stroke` 状态 |
 | 闲置等待 | 自动进入 `idle` 状态，随机移动 |
 | 右键菜单 | 打开对话/状态/行动/设置面板 |
 
@@ -209,7 +215,7 @@ pip install pyside6
 **快速上手**：
 
 1. 在 `action/` 目录新建 Python 文件（如 `act-my-action.py`）
-2. 编写继承自 `tool.plugin.Plugin` 的类，重写 `start` 和 `stop` 方法
+2. 编写继承自 `tool.plugin.Plugin` 的类
 3. 在 `./data/plugin.json` 中注册插件
 4. （可选）配置动画和状态反馈文本
 
@@ -223,20 +229,24 @@ class MyAction(Plugin):
     def __init__(self):
         super().__init__()
         self.id = "act-action"
+        self.auto = False
         self.name = "Action"
-        self.description = "This is an action"  # 可选，用于鼠标悬浮提示
+        self.description = "This is an action"
 
     def start(self):
-        pass
+        # do something here
+        super().start()
 
     def stop(self):
-        pass
+        # do something here
+        super().stop()
 ```
 
 > **注意**：
 > - 行动开始后会阻塞其他状态切换，直至调用 `stop` 或点击"结束"按钮
 > - 可通过 `self.window` 访问主窗口的公开方法
 > - 设置 `self.auto = True` 可使插件在程序启动时自动运行
+> - **初始化中涉及主窗口的操作应移至`setup`，并先调用`super().setup(window)`（主窗口还未完成初始化）**
 
 ---
 
@@ -244,14 +254,16 @@ class MyAction(Plugin):
 
 版本号格式：**主版本号.次版本号[.修订版本号]**
 
-### v0.4.2（最新）
+### v0.4.3（最新）
 
 1. 完全重写插件的实现逻辑（由纯函数改为类继承）
 2. 丰富插件功能（事件过滤器、插件生命周期管理）
 3. 丰富日志系统（新增 `PluginLoaded` 日志类型）
 4. 行动面板新增提示（`ToolTip`）
 5. 加入自启动插件
-6. 将`stroke`与`drag`事件重写为插件
+6. 将 `act-stroke`，`act-drag`与`act-move-randomly`事件重写为插件
+7. 优化插件逻辑
+8. 提供更多API
 
 ### v0.3.2.1
 
@@ -260,11 +272,11 @@ class MyAction(Plugin):
 3. 修复了 `mouse.py` 中 `getCollision` 传参过少导致报错的问题
 4. 修复鼠标抬起必定切回待机的 bug
 5. 预留了两个行动
-6. 让D指导写了篇 API 文档
+6. 让 D 指导写了篇 API 文档
 
 ### v0.3.1
 
-1. 加入行动自定义功能与行动面板
+1. 加入行动自定义功能（插件）与行动面板
 2. 将部分含 "action" 的变量/函数等的命名规范为 "state"
 3. 丰富日志系统
 4. 优化判定，防崩溃

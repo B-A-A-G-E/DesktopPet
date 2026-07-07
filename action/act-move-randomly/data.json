@@ -1,0 +1,7 @@
+{
+  "idle-move-time": 15000,
+  "move-min-step": 200,
+  "move-max-step": 3000,
+  "move-step-time": 20,
+  "move-speed": 1
+}

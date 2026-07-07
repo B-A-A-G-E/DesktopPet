@@ -38,4 +38,8 @@ class ActionMenu(QWidget):
     def bind(self) -> None:
         for k in self.petWindow.acts.keys():
             self.actBtn[k].clicked.connect(lambda clicked, id = k: self.petWindow.act(id))
-        self.stopBtn.clicked.connect(self.petWindow.stopAct)
+
+        def stopAct() -> None:
+            if self.petWindow.currentAct:
+                self.petWindow.currentAct.stop()
+        self.stopBtn.clicked.connect(stopAct)
