@@ -190,13 +190,13 @@ class PetWindow(QWidget):
         self.state = state
         self.stateMenu.log(self.state, LogType.StateChange)
     
-    def changeAnime(self, state: str, afterEvent: bool = False, isContinue: bool = False, isAsync: bool = True) -> None:
+    def changeAnime(self, name: str, afterEvent: bool = False, isContinue: bool = False, isAsync: bool = True) -> None:
         """切换动画"""
-        if state in self.animes.keys():
+        if name in self.animes.keys():
             self.currentAnime.over()
             if afterEvent and f"after-{self.state}" in self.animes.keys():
                 self.replyState(f"after-{self.state}", False, False, False)
-            self.currentAnime = self.animes[state]
+            self.currentAnime = self.animes[name]
             self.currentAnime.play(isContinue, isAsync)
     
     @Slot()

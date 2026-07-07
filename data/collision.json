@@ -1,8 +1,14 @@
 {
-  "stroke": {
+  "head": {
     "left": 11,
     "top": 30,
     "width": 135,
     "height": 30
+  },
+  "fan-switch": {
+    "left": 80,
+    "top": 350,
+    "width": 70,
+    "height": 40
   }
 }

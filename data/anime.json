@@ -14,28 +14,28 @@
     "fps": 30,
     "loop": true
   },
-  "stroke": {
-    "path": "./img/stroke",
+  "act-stroke": {
+    "path": "./img/act-stroke",
     "fps": 30,
     "loop": true
   },
-  "drag": {
-    "path": "./img/drag",
+  "act-drag": {
+    "path": "./img/act-drag",
     "fps": 30,
     "loop": true
   },
-  "after-stroke": {
-    "path": "./img/after-stroke",
+  "after-act-stroke": {
+    "path": "./img/after-act-stroke",
     "fps": 50,
     "loop": false
   },
-  "act-dance": {
-    "path": "./img/act-dance",
+  "using-fan": {
+    "path": "./img/using-fan",
     "fps": 20,
     "loop": true
   },
-  "act-use-fan": {
-    "path": "./img/act-use-fan",
+  "turn-off-fan": {
+    "path": "./img/turn-off-fan",
     "fps": 20,
     "loop": true
   }

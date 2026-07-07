@@ -30,18 +30,11 @@ def fitImgSize(window, widget):
             window.resize(pixmap.size())
             widget.resize(pixmap.size())
         else:
-            showLoadFailedMsg(window, widget)
+            showLoadFailedMsg(window)
 
-def showLoadFailedMsg(window, widget, path: str = ""):
-    operation = QMessageBox.critical(window, "Fail to Load", f"Can't load file {path}.", QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Close)
-    if operation == QMessageBox.StandardButton.Ok:
-        # 加载默认图片
-        window.resize(200, 200)
-        widget.resize(200, 200)
-        widget.setPixmap(QPixmap(data.base["load-failed-img-path"]))
-    elif operation == QMessageBox.StandardButton.Close:
-        #退出程序
-        window.close()
+def showLoadFailedMsg(window, path: str = ""):
+    QMessageBox.critical(window, "Fail to Load", f"Can't load file {path}.", QMessageBox.StandardButton.Close)
+    window.close()
 
 class Anime(QObject):
     finished = Signal() # 一轮动画播放完成信号
@@ -76,7 +69,7 @@ class Anime(QObject):
                     fitImgSize(self.window, self.widget) # 调整窗口大小以适应图片
                 except:
                     self.loadErr.emit(f"Can't load file {self.path}.")
-                    showLoadFailedMsg(self.window, self.widget, self.path)
+                    showLoadFailedMsg(self.window, self.path)
                 time.sleep(1 / self.fps)
                 QApplication.processEvents()  # 允许界面更新
             self.finished.emit()
@@ -102,7 +95,7 @@ class Anime(QObject):
             fitImgSize(self.window, self.widget) # 调整窗口大小以适应图片
         except:
             self.loadErr.emit(f"Can't load file {self.path}.")
-            showLoadFailedMsg(self.window, self.widget, self.path)
+            showLoadFailedMsg(self.window, self.path)
         self.index += 1
         if self.index == len(self.imgNames):
             self.index = 0

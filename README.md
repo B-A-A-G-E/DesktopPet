@@ -124,7 +124,6 @@ pip install pyside6
 | 键 | 说明 | 默认值 |
 | :---: | :---: | :---: |
 | `log-path` | 日志保存路径 | `./log.log` |
-| `load-failed-img-path` | 加载失败占位图路径 | `./img/load_failed.png` |
 | `quesSelecter-item-count` | 对话面板最大显示问题数 | `10` |
 | `idle-time` | 待机判定时间（毫秒） | `10000` |
 | `idle-move-time` | 随机移动间隔（毫秒） | `15000` |

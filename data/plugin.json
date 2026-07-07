@@ -1,3 +1,5 @@
 {
-    "act-stroke-drag": "action.act-stroke-drag"
+    "act-stroke": "action.act-stroke",
+    "act-drag": "action.act-drag",
+    "act-use-fan": "action.act-use-fan"
 }
