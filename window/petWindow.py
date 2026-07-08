@@ -7,6 +7,7 @@ import importlib
 from tool import data
 from tool import conv
 from tool import anime
+from tool.stateMachine import StateMachine
 from tool.data import LogType
 
 from tool.plugin import Plugin
@@ -52,8 +53,7 @@ class PetWindow(QWidget):
         self.setLayout(self.mainlayout)
 
         # 辅助变量
-        self.state = "idle" # 当前状态（触发特定事件&防止重复触发回复）
-        self.idleTimer = QTimer() # 触发闲置（无操作）时间
+        self.stateMachine = StateMachine([k for k in data.state.keys()], data.base["idle-time"], "idle")
 
         # 添加动画
         self.animes = { k: anime.Anime(v["path"], v["fps"], v["loop"], self, self.imgLb) for k, v in data.anime.items()}
@@ -78,9 +78,6 @@ class PetWindow(QWidget):
         #self.stateMenu.log("Succeed to entre", LogType.Entre)
         #self.replyState("entre", isAsync = False)
         self.replyState("idle")
-
-        # 开始计时
-        self.idleTimer.start(data.base["idle-time"])
 
         # 安装并开始行动
         for act in self.autoActs.values():
@@ -107,39 +104,39 @@ class PetWindow(QWidget):
         self.imgLb.actAct.triggered.connect(self.actionMenu.show)
         self.imgLb.exitAct.triggered.connect(QApplication.quit)
 
-        # 绑定idle计时器
-        self.idleTimer.timeout.connect(lambda: self.replyState("idle"))
+        self.stateMachine.stateChanged.connect(self.onStateChanged)
+        self.stateMachine.stateUndefined.connect(lambda state: self.stateMenu.log(f"Undefined state \"{state}\"", LogType.Error))
 
         # 绑定动画加载失败信号
         for anime in self.animes.values():
             anime.loadErr.connect(lambda text: self.stateMenu.log(text, LogType.Error))
-
+    
+    @property
+    def state(self) -> str:
+        """获取当前状态"""
+        return self.stateMachine.currentState
+    
+    @state.setter
+    def state(self, value: str) -> None:
+        """设置当前状态"""
+        self.stateMachine.currentState = value
+    
     def replyState(self, state: str, afterEvent: bool = False, isContinue: bool = False, isAsync: bool = True) -> None:
         """
         执行对应行动时进行响应\n
         若afterEvent为True，则先响应当前状态的after-state事件（动画只能同步播放）\n
         """
-        if self.state != state or (state == "idle" and self.state == "idle"):
-            if afterEvent and f"after-{self.state}" in self.animes.keys():
-                self.replyState(f"after-{self.state}", isAsync = False)
+        currentState = self.stateMachine.currentState
+        
+        if currentState != state or (state == "idle" and currentState == "idle"):
+            if afterEvent and f"after-{currentState}" in self.animes.keys():
+                self.replyState(f"after-{currentState}", isAsync = False)
             # 更新状态
-            self.changeState(state)
+            self.stateMachine.currentState = state
             # 在dialogMenu回复
             self.dialogMenu.addLine(conv.replyText("state", state))
             # 切换动画
             self.changeAnime(state, isContinue, isAsync)
-  
-    def changeState(self, state: str) -> None:
-        """更新宠物状态并切换计时器状态"""
-        # 切换计时器状态
-        if state != "idle":
-            self.idleTimer.stop()
-        else:
-            self.idleTimer.start(data.base["idle-time"])
-        # 更新状态
-        self.state = state
-        self.stateMenu.log(self.state, LogType.StateChange)
-        self.stateChanged.emit(state)
     
     def changeAnime(self, name: str, isContinue: bool = False, isAsync: bool = True) -> None:
         """切换动画"""
@@ -149,13 +146,19 @@ class PetWindow(QWidget):
             self.currentAnime.play(isContinue, isAsync)
     
     def loadPlugins(self) -> None:
-        for id in data.actPath.keys():
+        for id in data.plugin.keys():
             self.loadPlugin(id)
 
     def loadPlugin(self, id: str) -> bool:
         try:
-            # 导入模块并加载Plugin的子类
-            module = importlib.import_module(data.actPath[id])
+            if not data.plugin[id]["enabled"]:
+                return False
+            
+            # 检查是否已加载
+            if id in self.acts or id in self.autoActs:
+                return True
+            
+            module = importlib.import_module(data.plugin[id]["path"])
             pluginClass = None
             for attrName in dir(module):
                 attr = getattr(module, attrName)
@@ -163,44 +166,52 @@ class PetWindow(QWidget):
                 if isinstance(attr, type) and issubclass(attr, Plugin) and attr is not Plugin:
                     pluginClass = attr
                     break
-            # 实例化子类
+            
             if pluginClass:
-                self.pluginLoadSucceeded.emit(f"succeeded to load plugin \"{id}\"")
                 plugin = pluginClass()
-                plugin.stopped.connect(self.stopAct)
+                plugin.stopped.connect(lambda: self.onActStopped(plugin.id))
+                
                 if plugin.auto:
                     self.autoActs[id] = plugin
-                    return True
                 else:
                     self.acts[id] = plugin
-                    return False
+                
+                self.pluginLoadSucceeded.emit(f"succeeded to load plugin \"{id}\"")
+                return True
             else:
-                self.pluginInheritError.emit("plugin \"{id}\" is not based on the base class \"Plugin\"")
+                self.pluginInheritError.emit(f"plugin \"{id}\" is not based on the base class \"Plugin\"")
+                return False
         except Exception as e:
             self.pluginLoadFailed.emit(f"failed to load plugin \"{id}\": {e}")
+            return False
     
     def deletePlugin(self, id: str) -> bool:
-        if id in self.acts.keys():
-            if self.currentAct.id == id:
-                self.acts[id].stop()
+        """删除插件"""
+        if id in self.acts:
+            # 停止并卸载非自启动插件
+            if self.currentAct and self.currentAct.id == id:
+                self.currentAct.stop()
+                self.currentAct.teardown()
+                self.currentAct = None
             self.acts.pop(id)
-        elif id in self.autoActs.keys():
+            return True
+        elif id in self.autoActs:
+            # 停止并卸载自启动插件
             self.autoActs[id].stop()
             self.autoActs[id].teardown()
             self.autoActs.pop(id)
-        else:
-            return False
-        return True
+            return True
+        return False
 
     def act(self, id: str) -> None:
         """执行行动"""
-        if id != self.state:
+        if id != self.stateMachine.currentState:
             # 停止上一个行动
             if id in self.acts and self.currentAct:
                 self.currentAct.stop()
             
             # 更新状态
-            self.changeState(id)
+            self.state = id
             
             # 开始新行动
             self.currentAct = self.acts[id]
@@ -216,16 +227,23 @@ class PetWindow(QWidget):
                 return v
         return None
 
-    @Slot()
-    def stopAct(self) -> None:
-        self.currentAct.teardown()
-        self.currentAct = None
+    @Slot(str, str)
+    def onStateChanged(self, prevState: str, currentState: str) -> None:
+        self.stateMenu.log(self.state, LogType.StateChanged)
+        self.stateChanged.emit(currentState)
+
+    @Slot(str, str)
+    def onActStopped(self, id: str) -> None:
+        if self.currentAct and self.currentAct.id == id:
+            self.currentAct.teardown()
+            self.currentAct = None
         self.replyState("idle")
 
     @Slot()
     def updateData(self) -> None:
         """更新数据"""
         # petWindow
+        self.stateMachine.idleTime = data.base["idle-time"]
         self.animes = { k: anime.Anime(v["path"], v["fps"], v["loop"], self, self.imgLb) for k, v in data.anime.items()}
         self.collisions = { k: QRect(v["left"], v["top"], v["width"], v["height"]) for k, v in data.collision.items()}
         # dialogWindow

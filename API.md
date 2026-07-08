@@ -27,12 +27,22 @@
   - [模块 tool.plugin](#模块-toolplugin)
     - [类 Plugin(QObject)](#类-pluginqobject)
       - [属性](#属性)
+      - [属性（Property）](#属性property)
       - [信号](#信号-1)
       - [方法 setup(window: PetWindow) -> None](#方法-setupwindow-petwindow---none)
       - [方法 teardown() -> None](#方法-teardown---none)
       - [方法 start() -> None](#方法-start---none)
       - [方法 stop() -> None](#方法-stop---none)
       - [方法 eventFilter(obj, event: QEvent) -> bool](#方法-eventfilterobj-event-qevent---bool)
+  - [模块 tool.stateMachine](#模块-toolstatemachine)
+    - [类 StateMachine(QObject)](#类-statemachineqobject)
+      - [信号](#信号-2)
+      - [属性](#属性-1)
+      - [属性（Property）](#属性property-1)
+      - [方法 currentState(state: str) -> bool](#方法-currentstatestate-str---bool)
+      - [方法 addState(state: str) -> None](#方法-addstatestate-str---none)
+      - [方法 removeState(state: str) -> bool](#方法-removestatestate-str---bool)
+      - [槽函数 onIdleTimeout() -> None](#槽函数-onidletimeout---none)
   - [窗口类](#窗口类)
     - [ActionMenu](#actionmenu)
       - [关键属性](#关键属性)
@@ -41,12 +51,11 @@
     - [StateMenu](#statemenu)
       - [关键方法](#关键方法-1)
     - [SettingMenu](#settingmenu)
-      - [信号](#信号-2)
+      - [信号](#信号-3)
       - [关键方法](#关键方法-2)
     - [PetWindow](#petwindow)
       - [核心方法 replyState(state: str, afterEvent: bool = False, isContinue: bool = False, isAsync: bool = True) -> None](#核心方法-replystatestate-str-afterevent-bool--false-iscontinue-bool--false-isasync-bool--true---none)
-      - [核心方法 changeState(state: str) -> None](#核心方法-changestatestate-str---none)
-      - [核心方法 changeAnime(state: str, afterEvent: bool = False, isContinue: bool = False, isAsync: bool = True) -> None](#核心方法-changeanimestate-str-afterevent-bool--false-iscontinue-bool--false-isasync-bool--true---none)
+      - [核心方法 changeAnime(state: str, isContinue: bool = False, isAsync: bool = True) -> None](#核心方法-changeanimestate-str-iscontinue-bool--false-isasync-bool--true---none)
       - [核心方法 loadPlugins() -> None](#核心方法-loadplugins---none)
       - [核心方法 loadPlugin(id: str) -> bool](#核心方法-loadpluginid-str---bool)
       - [核心方法 deletePlugin(id: str) -> bool](#核心方法-deletepluginid-str---bool)
@@ -54,8 +63,11 @@
       - [核心方法 getAct(id: str) -> Plugin | None](#核心方法-getactid-str---plugin--none)
       - [核心方法 stopAct() -> None](#核心方法-stopact---none)
       - [核心方法 updateData() -> None](#核心方法-updatedata---none)
-      - [信号](#信号-3)
-      - [属性](#属性-1)
+      - [信号](#信号-4)
+      - [属性](#属性-2)
+      - [属性（Property）](#属性property-2)
+      - [槽函数 onStateChanged(prevState: str, currentState: str) -> None](#槽函数-onstatechangedprevstate-str-currentstate-str---none)
+      - [槽函数 onActStopped(id: str) -> None](#槽函数-onactstoppedid-str---none)
 
 ---
 
@@ -76,7 +88,7 @@
 - **参数**
   - `folderPath`: 文件夹路径
 - **返回**
-  - 排序后的文件名列表，如 `["0".png, "1.png", "2.png"]`
+  - 排序后的文件名列表，如 `["0.png", "1.png", "2.png"]`
 - **说明**
   - 自动过滤非纯数字命名的文件
   - 文件名示例：`0.png`、`1.jpg` 等
@@ -89,7 +101,7 @@
   - `window`: 父窗口
   - `widget`: 存放图片的 QLabel
 - **说明**
-  - 若图片加载失败，弹出错误窗口，退出程序
+  - 若图片加载失败，调用 `showLoadFailedMsg` 弹出错误窗口并退出程序
 
 ### 函数 showLoadFailedMsg(window: QWidget, widget: QLabel, path: str = "") -> None
 
@@ -181,7 +193,7 @@
 | `collision` | dict | `./data/collision.json` |
 | `state` | dict | `./data/state.json` |
 | `dialog` | dict | `./data/dialog.json` |
-| `actPath` | dict | `./data/plugin.json` |
+| `plugin` | dict | `./data/plugin.json` |
 
 ### 枚举 LogType
 
@@ -193,7 +205,7 @@
 | `Entre` | 1 | 入场事件 |
 | `Exit` | 2 | 退场事件 |
 | `Set` | 3 | 设置更新事件 |
-| `StateChange` | 4 | 状态切换事件 |
+| `StateChanged` | 4 | 状态切换事件 |
 | `PluginLoaded` | 5 | 插件加载事件 |
 
 ### 函数 loadData() -> None
@@ -238,7 +250,7 @@
 | `auto` | bool | 是否在程序启动时自动运行，默认为 `False` |
 | `name` | str | 在行动面板显示的名称 |
 | `description` | str | 插件描述，用于行动面板的鼠标悬浮提示 |
-| `_window` | PetWindow \| None | 关联的主窗口实例（内部使用，通过 `window` 访问） |
+| `_window` | PetWindow \| None | 关联的主窗口实例（内部使用，通过 `window` 属性访问） |
 
 #### 属性（Property）
 
@@ -305,11 +317,85 @@
 
 ---
 
+## 模块 tool.stateMachine
+
+状态机模块，管理宠物的状态切换、状态列表和闲置计时器。
+
+### 类 StateMachine(QObject)
+
+#### 信号
+
+| 信号 | 触发时机 |
+| :--- | :--- |
+| `stateChanged(str, str)` | 状态变更时发射，携带前一状态名和新状态名 |
+| `stateUndefined(str)` | 尝试切换至未定义状态时发射，携带状态名 |
+| `stateTimeout(str)` | 闲置超时时发射，携带超时状态名 |
+
+#### 属性
+
+| 属性 | 类型 | 说明 |
+| :--- | :--- | :--- |
+| `_stateList` | list[str] | 所有已注册状态的列表（内部存储） |
+| `_currentState` | str | 当前状态（内部存储） |
+| `_idleTime` | int | 闲置超时时间（毫秒）（内部存储） |
+| `_idleTimer` | QTimer | 闲置计时器（内部存储） |
+
+#### 属性（Property）
+
+| 属性 | 类型 | 可访问性 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `stateList` | list[str] | 读写（getter/setter） | 获取或设置所有已注册状态的列表 |
+| `currentState` | str | 读写（getter/setter） | 获取或设置当前状态，通过 setter 触发状态切换逻辑 |
+| `idleTime` | int | 读写（getter/setter） | 获取或设置闲置超时时间（毫秒），设置时会重启计时器 |
+
+#### 方法 currentState(state: str) -> bool
+
+更新当前状态（通过 `currentState` 的 setter 调用）。
+
+- **参数**
+  - `state`: 目标状态名
+- **返回**
+  - 切换是否成功（状态是否存在于 `stateList` 中）
+- **行为**
+  - 若状态不在列表中，发射 `stateUndefined` 信号并返回 `False`
+  - 若目标状态非 `idle`，停止闲置计时器
+  - 若目标状态为 `idle`，启动闲置计时器
+  - 更新 `_currentState`，发射 `stateChanged` 信号
+
+#### 方法 addState(state: str) -> None
+
+添加新状态到状态列表。
+
+- **参数**
+  - `state`: 要添加的状态名
+- **说明**
+  - 若状态已存在，不做任何操作
+
+#### 方法 removeState(state: str) -> bool
+
+从状态列表中移除指定状态。
+
+- **参数**
+  - `state`: 要移除的状态名
+- **返回**
+  - 是否成功移除（状态是否存在）
+- **说明**
+  - 若状态不存在，发射 `stateUndefined` 信号并返回 `False`
+
+#### 槽函数 onIdleTimeout() -> None
+
+闲置超时处理槽函数。
+
+- **行为**
+  - 将当前状态切换为 `"idle"`
+
+---
+
 ## 窗口类
 
 ### ActionMenu
 
-行动面板，显示 `data.actPath` 中注册的所有非自启动行动按钮。
+行动面板，显示 `data.plugin` 中注册的所有非自启动行动按钮。
 
 #### 关键属性
 
@@ -376,48 +462,32 @@
 
 - **参数**
   - `state`: 目标状态名
-  - `afterEvent`: 是否先响应当前状态的 `after-{当前状态}`
+  - `afterEvent`: 是否先响应当前状态的 `after-{当前状态}`（仅当目标状态与当前状态不同时生效）
   - `isContinue`: 切换动画时是否从上一次停止位置继续
   - `isAsync`: 动画是否异步播放
-
 - **行为**
-  - 调用 `changeState` 更新状态
+  - 若 `afterEvent` 为 True 且当前状态存在对应的 `after-{当前状态}` 动画，递归调用 `replyState` 播放后续动画（强制同步播放）
+  - 调用 `stateMachine.currentState` 更新状态
   - 调用 `conv.replyText("state", state)` 获取回复并写入对话面板
   - 调用 `changeAnime` 切换动画
-
 - **说明**
-  - 若 `afterEvent` 为 True，在切换前尝试响应 `after-{当前状态}`
-
-#### 核心方法 changeState(state: str) -> None
-
-更新状态并管理计时器（闲置计时器）。
-
-- **参数**
-  - `state`: 目标状态名
-
-- **行为**
-  - `state` 为 `idle` 状态：停止闲置计时器
-  - `state` 非 `idle` 状态：启动闲置计时器
-  - 记录状态变更日志
-  - 发射 `stateChanged` 信号
+  - 若目标状态与当前状态相同且非 idle，不执行任何操作
 
 #### 核心方法 changeAnime(state: str, isContinue: bool = False, isAsync: bool = True) -> None
 
 切换动画，停止当前动画并播放目标动画。
 
 - **参数**
-  - **参数**
   - `state`: 目标状态名
-  - `isContinue`: 切换动画时是否从上一次停止位置继续
+  - `isContinue`: 是否从上一次停止位置继续
   - `isAsync`: 动画是否异步播放
-
 
 #### 核心方法 loadPlugins() -> None
 
-加载 `data.actPath` 中注册的所有插件。
+加载 `data.plugin` 中注册的所有插件。
 
 - **行为**
-  - 遍历 `actPath`，调用 `loadPlugin` 方法
+  - 遍历 `plugin`，调用 `loadPlugin` 方法
   - 导入模块并实例化 `Plugin` 子类
   - 普通插件（`auto = False`）存入 `self.acts`
   - 自动插件（`auto = True`）存入 `self.autoActs`，调用 `setup` 并立即启动
@@ -425,21 +495,26 @@
 
 #### 核心方法 loadPlugin(id: str) -> bool
 
-加载 `data.actPath` 中注册的指定插件。
+加载 `data.plugin` 中注册的指定插件。
 
+- **参数**
+  - `id`: 插件 ID
 - **行为**
+  - 若 `plugin[id]["enabled"]` 为 `False`，直接返回 `False`
+  - 若插件已加载，返回 `True`
   - 导入模块并实例化 `Plugin` 子类
   - 普通插件（`auto = False`）存入 `self.acts`
   - 自动插件（`auto = True`）存入 `self.autoActs`
   - 发射 `pluginLoadSucceeded`、`pluginInheritError` 或 `pluginLoadFailed` 信号
-
 - **返回**
-  - 插件是否是自启动插件（插件的 `auto` 属性）
+  - 插件是否加载成功
 
 #### 核心方法 deletePlugin(id: str) -> bool
 
-删除指定插件
+删除指定插件。
 
+- **参数**
+  - `id`: 插件 ID
 - **行为**
   - 检测 `acts` 是否存在键 `id`，若存在：
     - 若其是正在运行的插件，停止运行并卸载
@@ -447,9 +522,8 @@
   - 检测 `autoActs` 是否存在键 `id`，若存在：
     - 若其是正在运行的插件，停止运行并卸载
     - 从 `autoActs` 中移出插件
-
 - **返回**
-  - 插件是否成功删除（`acts` 或 `autoActs` 是否含有该插件）
+  - 插件是否成功删除
 
 #### 核心方法 act(id: str) -> None
 
@@ -458,7 +532,7 @@
 - **参数**
   - `id`: 插件 ID
 - **行为**
-  - 若当前有正在运行的行动，调用其 `stop` 和 `teardown` 方法
+  - 若当前有正在运行的行动，调用其 `stop` 方法（`teardown` 由 `onActStopped` 处理）
   - 更新状态为目标 ID
   - 调用目标插件的 `setup` 和 `start` 方法
 
@@ -471,7 +545,7 @@
 - **返回**
   - 插件实例，若未找到则返回 `None`
 
-#### 核心方法 stopAct() -> None *\[Slot\]*
+#### 核心方法 stopAct() -> None *[Slot]*
 
 停止当前正在运行的行动，切换回 `idle` 状态。
 
@@ -479,14 +553,16 @@
   - 由 `ActionMenu` 的停止按钮或插件自身发射 `stopped` 信号触发
   - 将 `currentAct` 置为 `None` 并调用 `replyState("idle")`
 
-#### 核心方法 updateData() -> None *\[Slot\]*
+#### 核心方法 updateData() -> None *[Slot]*
 
 重新加载配置数据并刷新动画和碰撞体。
 
 - **说明**
   - 由 `SettingMenu.dataUpdated` 信号触发调用
+  - 更新 `stateMachine.idleTime`
   - 重新从 `data.anime` 和 `data.collision` 构建动画对象和碰撞体
   - 调用 `dialogMenu.resetQuesSelecter()` 刷新对话选项
+  - 记录日志
 
 #### 信号
 
@@ -501,16 +577,44 @@
 
 | 属性 | 类型 | 说明 |
 | :--- | :--- | :--- |
-| `state` | str | 当前状态 |
 | `animes` | dict | 动画对象字典，键为状态名 |
 | `collisions` | dict | 碰撞体字典，键为状态名 |
 | `acts` | dict | 普通插件字典（`auto = False`），键为插件 ID |
 | `autoActs` | dict | 自动启动插件字典（`auto = True`），键为插件 ID |
 | `currentAct` | Plugin \| None | 当前正在运行的插件 |
-| `idleTimer` | QTimer | 闲置判定计时器 |
 | `dialogMenu` | DialogMenu | 对话面板实例 |
 | `stateMenu` | StateMenu | 状态日志面板实例 |
 | `actionMenu` | ActionMenu | 行动面板实例 |
 | `settingMenu` | SettingMenu | 设置面板实例 |
+| `stateMachine` | StateMachine | 状态机实例 |
+
+#### 属性（Property）
+
+| 属性 | 类型 | 可访问性 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `state` | str | 读写（getter/setter） | 获取或设置当前状态，通过 setter 调用 `stateMachine.currentState` |
+
+#### 槽函数 onStateChanged(prevState: str, currentState: str) -> None
+
+状态变更响应槽函数。
+
+- **参数**
+  - `prevState`: 前一状态名
+  - `currentState`: 新状态名
+- **行为**
+  - 向状态日志面板写入状态变更日志
+  - 发射 `stateChanged` 信号
+
+#### 槽函数 onActStopped(id: str) -> None
+
+行动停止响应槽函数。
+
+- **参数**
+  - `id`: 停止的插件 ID
+- **行为**
+  - 若当前正在运行的插件 ID 匹配，调用其 `teardown` 并置空
+  - 切换回 `idle` 状态
+
+---
 
 > ### 详细教程请参阅 [customization.md](./customization.md)。

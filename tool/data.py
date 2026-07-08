@@ -6,14 +6,14 @@ anime: dict
 collision: dict
 state: dict
 dialog: dict
-actPath: dict
+plugin: dict
 
 class LogType(Enum):
     Error = 0
     Entre = 1
     Exit = 2
     Set = 3
-    StateChange = 4
+    StateChanged = 4
     PluginLoaded = 5
 
 
@@ -22,7 +22,7 @@ def loadData() -> None:
     global anime
     global collision
     global state, dialog
-    global actPath
+    global plugin
 
     with open("./data/base.json", "r", encoding = "utf-8") as f:
        base = json.load(f)
@@ -35,6 +35,6 @@ def loadData() -> None:
     with open("./data/dialog.json", "r", encoding = "utf-8") as f:
         dialog = json.load(f)
     with open("./data/plugin.json", "r", encoding = "utf-8") as f:
-        actPath = json.load(f)
+        plugin = json.load(f)
 
 loadData()

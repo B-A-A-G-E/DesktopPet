@@ -22,8 +22,9 @@
       - [1. 创建插件文件](#1-创建插件文件)
       - [2. 编写插件类](#2-编写插件类)
       - [3. 注册插件](#3-注册插件)
-      - [4. 准备动画资源（可选）](#4-准备动画资源可选)
-      - [5. 准备状态反馈文本（可选）](#5-准备状态反馈文本可选)
+      - [4. 注册状态并配置状态反馈文本](#4-注册状态并配置状态反馈文本)
+      - [5. 配置动画（可选）](#5-配置动画可选)
+      - [6. 配置碰撞体（可选）](#6-配置碰撞体可选)
     - [完整示例：跳舞插件](#完整示例跳舞插件)
       - [插件代码](#插件代码)
       - [注册](#注册)
@@ -141,6 +142,11 @@
 ]
 ```
 
+``` json
+"状态名": [] // 只注册状态
+```
+
+- 新建的状态必须在此文件内注册，若不希望回复直接设置空数组即可
 - 用 `PetWindow.replyState` 切换状态时会从对应数组中随机选取一条回复
 - 若状态无对应条目，则不显示回复
 
@@ -190,7 +196,6 @@
 
 ```
 action/
-├── act-dance.py
 ├── act-action.py   # 新插件
 ```
 
@@ -241,15 +246,36 @@ class Action(Plugin):
 编辑 `./data/plugin.json`：
 
 ``` json
-{
-    "act-action": "action.act-action"
+"act-action": {
+    "path": "action.act-action",
+    "enabled": true
 }
 ```
 
 - 键：插件 ID（须与 `self.id` 一致）
-- 值：模块导入路径（`action.文件名`）
+- 值：
+    - `path`: 模块导入路径（如 `action.act-action`）
+    - `enabled`: 是否启用（当前无效果，为以后的行动面板的插件配置做准备）
 
-#### 4. 配置动画（可选）
+#### 4. 注册状态并配置状态反馈文本
+
+在 `./data/state.json` 中添加状态反馈文本（可选）：
+
+``` json
+"状态名": [] // 只注册状态
+```
+
+``` json
+// 注册状态并配置状态反馈文本
+"状态名": [
+    "反馈1",
+    "反馈2"
+]
+```
+
+在 `start` 中调用 `self.window.dialogMenu.addLine` 手动显示回复，或通过 `conv.replyText("state", self.id)` 获取随机回复。
+
+#### 5. 配置动画（可选）
 
 若行动需要播放动画，在 `./data/anime.json` 中添加条目：
 
@@ -263,7 +289,7 @@ class Action(Plugin):
 
 在 `start` 中调用 `self.window.changeAnime(self.id)` 即可播放。
 
-### 5. 配置碰撞体（可选）
+#### 6. 配置碰撞体（可选）
 
 在 `./data/state.json` 中添加碰撞体：
 
@@ -277,19 +303,6 @@ class Action(Plugin):
 ```
 
 导入 `tool.mouse.getCollision` 函数获取鼠标所在的碰撞体
-
-### 6. 配置状态反馈文本（可选）
-
-在 `./data/state.json` 中添加状态反馈文本：
-
-``` json
-"状态名": [
-    "反馈1",
-    "反馈2"
-]
-```
-
-在 `start` 中调用 `self.window.dialogMenu.addLine` 手动显示回复，或通过 `conv.replyText("state", self.id)` 获取随机回复。
 
 ### 完整示例：跳舞插件
 

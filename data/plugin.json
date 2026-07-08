@@ -1,6 +1,18 @@
 {
-    "act-stroke": "action.act-stroke",
-    "act-drag": "action.act-drag",
-    "act-move-randomly": "action.act-move-randomly.act-move-randomly",
-    "act-use-fan": "action.act-use-fan"
+  "act-stroke": {
+    "path": "action.act-stroke",
+    "enabled": true
+  },
+  "act-drag": {
+    "path": "action.act-drag",
+    "enabled": true
+  },
+  "act-move-randomly": {
+    "path": "action.act-move-randomly.act-move-randomly",
+    "enabled": true
+  },
+  "act-use-fan": {
+    "path": "action.act-use-fan",
+    "enabled": true
+  }
 }

@@ -39,4 +39,4 @@ class Drag(Plugin):
     
     def mouseReleaseEvent(self, event: QMouseEvent):
         if self.window.state == self.id:
-            self.window.replyState("idle", False)
+            self.window.replyState("idle", True)

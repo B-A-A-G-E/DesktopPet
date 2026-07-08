@@ -4,8 +4,6 @@ from PySide6.QtCore import Signal
 import json
 from tool import data
 
-"""写给自己：本文件有很多部分使用ai编写或修改，精进技术后尝试自己完善手写的old/settingMenu.py"""
-
 class PageFactory():
     @staticmethod
     def createPage(dataDict: dict, tabWidget: QTabWidget, tabName: str, addBtnText: str = "新建项"):
