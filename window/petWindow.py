@@ -87,32 +87,6 @@ class PetWindow(QWidget):
             act.setup(self)
             act.start()
 
-    def loadPlugins(self) -> None:
-        for k, v in data.actPath.items():
-            try:
-                # 导入模块并加载Plugin的子类
-                module = importlib.import_module(v)
-                pluginClass = None
-                for attrName in dir(module):
-                    attr = getattr(module, attrName)
-                    
-                    if isinstance(attr, type) and issubclass(attr, Plugin) and attr is not Plugin:
-                        pluginClass = attr
-                        break
-                # 实例化子类
-                if pluginClass:
-                    plugin = pluginClass()
-                    plugin.stopped.connect(self.stopAct)
-                    if plugin.auto:
-                        self.autoActs[k] = plugin
-                    else:
-                        self.acts[k] = plugin
-                    self.pluginLoadSucceeded.emit(f"succeeded to load plugin \"{k}\"")
-                else:
-                    self.pluginInheritError.emit("plugin \"{k}\" is not based on the base class \"Plugin\"")
-            except Exception as e:
-                self.pluginLoadFailed.emit(f"failed to load plugin \"{k}\": {e}")
-
     def bind(self) -> None:
         """绑定子窗口及信号"""
         self.dialogMenu = DialogMenu()
@@ -139,23 +113,7 @@ class PetWindow(QWidget):
         # 绑定动画加载失败信号
         for anime in self.animes.values():
             anime.loadErr.connect(lambda text: self.stateMenu.log(text, LogType.Error))
-    
-    def act(self, id: str) -> None:
-        """执行行动"""
-        if id != self.state:
-            # 停止上一个行动
-            if id in self.acts and self.currentAct:
-                self.currentAct.stop()
-                self.currentAct.teardown() # 卸载插件，卸载事件过滤器
-            
-            # 更新状态
-            self.changeState(id)
-            
-            # 开始新行动
-            self.currentAct = self.acts[id]
-            self.currentAct.setup(self) # 安装插件，安装事件过滤器
-            self.currentAct.start()
-        
+
     def replyState(self, state: str, afterEvent: bool = False, isContinue: bool = False, isAsync: bool = True) -> None:
         """
         执行对应行动时进行响应\n
@@ -190,6 +148,53 @@ class PetWindow(QWidget):
             self.currentAnime = self.animes[name]
             self.currentAnime.play(isContinue, isAsync)
     
+    def loadPlugins(self) -> None:
+        for id, path in data.actPath.items():
+            self.loadPlugin(id, path)
+
+    def loadPlugin(self, id: str, path: str) -> bool:
+        try:
+            # 导入模块并加载Plugin的子类
+            module = importlib.import_module(path)
+            pluginClass = None
+            for attrName in dir(module):
+                attr = getattr(module, attrName)
+                
+                if isinstance(attr, type) and issubclass(attr, Plugin) and attr is not Plugin:
+                    pluginClass = attr
+                    break
+            # 实例化子类
+            if pluginClass:
+                self.pluginLoadSucceeded.emit(f"succeeded to load plugin \"{id}\"")
+                plugin = pluginClass()
+                plugin.stopped.connect(self.stopAct)
+                if plugin.auto:
+                    self.autoActs[id] = plugin
+                    return True
+                else:
+                    self.acts[id] = plugin
+                    return False
+            else:
+                self.pluginInheritError.emit("plugin \"{id}\" is not based on the base class \"Plugin\"")
+        except Exception as e:
+            self.pluginLoadFailed.emit(f"failed to load plugin \"{id}\": {e}")
+    
+    def act(self, id: str) -> None:
+        """执行行动"""
+        if id != self.state:
+            # 停止上一个行动
+            if id in self.acts and self.currentAct:
+                self.currentAct.stop()
+                self.currentAct.teardown() # 卸载插件，卸载事件过滤器
+            
+            # 更新状态
+            self.changeState(id)
+            
+            # 开始新行动
+            self.currentAct = self.acts[id]
+            self.currentAct.setup(self) # 安装插件，安装事件过滤器
+            self.currentAct.start()
+        
     def getAct(self, id: str) -> Plugin | None:
         for k, v in self.acts.items():
             if k == id:

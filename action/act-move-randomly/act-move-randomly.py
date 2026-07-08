@@ -45,9 +45,9 @@ class MoveRandomly(Plugin):
                     self.moveTimer.start(self.data["idle-move-time"])
     
         self.moveTimer.timeout.connect(self.moveRandomly)
-        self.window().stateChanged.connect(stopTimer)
+        self.window.stateChanged.connect(stopTimer)
         
-        self.window().settingMenu.dataUpdated.connect(self.updateData)
+        self.window.settingMenu.dataUpdated.connect(self.updateData)
     
     def loadData(self) -> None:
         with open("./action/act-move-randomly/data.json", "r", encoding = "utf-8") as f:
@@ -75,15 +75,15 @@ class MoveRandomly(Plugin):
                 self.pg.edits[key] = (edit, isInt)
 
             self.pg.setLayout(layout)
-            self.window().settingMenu.addPage(self.pg, "移动配置")
+            self.window.settingMenu.addPage(self.pg, "移动配置")
         except Exception as e:
             print(e)
     @Slot()
     def moveRandomly(self) -> None:
-        if self.window().state == "idle":
+        if self.window.state == "idle":
             self.moveTimer.stop()
 
-            currentGeo = self.window().geometry()
+            currentGeo = self.window.geometry()
             width, height = currentGeo.width(), currentGeo.height()
 
             self.dir = QPoint(0, 0)
@@ -101,14 +101,14 @@ class MoveRandomly(Plugin):
 
     @Slot(int, int, QRect)
     def moveWindow(self, width: int, height: int, screenGeo: QRect) -> None:
-        if self.step > 0 and self.window().state == "idle":
+        if self.step > 0 and self.window.state == "idle":
             # 控制斜向移动与水平/竖直移动速度相同
-            newX = self.window().x() + self.dir.x() * self.data["move-speed"] * (0.5 if self.dir.x() != 0 and self.dir.y() != 0 else 1)
-            newY = self.window().y() + self.dir.y() * self.data["move-speed"] * (0.5 if self.dir.x() != 0 and self.dir.y() != 0 else 1)
+            newX = self.window.x() + self.dir.x() * self.data["move-speed"] * (0.5 if self.dir.x() != 0 and self.dir.y() != 0 else 1)
+            newY = self.window.y() + self.dir.y() * self.data["move-speed"] * (0.5 if self.dir.x() != 0 and self.dir.y() != 0 else 1)
 
             # 检查新位置是否在屏幕范围内
             if (screenGeo.left() <= newX <= screenGeo.right() - width) and (screenGeo.top() <= newY <= screenGeo.bottom() - height):
-                self.window().move(newX, newY)
+                self.window.move(newX, newY)
                 self.step -= 1
             else:
                 self.dir = QPoint(0, 0)
@@ -121,7 +121,7 @@ class MoveRandomly(Plugin):
     
     @Slot()
     def updateData(self) -> None:
-        self.pg = self.window().settingMenu.getPage("移动配置")
+        self.pg = self.window.settingMenu.getPage("移动配置")
         
         for key, v in self.pg.edits.items():
             edit, isInt = v

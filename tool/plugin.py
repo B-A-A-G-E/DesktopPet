@@ -18,6 +18,7 @@ class Plugin(QObject):
         self.description: str = ""
         self._window: "PetWindow | None" = None
     
+    @property
     def window(self) -> "PetWindow | None":
         return self._window
     
@@ -41,4 +42,5 @@ class Plugin(QObject):
         self.stopped.emit()
     
     def eventFilter(self, obj, event: QEvent) -> bool:
+        """事件过滤器"""
         return False

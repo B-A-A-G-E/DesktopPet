@@ -26,17 +26,17 @@ class Drag(Plugin):
         # 记录左键按下时的窗口坐标
         if event.button() == Qt.MouseButton.LeftButton:
             event.accept()
-            self.dragPosition = event.globalPosition().toPoint() - self.window().frameGeometry().topLeft()
+            self.dragPosition = event.globalPosition().toPoint() - self.window.frameGeometry().topLeft()
     
     def mouseMoveEvent(self, event: QMouseEvent):
-        if event.buttons() == Qt.MouseButton.LeftButton and "after-" not in self.window().state:
-            collision = mouse.getCollision(self.window(), event.position().toPoint())
+        if event.buttons() == Qt.MouseButton.LeftButton and "after-" not in self.window.state:
+            collision = mouse.getCollision(self.window, event.position().toPoint())
             if not collision:
                 event.accept()
-                if self.window().state != self.id:
-                    self.window().replyState(self.id)
-                self.window().move(event.globalPosition().toPoint() - self.dragPosition)
+                if self.window.state != self.id:
+                    self.window.replyState(self.id)
+                self.window.move(event.globalPosition().toPoint() - self.dragPosition)
     
     def mouseReleaseEvent(self, event: QMouseEvent):
-        if self.window().state == self.id:
-            self.window().replyState("idle", False)
+        if self.window.state == self.id:
+            self.window.replyState("idle", False)

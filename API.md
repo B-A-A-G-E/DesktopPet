@@ -30,7 +30,6 @@
       - [信号](#信号-1)
       - [方法 setup(window: PetWindow) -> None](#方法-setupwindow-petwindow---none)
       - [方法 teardown() -> None](#方法-teardown---none)
-      - [方法 window() -> PetWindow | None](#方法-window---petwindow--none)
       - [方法 start() -> None](#方法-start---none)
       - [方法 stop() -> None](#方法-stop---none)
       - [方法 eventFilter(obj, event: QEvent) -> bool](#方法-eventfilterobj-event-qevent---bool)
@@ -60,7 +59,7 @@
 
 ## 概述
 
-本文档描述桌面宠物程序的核心 API，涵盖工具模块、窗口类和自定义扩展接口。所有 API 均基于 PySide6 实现。
+本文档描述桌面宠物程序的核心 API，涵盖工具模块、窗口类和自定义扩展接口。
 
 ---
 
@@ -70,12 +69,12 @@
 
 ### 函数 getPixNames(folderPath: str) -> list[str]
 
-获取指定文件夹内所有纯数字命名的图片文件名（不含扩展名），并按数字升序排序。
+获取指定文件夹内所有纯数字命名的图片文件名（不含子目录），并按数字升序排序。
 
 - **参数**
   - `folderPath`: 文件夹路径
 - **返回**
-  - 排序后的文件名列表，如 `["0", "1", "2"]`
+  - 排序后的文件名列表，如 `["0".png, "1.png", "2.png"]`
 - **说明**
   - 自动过滤非纯数字命名的文件
   - 文件名示例：`0.png`、`1.jpg` 等
@@ -88,7 +87,7 @@
   - `window`: 父窗口
   - `widget`: 存放图片的 QLabel
 - **说明**
-  - 若图片加载失败，自动调用 `showLoadFailedMsg`
+  - 若图片加载失败，弹出错误窗口，退出程序
 
 ### 函数 showLoadFailedMsg(window: QWidget, widget: QLabel, path: str = "") -> None
 
@@ -96,10 +95,8 @@
 
 - **参数**
   - `window`: 父窗口
-  - `widget`: 存放图片的 QLabel
   - `path`: 尝试加载的文件路径（用于错误提示）
 - **行为**
-  - 点击「确定」：加载占位图，窗口调整为 200x200
   - 点击「关闭」：关闭窗口
 
 ### 类 Anime(QObject)
@@ -221,7 +218,7 @@
 - **返回**
   - 命中状态名（键名），若未命中则返回 `None`
 - **说明**
-  - `collisions` 格式：`{ "状态名": QRect, ... }`
+  - `collisions` 格式：`{ "碰撞体名": QRect, ... }`
 
 ---
 
@@ -231,17 +228,21 @@
 
 ### 类 Plugin(QObject)
 
-所有自定义行动插件须继承此类并重写 `start` 和 `stop` 方法。
-
 #### 属性
 
 | 属性 | 类型 | 说明 |
 | :--- | :--- | :--- |
 | `id` | str | 插件唯一标识，应与文件名一致 |
+| `auto` | bool | 是否在程序启动时自动运行，默认为 `False` |
 | `name` | str | 在行动面板显示的名称 |
 | `description` | str | 插件描述，用于行动面板的鼠标悬浮提示 |
-| `auto` | bool | 是否在程序启动时自动运行，默认为 `False` |
-| `_window` | PetWindow \| None | 关联的主窗口实例（内部使用，通过 `window()` 访问） |
+| `_window` | PetWindow \| None | 关联的主窗口实例（内部使用，通过 `window` 访问） |
+
+#### 属性（Property）
+
+| 属性 | 类型 | 可访问性 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `window` | PetWindow \| None | 只读（getter） | 获取当前关联的主窗口实例。若插件尚未通过 `setup` 安装，则返回 `None`。 |
 
 #### 信号
 
@@ -257,8 +258,9 @@
 - **参数**
   - `window`: 主窗口实例
 - **说明**
-  - 由 `PetWindow.loadPlugins` 或 `PetWindow.act` 自动调用，无需手动调用
+  - 由 `PetWindow.__init__` 或 `PetWindow.act` 自动调用，无需手动调用
   - **初始化中涉及主窗口的操作应在此方法中进行，并先调用 `super().setup(window)`**
+  - 调用后可通过 `self.window` 属性访问主窗口实例
 
 #### 方法 teardown() -> None
 
@@ -267,20 +269,13 @@
 - **说明**
   - 由 `PetWindow.act` 在切换行动时自动调用
 
-#### 方法 window() -> PetWindow | None
-
-获取关联的主窗口实例。
-
-- **返回**
-  - 关联的 `PetWindow` 实例，若未安装则返回 `None`
-
 #### 方法 start() -> None
 
 开始行动。
 
 - **说明**
   - 在此实现行动开始时的逻辑（如切换动画、播放回复等）
-  - 可通过 `self.window()` 访问主窗口的公开方法
+  - 可通过 `self.window` 访问主窗口的公开方法
   - 发射 `started` 信号
 
 #### 方法 stop() -> None
@@ -338,7 +333,7 @@
 | `addLine(content: str)` | 向回复框追加一行文本 |
 
 - **行为**
-  - 提问后自动从列表中移除该问题，并从剩余问题中随机补充
+  - 提问后自动从列表中移除该问题，并从剩余问题中随机补充（包括刚刚移除的）
 
 ### StateMenu
 
@@ -348,7 +343,7 @@
 
 | 方法 | 说明 |
 | :--- | :--- |
-| `log(text: str, type: LogType = None)` | 添加日志条目，格式为 `时间  LogType.xxx:    文本` |
+| `log(text: str, type: LogType = None)` | 添加日志条目，格式为 `时间  LogType.xxx/None:    文本` |
 
 ### SettingMenu
 
@@ -358,7 +353,7 @@
 
 | 信号 | 触发时机 |
 | :--- | :--- |
-| `dataUpdated()` | 应用配置后发射，用于通知主窗口刷新数据 |
+| `dataUpdated()` | 应用配置后发射，用于通知刷新数据 |
 
 #### 关键方法
 
@@ -379,7 +374,7 @@
 
 - **参数**
   - `state`: 目标状态名
-  - `afterEvent`: 是否先播放当前状态的 `after-{state}` 后续动画（仅同步模式）
+  - `afterEvent`: 是否先播放当前状态的 `after-state` 后续动画（仅同步模式）
   - `isContinue`: 切换动画时是否从上一次停止位置继续
   - `isAsync`: 动画是否异步播放
 - **行为**
@@ -391,9 +386,12 @@
 
 更新状态并管理计时器（闲置计时器）。
 
+- **参数**
+  - `state`: 目标状态名
+
 - **行为**
-  - 非 `idle` 状态：停止闲置计时器
-  - `idle` 状态：启动闲置计时器
+  - `state` 为 `idle` 状态：停止闲置计时器
+  - `state` 非 `idle` 状态：启动闲置计时器
   - 记录状态变更日志
   - 发射 `stateChanged` 信号
 
@@ -411,10 +409,24 @@
 加载 `data.actPath` 中注册的所有插件。
 
 - **行为**
-  - 遍历 `actPath`，导入模块并实例化 `Plugin` 子类
+  - 遍历 `actPath`，调用 `loadPlugin` 方法
+  - 导入模块并实例化 `Plugin` 子类
   - 普通插件（`auto = False`）存入 `self.acts`
   - 自动插件（`auto = True`）存入 `self.autoActs`，调用 `setup` 并立即启动
   - 发射 `pluginLoadSucceeded`、`pluginInheritError` 或 `pluginLoadFailed` 信号
+
+#### 核心方法 loadPlugin(id: str, path: str) -> bool
+
+加载 `data.actPath` 中注册的指定插件。
+
+- **行为**
+  - 导入模块并实例化 `Plugin` 子类
+  - 普通插件（`auto = False`）存入 `self.acts`
+  - 自动插件（`auto = True`）存入 `self.autoActs`
+  - 发射 `pluginLoadSucceeded`、`pluginInheritError` 或 `pluginLoadFailed` 信号
+
+- **返回**
+  - 插件是否是自启动插件（插件的 `auto` 属性）
 
 #### 核心方法 act(id: str) -> None
 
