@@ -13,6 +13,8 @@ class StateMachine(QObject):
         self._idleTime: int = idleTime
 
         self._idleTimer: QTimer = QTimer()
+
+        self.bind()
     
     @property
     def stateList(self) -> list:
@@ -51,6 +53,9 @@ class StateMachine(QObject):
     @property
     def idleTime(self) -> int:
         return self._idleTime
+    
+    def bind(self):
+        self._idleTimer.timeout.connect(self.onIdleTimeout)
     
     @idleTime.setter
     def idleTime(self, time: int) -> int:

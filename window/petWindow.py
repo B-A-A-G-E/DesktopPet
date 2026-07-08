@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout
 from PySide6.QtGui import QAction
-from PySide6.QtCore import Qt, Slot, Signal, QTimer, QRect
+from PySide6.QtCore import Qt, Slot, Signal, QRect
 
 import importlib
 
@@ -75,7 +75,7 @@ class PetWindow(QWidget):
         self.bind()
 
         # 入场并切换待机
-        #self.stateMenu.log("Succeed to entre", LogType.Entre)
+        self.stateMenu.log("Succeeded to entre", LogType.Entre)
         #self.replyState("entre", isAsync = False)
         self.replyState("idle")
 
@@ -230,6 +230,9 @@ class PetWindow(QWidget):
     @Slot(str, str)
     def onStateChanged(self, prevState: str, currentState: str) -> None:
         self.stateMenu.log(self.state, LogType.StateChanged)
+        if prevState == "idle" and currentState == "idle":
+            # 在dialogMenu回复
+            self.dialogMenu.addLine(conv.replyText("state", currentState))
         self.stateChanged.emit(currentState)
 
     @Slot(str, str)

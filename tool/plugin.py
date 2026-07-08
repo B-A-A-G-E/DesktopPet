@@ -1,6 +1,6 @@
-# tool/plugin_base.py
-from typing import TYPE_CHECKING
 from PySide6.QtCore import QObject, Signal, QEvent
+
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from window.petWindow import PetWindow

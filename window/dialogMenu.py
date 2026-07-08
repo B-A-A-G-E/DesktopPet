@@ -52,7 +52,7 @@ class DialogMenu(QWidget):
     def addLine(self, content: str) -> None:
         if content != "":
             self.replyBox.setText(self.replyBox.toPlainText() + '\n' + content)
-
+    
     @Slot()
     def addNewOption(self) -> None:
         option = self.quesSelecter.currentText()

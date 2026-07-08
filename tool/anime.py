@@ -4,8 +4,6 @@ from PySide6.QtCore import QTimer, QDir, Slot, Signal, QObject
 
 import time
 
-from tool import data
-
 def getPixNames(folderPath: str):
     """获取文件夹内所有文件名（不包括子目录）"""
     dir = QDir(folderPath)
@@ -27,8 +25,9 @@ def fitImgSize(window, widget):
         # 调整窗口大小以适应图片
         pixmap = widget.pixmap()
         if pixmap and not pixmap.isNull():
-            window.resize(pixmap.size())
-            widget.resize(pixmap.size())
+            if window.size() != pixmap.size():
+                window.resize(pixmap.size())
+                widget.resize(pixmap.size())
         else:
             showLoadFailedMsg(window)
 

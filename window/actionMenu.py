@@ -1,7 +1,5 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton
 
-from tool import data
-
 class ActionMenu(QWidget):
     def __init__(self, petWindow):
         super().__init__()
