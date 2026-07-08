@@ -48,6 +48,8 @@
       - [核心方法 changeState(state: str) -> None](#核心方法-changestatestate-str---none)
       - [核心方法 changeAnime(state: str, afterEvent: bool = False, isContinue: bool = False, isAsync: bool = True) -> None](#核心方法-changeanimestate-str-afterevent-bool--false-iscontinue-bool--false-isasync-bool--true---none)
       - [核心方法 loadPlugins() -> None](#核心方法-loadplugins---none)
+      - [核心方法 loadPlugin(id: str) -> bool](#核心方法-loadpluginid-str---bool)
+      - [核心方法 deletePlugin(id: str) -> bool](#核心方法-deletepluginid-str---bool)
       - [核心方法 act(id: str) -> None](#核心方法-actid-str---none)
       - [核心方法 getAct(id: str) -> Plugin | None](#核心方法-getactid-str---plugin--none)
       - [核心方法 stopAct() -> None](#核心方法-stopact---none)
@@ -374,13 +376,17 @@
 
 - **参数**
   - `state`: 目标状态名
-  - `afterEvent`: 是否先播放当前状态的 `after-state` 后续动画（仅同步模式）
+  - `afterEvent`: 是否先响应当前状态的 `after-{当前状态}`
   - `isContinue`: 切换动画时是否从上一次停止位置继续
   - `isAsync`: 动画是否异步播放
+
 - **行为**
+  - 调用 `changeState` 更新状态
   - 调用 `conv.replyText("state", state)` 获取回复并写入对话面板
   - 调用 `changeAnime` 切换动画
-  - 调用 `changeState` 更新状态
+
+- **说明**
+  - 若 `afterEvent` 为 True，在切换前尝试响应 `after-{当前状态}`
 
 #### 核心方法 changeState(state: str) -> None
 
@@ -395,14 +401,16 @@
   - 记录状态变更日志
   - 发射 `stateChanged` 信号
 
-#### 核心方法 changeAnime(state: str, afterEvent: bool = False, isContinue: bool = False, isAsync: bool = True) -> None
+#### 核心方法 changeAnime(state: str, isContinue: bool = False, isAsync: bool = True) -> None
 
 切换动画，停止当前动画并播放目标动画。
 
 - **参数**
-  - 同 `replyState`
-- **说明**
-  - 若 `afterEvent` 为 True，在切换前尝试播放 `after-{当前状态}` 动画（同步阻塞）
+  - **参数**
+  - `state`: 目标状态名
+  - `isContinue`: 切换动画时是否从上一次停止位置继续
+  - `isAsync`: 动画是否异步播放
+
 
 #### 核心方法 loadPlugins() -> None
 
@@ -415,7 +423,7 @@
   - 自动插件（`auto = True`）存入 `self.autoActs`，调用 `setup` 并立即启动
   - 发射 `pluginLoadSucceeded`、`pluginInheritError` 或 `pluginLoadFailed` 信号
 
-#### 核心方法 loadPlugin(id: str, path: str) -> bool
+#### 核心方法 loadPlugin(id: str) -> bool
 
 加载 `data.actPath` 中注册的指定插件。
 
@@ -427,6 +435,21 @@
 
 - **返回**
   - 插件是否是自启动插件（插件的 `auto` 属性）
+
+#### 核心方法 deletePlugin(id: str) -> bool
+
+删除指定插件
+
+- **行为**
+  - 检测 `acts` 是否存在键 `id`，若存在：
+    - 若其是正在运行的插件，停止运行并卸载
+    - 从 `acts` 中移出插件
+  - 检测 `autoActs` 是否存在键 `id`，若存在：
+    - 若其是正在运行的插件，停止运行并卸载
+    - 从 `autoActs` 中移出插件
+
+- **返回**
+  - 插件是否成功删除（`acts` 或 `autoActs` 是否含有该插件）
 
 #### 核心方法 act(id: str) -> None
 
@@ -448,7 +471,7 @@
 - **返回**
   - 插件实例，若未找到则返回 `None`
 
-#### 核心方法 stopAct() -> None
+#### 核心方法 stopAct() -> None *\[Slot\]*
 
 停止当前正在运行的行动，切换回 `idle` 状态。
 
@@ -456,7 +479,7 @@
   - 由 `ActionMenu` 的停止按钮或插件自身发射 `stopped` 信号触发
   - 将 `currentAct` 置为 `None` 并调用 `replyState("idle")`
 
-#### 核心方法 updateData() -> None
+#### 核心方法 updateData() -> None *\[Slot\]*
 
 重新加载配置数据并刷新动画和碰撞体。
 

@@ -117,15 +117,17 @@ class PetWindow(QWidget):
     def replyState(self, state: str, afterEvent: bool = False, isContinue: bool = False, isAsync: bool = True) -> None:
         """
         执行对应行动时进行响应\n
-        若afterEvent为True，则先回应当前状态的after-event事件(动画只能同步播放)\n
+        若afterEvent为True，则先响应当前状态的after-state事件（动画只能同步播放）\n
         """
         if self.state != state or (state == "idle" and self.state == "idle"):
+            if afterEvent and f"after-{self.state}" in self.animes.keys():
+                self.replyState(f"after-{self.state}", isAsync = False)
+            # 更新状态
+            self.changeState(state)
             # 在dialogMenu回复
             self.dialogMenu.addLine(conv.replyText("state", state))
             # 切换动画
-            self.changeAnime(state, afterEvent, isContinue, isAsync)
-            # 更新状态
-            self.changeState(state)
+            self.changeAnime(state, isContinue, isAsync)
   
     def changeState(self, state: str) -> None:
         """更新宠物状态并切换计时器状态"""
@@ -139,23 +141,21 @@ class PetWindow(QWidget):
         self.stateMenu.log(self.state, LogType.StateChange)
         self.stateChanged.emit(state)
     
-    def changeAnime(self, name: str, afterEvent: bool = False, isContinue: bool = False, isAsync: bool = True) -> None:
+    def changeAnime(self, name: str, isContinue: bool = False, isAsync: bool = True) -> None:
         """切换动画"""
         if name in self.animes.keys():
             self.currentAnime.over()
-            if afterEvent and f"after-{self.state}" in self.animes.keys():
-                self.replyState(f"after-{self.state}", isAsync = False)
             self.currentAnime = self.animes[name]
             self.currentAnime.play(isContinue, isAsync)
     
     def loadPlugins(self) -> None:
-        for id, path in data.actPath.items():
-            self.loadPlugin(id, path)
+        for id in data.actPath.keys():
+            self.loadPlugin(id)
 
-    def loadPlugin(self, id: str, path: str) -> bool:
+    def loadPlugin(self, id: str) -> bool:
         try:
             # 导入模块并加载Plugin的子类
-            module = importlib.import_module(path)
+            module = importlib.import_module(data.actPath[id])
             pluginClass = None
             for attrName in dir(module):
                 attr = getattr(module, attrName)
@@ -179,13 +179,25 @@ class PetWindow(QWidget):
         except Exception as e:
             self.pluginLoadFailed.emit(f"failed to load plugin \"{id}\": {e}")
     
+    def deletePlugin(self, id: str) -> bool:
+        if id in self.acts.keys():
+            if self.currentAct.id == id:
+                self.acts[id].stop()
+            self.acts.pop(id)
+        elif id in self.autoActs.keys():
+            self.autoActs[id].stop()
+            self.autoActs[id].teardown()
+            self.autoActs.pop(id)
+        else:
+            return False
+        return True
+
     def act(self, id: str) -> None:
         """执行行动"""
         if id != self.state:
             # 停止上一个行动
             if id in self.acts and self.currentAct:
                 self.currentAct.stop()
-                self.currentAct.teardown() # 卸载插件，卸载事件过滤器
             
             # 更新状态
             self.changeState(id)
@@ -206,6 +218,7 @@ class PetWindow(QWidget):
 
     @Slot()
     def stopAct(self) -> None:
+        self.currentAct.teardown()
         self.currentAct = None
         self.replyState("idle")
 

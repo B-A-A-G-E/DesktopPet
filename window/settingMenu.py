@@ -323,7 +323,7 @@ class SettingMenu(QWidget):
             # 重新绑定
             if pageType == "state":
                 row["remove"].clicked.connect(
-                    lambda checked, k=key, i=idx: self.removestateRow(k, i)
+                    lambda checked, k=key, i=idx: self.removeStateRow(k, i)
                 )
             else:
                 row["remove"].clicked.connect(
