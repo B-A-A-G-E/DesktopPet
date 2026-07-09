@@ -43,5 +43,5 @@ class ActionMenu(QWidget):
 
         def stopCurrentAct() -> None:
             if self.petWindow.currentAct:
-                self.petWindow.stopCurrentAct()
+                self.petWindow.stopAct(self.petWindow.currentAct.id)
         self.stopBtn.clicked.connect(stopCurrentAct)

@@ -103,6 +103,10 @@ class PetWindow(QWidget):
         # 绑定动画加载失败信号
         for anime in self.animes.values():
             anime.loadError.connect(lambda text: self.stateMenu.log(text, LogType.Error))
+        
+        # 绑定插件信号
+        for v in self.pluginManager.plugins.values():
+            v.stopped.connect(lambda id = v.id: self.onActStopped(id))
     
     @property
     def state(self) -> str:

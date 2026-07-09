@@ -188,7 +188,7 @@ class PluginManager(QObject):
     def stopPlugin(self, id: str) -> None:
         plugin = self.plugins.get(id)
         if plugin:
-            if self._currentPlugin == plugin:
+            if self._currentPlugin and self._currentPlugin == plugin:
                 self.currentPlugin = None
             else:
                 plugin.stop()
