@@ -8,14 +8,14 @@ def getPixNames(folderPath: str):
     """获取文件夹内所有文件名（不包括子目录）"""
     dir = QDir(folderPath)
     files = dir.entryList(QDir.Files | QDir.NoDotAndDotDot)
-    def extract_number(fileName):
+    def extractNumber(fileName):
         # 去掉扩展名，转为整数
         nameWithoutExt = fileName.split('.')[0]
         return int(nameWithoutExt) if nameWithoutExt.isdigit() else -1
     
     # 按数值排序，过滤掉非纯数字的文件
     numericFiles = [f for f in files if f.split('.')[0].isdigit()]
-    numericFiles.sort(key=extract_number)
+    numericFiles.sort(key=extractNumber)
     
     return numericFiles
 
@@ -38,7 +38,7 @@ def showLoadFailedMsg(window, path: str = ""):
 class Anime(QObject):
     finished = Signal() # 一轮动画播放完成信号
     overed = Signal() # 动画播放结束信号
-    loadErr = Signal(str)
+    loadError = Signal(str)
 
     def __init__(self, path: str, fps: int, loop: bool, window, widget):
         super().__init__()
@@ -67,7 +67,7 @@ class Anime(QObject):
                     self.widget.setPixmap(QPixmap(f"{self.path}/{imgName}"))
                     fitImgSize(self.window, self.widget) # 调整窗口大小以适应图片
                 except:
-                    self.loadErr.emit(f"Can't load file {self.path}.")
+                    self.loadError.emit(f"Can't load file {self.path}.")
                     showLoadFailedMsg(self.window, self.path)
                 time.sleep(1 / self.fps)
                 QApplication.processEvents()  # 允许界面更新
@@ -93,7 +93,7 @@ class Anime(QObject):
             self.widget.setPixmap(QPixmap(f"{self.path}/{self.imgNames[self.index]}")) # 更新帧
             fitImgSize(self.window, self.widget) # 调整窗口大小以适应图片
         except:
-            self.loadErr.emit(f"Can't load file {self.path}.")
+            self.loadError.emit(f"Can't load file {self.path}.")
             showLoadFailedMsg(self.window, self.path)
         self.index += 1
         if self.index == len(self.imgNames):

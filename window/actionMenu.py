@@ -14,7 +14,10 @@ class ActionMenu(QWidget):
         self.lb = {}
         self.actBtn = {}
 
-        for k, v in self.petWindow.acts.items():
+        for k, v in self.petWindow.pluginManager.plugins.items():
+            if v.auto:
+                break
+
             self.hl[k] = QHBoxLayout()
 
             self.lb[k] = QLabel(v.name)
@@ -34,10 +37,11 @@ class ActionMenu(QWidget):
         self.bind()
     
     def bind(self) -> None:
-        for k in self.petWindow.acts.keys():
-            self.actBtn[k].clicked.connect(lambda clicked, id = k: self.petWindow.act(id))
+        for k, v in self.petWindow.pluginManager.plugins.items():
+            if not v.auto:
+                self.actBtn[k].clicked.connect(lambda clicked, id = k: self.petWindow.startAct(id))
 
         def stopAct() -> None:
             if self.petWindow.currentAct:
-                self.petWindow.currentAct.stop()
+                self.petWindow.stopAct()
         self.stopBtn.clicked.connect(stopAct)

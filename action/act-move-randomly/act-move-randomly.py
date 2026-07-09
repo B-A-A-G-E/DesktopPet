@@ -6,7 +6,7 @@ import random
 
 from tool.plugin import Plugin
 
-class MoveRandomly(Plugin):
+class Action(Plugin):
     def __init__(self):
         super().__init__()
 

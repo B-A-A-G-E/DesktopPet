@@ -7,7 +7,7 @@
   - [模块 tool.anime](#模块-toolanime)
     - [函数 getPixNames(folderPath: str) -> list[str]](#函数-getpixnamesfolderpath-str---liststr)
     - [函数 fitImgSize(window: QWidget, widget: QLabel) -> None](#函数-fitimgsizewindow-qwidget-widget-qlabel---none)
-    - [函数 showLoadFailedMsg(window: QWidget, widget: QLabel, path: str = "") -> None](#函数-showloadfailedmsgwindow-qwidget-widget-qlabel-path-str----none)
+    - [函数 showLoadFailedMsg(window: QWidget, path: str = "") -> None](#函数-showloadfailedmsgwindow-qwidget-path-str----none)
     - [类 Anime(QObject)](#类-animeqobject)
       - [信号](#信号)
       - [初始化 __init__(path: str, fps: int, loop: bool, window: QWidget, widget: QLabel)](#初始化-__init__path-str-fps-int-loop-bool-window-qwidget-widget-qlabel)
@@ -34,12 +34,21 @@
       - [方法 start() -> None](#方法-start---none)
       - [方法 stop() -> None](#方法-stop---none)
       - [方法 eventFilter(obj, event: QEvent) -> bool](#方法-eventfilterobj-event-qevent---bool)
-  - [模块 tool.stateMachine](#模块-toolstatemachine)
-    - [类 StateMachine(QObject)](#类-statemachineqobject)
+    - [类 PluginManager(QObject)](#类-pluginmanagerqobject)
       - [信号](#信号-2)
       - [属性](#属性-1)
+      - [方法 loadAllPlugins() -> None](#方法-loadallplugins---none)
+      - [方法 loadPlugin(id: str) -> Plugin | None](#方法-loadpluginid-str---plugin--none)
+      - [方法 sortPlugins() -> list[str]](#方法-sortplugins---liststr)
+      - [方法 startAutoPlugins() -> None](#方法-startautoplugins---none)
+      - [方法 getPlugin(id: str) -> Plugin | None](#方法-getpluginid-str---plugin--none)
+      - [方法 startPlugin(id: str) -> None](#方法-startpluginid-str---none)
+      - [方法 stopPlugin(id: str) -> None](#方法-stoppluginid-str---none)
+  - [模块 tool.stateMachine](#模块-toolstatemachine)
+    - [类 StateMachine(QObject)](#类-statemachineqobject)
+      - [信号](#信号-3)
+      - [属性](#属性-2)
       - [属性（Property）](#属性property-1)
-      - [方法 currentState(state: str) -> bool](#方法-currentstatestate-str---bool)
       - [方法 addState(state: str) -> None](#方法-addstatestate-str---none)
       - [方法 removeState(state: str) -> bool](#方法-removestatestate-str---bool)
       - [槽函数 onIdleTimeout() -> None](#槽函数-onidletimeout---none)
@@ -51,20 +60,17 @@
     - [StateMenu](#statemenu)
       - [关键方法](#关键方法-1)
     - [SettingMenu](#settingmenu)
-      - [信号](#信号-3)
+      - [信号](#信号-4)
       - [关键方法](#关键方法-2)
     - [PetWindow](#petwindow)
       - [核心方法 replyState(state: str, afterEvent: bool = False, isContinue: bool = False, isAsync: bool = True) -> None](#核心方法-replystatestate-str-afterevent-bool--false-iscontinue-bool--false-isasync-bool--true---none)
       - [核心方法 changeAnime(state: str, isContinue: bool = False, isAsync: bool = True) -> None](#核心方法-changeanimestate-str-iscontinue-bool--false-isasync-bool--true---none)
-      - [核心方法 loadPlugins() -> None](#核心方法-loadplugins---none)
-      - [核心方法 loadPlugin(id: str) -> bool](#核心方法-loadpluginid-str---bool)
-      - [核心方法 deletePlugin(id: str) -> bool](#核心方法-deletepluginid-str---bool)
-      - [核心方法 act(id: str) -> None](#核心方法-actid-str---none)
+      - [核心方法 startAct(id: str) -> None](#核心方法-startactid-str---none)
+      - [核心方法 stopAct(id: str) -> None](#核心方法-stopactid-str---none)
       - [核心方法 getAct(id: str) -> Plugin | None](#核心方法-getactid-str---plugin--none)
-      - [核心方法 stopAct() -> None](#核心方法-stopact---none)
       - [核心方法 updateData() -> None](#核心方法-updatedata---none)
-      - [信号](#信号-4)
-      - [属性](#属性-2)
+      - [信号](#信号-5)
+      - [属性](#属性-3)
       - [属性（Property）](#属性property-2)
       - [槽函数 onStateChanged(prevState: str, currentState: str) -> None](#槽函数-onstatechangedprevstate-str-currentstate-str---none)
       - [槽函数 onActStopped(id: str) -> None](#槽函数-onactstoppedid-str---none)
@@ -103,7 +109,7 @@
 - **说明**
   - 若图片加载失败，调用 `showLoadFailedMsg` 弹出错误窗口并退出程序
 
-### 函数 showLoadFailedMsg(window: QWidget, widget: QLabel, path: str = "") -> None
+### 函数 showLoadFailedMsg(window: QWidget, path: str = "") -> None
 
 显示图片加载失败的错误对话框，并提供恢复选项。
 
@@ -123,7 +129,7 @@
 | :--- | :--- |
 | `finished()` | 一轮动画播放完成（仅非循环模式） |
 | `overed()` | 动画播放结束（停止或完成） |
-| `loadErr(str)` | 加载帧图片失败时，携带错误信息 |
+| `loadError(str)` | 加载帧图片失败时，携带错误信息 |
 
 #### 初始化 __init__(path: str, fps: int, loop: bool, window: QWidget, widget: QLabel)
 
@@ -238,7 +244,7 @@
 
 ## 模块 tool.plugin
 
-插件基类，用于实现自定义行动。
+插件基类与插件管理器，用于实现和管理自定义行动。
 
 ### 类 Plugin(QObject)
 
@@ -247,6 +253,7 @@
 | 属性 | 类型 | 说明 |
 | :--- | :--- | :--- |
 | `id` | str | 插件唯一标识，应与文件名一致 |
+| `state` | str | 插件对应的状态名，用于状态机切换 |
 | `auto` | bool | 是否在程序启动时自动运行，默认为 `False` |
 | `name` | str | 在行动面板显示的名称 |
 | `description` | str | 插件描述，用于行动面板的鼠标悬浮提示 |
@@ -267,21 +274,21 @@
 
 #### 方法 setup(window: PetWindow) -> None
 
-插件安装，将插件与主窗口关联并安装事件过滤器。
+插件安装，将插件与主窗口关联。
 
 - **参数**
   - `window`: 主窗口实例
 - **说明**
-  - 由 `PetWindow.__init__` 或 `PetWindow.act` 自动调用，无需手动调用
+  - 由 `PetWindow.__init__` 或 `PluginManager` 自动调用，无需手动调用
   - **初始化中涉及主窗口的操作应在此方法中进行，并先调用 `super().setup(window)`**
   - 调用后可通过 `self.window` 属性访问主窗口实例
 
 #### 方法 teardown() -> None
 
-插件卸载，移除事件过滤器并解除与主窗口的关联。
+插件卸载，解除与主窗口的关联。
 
 - **说明**
-  - 由 `PetWindow.act` 在切换行动时自动调用
+  - 由 `PluginManager` 在切换插件时自动调用
 
 #### 方法 start() -> None
 
@@ -290,7 +297,7 @@
 - **说明**
   - 在此实现行动开始时的逻辑（如切换动画、播放回复等）
   - 可通过 `self.window` 访问主窗口的公开方法
-  - 发射 `started` 信号
+  - 安装事件过滤器并发射 `started` 信号
 
 #### 方法 stop() -> None
 
@@ -298,7 +305,7 @@
 
 - **说明**
   - 在此实现行动结束时的清理逻辑
-  - 发射 `stopped` 信号
+  - 移除事件过滤器并发射 `stopped` 信号
 - **注意**
   - 不需要在 `stop` 中手动切回待机状态（行动结束时会自动切换）
 
@@ -313,7 +320,102 @@
   - `True` 表示事件已被处理，不再传递；`False` 表示继续传递
 - **说明**
   - 默认返回 `False`，子类可按需重写
-  - 事件过滤器的安装和卸载由基类的 `setup`/`teardown` 自动处理
+  - 事件过滤器的安装和卸载由基类的 `start`/`stop` 自动处理
+
+---
+
+### 类 PluginManager(QObject)
+
+插件管理器，负责插件的加载、排序、生命周期管理和运行状态控制。
+
+#### 信号
+
+| 信号 | 触发时机 |
+| :--- | :--- |
+| `pluginLoadSucceeded(str)` | 插件加载成功，携带插件 ID |
+| `pluginError(str)` | 插件加载或操作失败，携带错误信息 |
+
+#### 属性
+
+| 属性 | 类型 | 说明 |
+| :--- | :--- | :--- |
+| `plugins` | dict[str, Plugin] | 所有已加载的插件字典，键为插件 ID |
+| `_currentPlugin` | Plugin \| None | 当前正在运行的非自启动插件（内部存储） |
+
+#### 属性（Property）
+
+| 属性 | 类型 | 可访问性 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `currentPlugin` | Plugin \| None | 读写（getter/setter） | 获取或设置当前正在运行的非自启动插件。设置新插件时会自动停止上一个插件并启动新插件。 |
+
+#### 方法 loadAllPlugins() -> None
+
+加载 `data.plugin` 中注册的所有插件。
+
+- **行为**
+  - 调用 `sortPlugins` 获取排序后的插件 ID 列表
+  - 依次调用 `loadPlugin` 加载每个插件
+
+#### 方法 loadPlugin(id: str) -> Plugin | None
+
+加载 `data.plugin` 中注册的指定插件。
+
+- **参数**
+  - `id`: 插件 ID
+- **行为**
+  - 若 `plugin[id]["enabled"]` 为 `False`，直接返回 `None`
+  - 若插件已加载，返回已有实例
+  - 导入模块并实例化 `Action` 类
+  - 调用 `setup` 方法安装插件
+  - 发射 `pluginLoadSucceeded` 或 `pluginError` 信号
+- **返回**
+  - 插件实例，若加载失败则返回 `None`
+
+#### 方法 sortPlugins() -> list[str]
+
+通过检查依赖项对插件加载顺序进行拓扑排序。
+
+- **返回**
+  - 排序后的插件 ID 列表
+- **行为**
+  - 构建依赖图，计算入度
+  - 使用 Kahn 算法进行拓扑排序
+  - 若检测到循环依赖，抛出 `ValueError`
+
+#### 方法 startAutoPlugins() -> None
+
+启动所有自启动插件（`auto = True`）。
+
+- **行为**
+  - 遍历所有已加载的插件，对 `auto` 为 `True` 的插件调用 `start`
+
+#### 方法 getPlugin(id: str) -> Plugin | None
+
+根据 ID 获取插件实例。
+
+- **参数**
+  - `id`: 插件 ID
+- **返回**
+  - 插件实例，若未找到则返回 `None`
+
+#### 方法 startPlugin(id: str) -> None
+
+启动指定 ID 的非自启动插件。
+
+- **参数**
+  - `id`: 插件 ID
+- **行为**
+  - 通过 `currentPlugin` setter 设置当前插件，自动停止上一个插件并启动新插件
+
+#### 方法 stopPlugin(id: str) -> None
+
+停止指定 ID 的插件。
+
+- **参数**
+  - `id`: 插件 ID
+- **行为**
+  - 若该插件为当前正在运行的插件，将 `currentPlugin` 置为 `None` 以停止它
+  - 否则调用该插件的 `stop` 方法
 
 ---
 
@@ -347,20 +449,6 @@
 | `stateList` | list[str] | 读写（getter/setter） | 获取或设置所有已注册状态的列表 |
 | `currentState` | str | 读写（getter/setter） | 获取或设置当前状态，通过 setter 触发状态切换逻辑 |
 | `idleTime` | int | 读写（getter/setter） | 获取或设置闲置超时时间（毫秒），设置时会重启计时器 |
-
-#### 方法 currentState(state: str) -> bool
-
-更新当前状态（通过 `currentState` 的 setter 调用）。
-
-- **参数**
-  - `state`: 目标状态名
-- **返回**
-  - 切换是否成功（状态是否存在于 `stateList` 中）
-- **行为**
-  - 若状态不在列表中，发射 `stateUndefined` 信号并返回 `False`
-  - 若目标状态非 `idle`，停止闲置计时器
-  - 若目标状态为 `idle`，启动闲置计时器
-  - 更新 `_currentState`，发射 `stateChanged` 信号
 
 #### 方法 addState(state: str) -> None
 
@@ -482,76 +570,33 @@
   - `isContinue`: 是否从上一次停止位置继续
   - `isAsync`: 动画是否异步播放
 
-#### 核心方法 loadPlugins() -> None
-
-加载 `data.plugin` 中注册的所有插件。
-
-- **行为**
-  - 遍历 `plugin`，调用 `loadPlugin` 方法
-  - 导入模块并实例化 `Plugin` 子类
-  - 普通插件（`auto = False`）存入 `self.acts`
-  - 自动插件（`auto = True`）存入 `self.autoActs`，调用 `setup` 并立即启动
-  - 发射 `pluginLoadSucceeded`、`pluginInheritError` 或 `pluginLoadFailed` 信号
-
-#### 核心方法 loadPlugin(id: str) -> bool
-
-加载 `data.plugin` 中注册的指定插件。
-
-- **参数**
-  - `id`: 插件 ID
-- **行为**
-  - 若 `plugin[id]["enabled"]` 为 `False`，直接返回 `False`
-  - 若插件已加载，返回 `True`
-  - 导入模块并实例化 `Plugin` 子类
-  - 普通插件（`auto = False`）存入 `self.acts`
-  - 自动插件（`auto = True`）存入 `self.autoActs`
-  - 发射 `pluginLoadSucceeded`、`pluginInheritError` 或 `pluginLoadFailed` 信号
-- **返回**
-  - 插件是否加载成功
-
-#### 核心方法 deletePlugin(id: str) -> bool
-
-删除指定插件。
-
-- **参数**
-  - `id`: 插件 ID
-- **行为**
-  - 检测 `acts` 是否存在键 `id`，若存在：
-    - 若其是正在运行的插件，停止运行并卸载
-    - 从 `acts` 中移出插件
-  - 检测 `autoActs` 是否存在键 `id`，若存在：
-    - 若其是正在运行的插件，停止运行并卸载
-    - 从 `autoActs` 中移出插件
-- **返回**
-  - 插件是否成功删除
-
-#### 核心方法 act(id: str) -> None
+#### 核心方法 startAct(id: str) -> None
 
 执行指定 ID 的行动。
 
 - **参数**
   - `id`: 插件 ID
 - **行为**
-  - 若当前有正在运行的行动，调用其 `stop` 方法（`teardown` 由 `onActStopped` 处理）
-  - 更新状态为目标 ID
-  - 调用目标插件的 `setup` 和 `start` 方法
+  - 通过 `pluginManager.currentPlugin` 切换当前插件（自动停止上一个插件并启动新插件）
+  - 通过 `stateMachine.currentState` 更新状态
+
+#### 核心方法 stopAct(id: str) -> None
+
+停止指定 ID 的行动。
+
+- **参数**
+  - `id`: 插件 ID
+- **行为**
+  - 调用 `pluginManager.stopPlugin(id)` 停止插件
 
 #### 核心方法 getAct(id: str) -> Plugin | None
 
-根据 ID 获取插件实例（遍历 `acts` 和 `autoActs`）。
+根据 ID 获取插件实例。
 
 - **参数**
   - `id`: 插件 ID
 - **返回**
   - 插件实例，若未找到则返回 `None`
-
-#### 核心方法 stopAct() -> None *[Slot]*
-
-停止当前正在运行的行动，切换回 `idle` 状态。
-
-- **说明**
-  - 由 `ActionMenu` 的停止按钮或插件自身发射 `stopped` 信号触发
-  - 将 `currentAct` 置为 `None` 并调用 `replyState("idle")`
 
 #### 核心方法 updateData() -> None *[Slot]*
 
@@ -568,9 +613,6 @@
 
 | 信号 | 触发时机 |
 | :--- | :--- |
-| `pluginLoadSucceeded(str)` | 插件加载成功，携带插件 ID |
-| `pluginInheritError(str)` | 插件未继承 Plugin 基类，携带错误信息 |
-| `pluginLoadFailed(str)` | 插件加载失败，携带异常信息 |
 | `stateChanged(str)` | 状态变更时发射，携带新状态名 |
 
 #### 属性
@@ -579,9 +621,7 @@
 | :--- | :--- | :--- |
 | `animes` | dict | 动画对象字典，键为状态名 |
 | `collisions` | dict | 碰撞体字典，键为状态名 |
-| `acts` | dict | 普通插件字典（`auto = False`），键为插件 ID |
-| `autoActs` | dict | 自动启动插件字典（`auto = True`），键为插件 ID |
-| `currentAct` | Plugin \| None | 当前正在运行的插件 |
+| `pluginManager` | PluginManager | 插件管理器实例 |
 | `dialogMenu` | DialogMenu | 对话面板实例 |
 | `stateMenu` | StateMenu | 状态日志面板实例 |
 | `actionMenu` | ActionMenu | 行动面板实例 |
@@ -593,6 +633,7 @@
 | 属性 | 类型 | 可访问性 | 说明 |
 | :--- | :--- | :--- | :--- |
 | `state` | str | 读写（getter/setter） | 获取或设置当前状态，通过 setter 调用 `stateMachine.currentState` |
+| `currentAct` | Plugin \| None | 只读（getter） | 获取当前正在运行的非自启动插件，通过 `pluginManager.currentPlugin` |
 
 #### 槽函数 onStateChanged(prevState: str, currentState: str) -> None
 
@@ -603,6 +644,7 @@
   - `currentState`: 新状态名
 - **行为**
   - 向状态日志面板写入状态变更日志
+  - 若切换至 idle 状态，显示 idle 回复
   - 发射 `stateChanged` 信号
 
 #### 槽函数 onActStopped(id: str) -> None
@@ -612,9 +654,4 @@
 - **参数**
   - `id`: 停止的插件 ID
 - **行为**
-  - 若当前正在运行的插件 ID 匹配，调用其 `teardown` 并置空
-  - 切换回 `idle` 状态
-
----
-
-> ### 详细教程请参阅 [customization.md](./customization.md)。
+  - 若当前正在运行的插件 ID 匹配，通过 `pluginManager.currentPlugin = None` 停止并切换回 `idle` 状态

@@ -4,11 +4,12 @@ from PySide6.QtGui import QMouseEvent
 from tool.plugin import Plugin
 from tool import mouse
 
-class Stroke(Plugin):
+class Action(Plugin):
     def __init__(self):
         super().__init__()
         
         self.id = "act-stroke"
+        self.state = "stroke"
         self.auto = True
     
     def eventFilter(self, obj, event: QEvent):
@@ -19,12 +20,12 @@ class Stroke(Plugin):
         return super().eventFilter(obj, event)
     
     def mouseMoveEvent(self, event: QMouseEvent):
-        if event.buttons() == Qt.MouseButton.LeftButton and "act-" not in self.window.state and "after-" not in self.window.state:
+        if event.buttons() == Qt.MouseButton.LeftButton and self.window.state == "idle":
             collision = mouse.getCollision(self.window, event.position().toPoint())
-            if self.window.state != "act-drag" and self.window.state != self.id and collision == "head":
+            if self.window.state != "act-drag" and self.window.state != self.state and collision == "head":
                 event.accept()
-                self.window.replyState(self.id)
+                self.window.replyState(self.state)
     
     def mouseReleaseEvent(self, event: QMouseEvent):
-        if self.window.state == self.id:
+        if self.window.state == self.state:
             self.window.replyState("idle", True)

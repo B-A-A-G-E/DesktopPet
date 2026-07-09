@@ -32,6 +32,7 @@
       - [状态反馈文本](#状态反馈文本)
     - [进阶：自启动插件](#进阶自启动插件)
     - [进阶：事件过滤器](#进阶事件过滤器)
+    - [进阶：插件依赖](#进阶插件依赖)
   - [常见问题](#常见问题)
 
 ---
@@ -72,13 +73,13 @@
 
 ### 步骤
 
-1. **准备帧图片**：在 `./img/` 下新建文件夹放入并帧图片。图片须**按数字顺序命名**（如 `0.png`, `1.png`, `2.png`...）。
+1. **准备帧图片**：在 `./img/` 下新建文件夹放入帧图片。图片须**按数字顺序命名**（如 `0.png`, `1.png`, `2.png`...）。
 2. **编辑 `./data/anime.json`**：配置动画，格式如下：
 
 ### 动画配置示例
 
 ``` json
-"动画": {
+"动画名": {
     "path": "./img/文件夹路径",
     "fps": 30,
     "loop": true
@@ -92,7 +93,7 @@
 | `loop` | bool | 是否循环播放 |
 
 > **注意**：
-> - 状态名建议使用小写字母和连字符（如 `act-dance`），以保持统一风格
+> - 动画名建议使用小写字母和连字符（如 `act-dance`），以保持统一风格
 > - 帧图片需按数字顺序命名（如 `0.png`, `1.png`, `2.png`...）
 > - 若需在 `PetWindow.replyState` 中自动播放，动画名需与状态名一致
 
@@ -143,7 +144,7 @@
 ```
 
 ``` json
-"状态名": [] // 只注册状态
+"状态名": [] // 只注册状态，不显示回复
 ```
 
 - 新建的状态必须在此文件内注册，若不希望回复直接设置空数组即可
@@ -184,7 +185,7 @@
 ### 步骤概览
 
 1. 在 `action/` 目录下新建 Python 文件（建议以 `act-` 为前缀）
-2. 编写继承自 `tool.plugin.Plugin` 的类
+2. 编写继承自 `tool.plugin.Plugin` 的类 `Action`
 3. 在 `./data/plugin.json` 中注册插件
 4. （可选）配置动画、碰撞体和状态反馈文本
 
@@ -203,20 +204,21 @@ action/
 
 #### 2. 编写插件类
 
-**基础模板:**
+**基础模板：**
 
 ``` python
 # action/act-action.py
 from tool.plugin import Plugin
 
-class Action(Plugin):
+class Action(Plugin):  # 类名必须为 Action
     def __init__(self):
         super().__init__()
 
-        # 必须设置id，非自启动插件必须设置name
+        # 必须设置 id 和 state
         self.id = "act-action"   # 应与文件名一致
-        self.auto = False           # 是否在程序启动时自动运行，默认为 False
-        self.name = "行动"       # 在行动面板显示的名称
+        self.state = "act-action"  # 状态名，用于状态机切换
+        self.auto = False        # 是否在程序启动时自动运行，默认为 False
+        self.name = "行动"       # 在行动面板显示的名称（非自启动插件必须设置）
         self.description = "这是插件的描述"  # 可选，用于行动面板的鼠标悬浮提示
 
     def start(self):
@@ -236,10 +238,11 @@ class Action(Plugin):
 ```
 
 > **关键说明**：
+> - **类名必须为 `Action`**（便于插件管理器加载与管理）
 > - `self.window` 关联 `PetWindow` 实例，可调用其公开方法
-> - 非自启动行动开始后，**会暂停其他状态的自动切换**，直至插件调用 `stop` 、用户点击行动面板的"结束"按钮或手动切换状态
+> - 非自启动行动开始后，**会暂停其他状态的自动切换**，直至插件调用 `stop`、用户点击行动面板的"结束"按钮或手动切换状态
 > - 不需要在 `stop` 中手动切回待机状态（行动结束时会自动切换）
-> - **初始化中涉及主窗口的操作应移至`setup`，并先调用`super().setup(window)`（主窗口还未完成初始化）**
+> - **初始化中涉及主窗口的操作应移至 `setup`，并先调用 `super().setup(window)`**
 
 #### 3. 注册插件
 
@@ -248,25 +251,26 @@ class Action(Plugin):
 ``` json
 "act-action": {
     "path": "action.act-action",
-    "enabled": true
+    "enabled": true,
+    "dependencies": []
 }
 ```
 
 - 键：插件 ID（须与 `self.id` 一致）
 - 值：
     - `path`: 模块导入路径（如 `action.act-action`）
-    - `enabled`: 是否启用（当前无效果，为以后的行动面板的插件配置做准备）
+    - `enabled`: 是否启用
+    - `dependencies`: 依赖的插件 ID 列表（用于控制加载顺序）
 
 #### 4. 注册状态并配置状态反馈文本
 
 在 `./data/state.json` 中添加状态反馈文本（可选）：
 
 ``` json
-"状态名": [] // 只注册状态
+"状态名": []  // 只注册状态，不显示回复
 ```
 
 ``` json
-// 注册状态并配置状态反馈文本
 "状态名": [
     "反馈1",
     "反馈2"
@@ -291,7 +295,7 @@ class Action(Plugin):
 
 #### 6. 配置碰撞体（可选）
 
-在 `./data/state.json` 中添加碰撞体：
+在 `./data/collision.json` 中添加碰撞体：
 
 ``` json
 "碰撞体名": {
@@ -302,7 +306,7 @@ class Action(Plugin):
 }
 ```
 
-导入 `tool.mouse.getCollision` 函数获取鼠标所在的碰撞体
+导入 `tool.mouse.getCollision` 函数获取鼠标所在的碰撞体。
 
 ### 完整示例：跳舞插件
 
@@ -313,20 +317,21 @@ class Action(Plugin):
 from tool.plugin import Plugin
 from tool import conv
 
-class Dance(Plugin):
+class Action(Plugin):
     def __init__(self):
         super().__init__()
 
         self.id = "act-dance"
+        self.state = "dance"
         self.name = "跳舞"
         self.description = "让宠物跳舞"
 
     def start(self):
         # 切换动画
-        self.window().changeAnime(self.id)
+        self.window.changeAnime(self.id)
         # 获取并显示随机回复
         reply = conv.replyText("state", self.id)
-        self.window().dialogMenu.addLine(reply)
+        self.window.dialogMenu.addLine(reply)
         super().start()
 
     def stop(self):
@@ -338,7 +343,11 @@ class Dance(Plugin):
 ``` json
 // data/plugin.json
 {
-    "act-dance": "action.act-dance"
+    "act-dance": {
+        "path": "action.act-dance",
+        "enabled": true,
+        "dependencies": []
+    }
 }
 ```
 
@@ -368,11 +377,11 @@ class Dance(Plugin):
 若希望插件在程序启动时自动运行，将 `self.auto` 设置为 `True`：
 
 ``` python
-class AutoAction(Plugin):
+class Action(Plugin):
     def __init__(self):
         super().__init__()
         self.id = "act-auto"
-        self.name = "自动行动"
+        self.state = "act-auto"
         self.auto = True  # 程序启动时自动运行
 
     def start(self):
@@ -386,8 +395,9 @@ class AutoAction(Plugin):
 
 > **注意**：
 > - 自动启动的插件会在宠物窗口初始化后自动运行
-> - 多个自动插件会按 `plugin.json` 中的顺序依次启动
+> - 多个自动插件会按 `plugin.json` 中的加载顺序依次启动
 > - 自动插件不会显示在行动面板中
+> - 自启动插件**不会暂停其他状态的自动切换**
 
 ### 进阶：事件过滤器
 
@@ -408,8 +418,25 @@ class Action(Plugin):
 ```
 
 > **注意**：
-> - 事件过滤器的安装和卸载由基类的 `setup`/`teardown` 自动处理，无需手动操作
+> - 事件过滤器的安装和卸载由基类的 `start`/`stop` 自动处理，无需手动操作
 > - 拦截事件可能影响宠物正常交互，请谨慎使用
+
+### 进阶：插件依赖
+
+若插件需要依赖其他插件，可在 `plugin.json` 中通过 `dependencies` 字段声明：
+
+``` json
+"act-plugin-b": {
+    "path": "action.act-plugin-b",
+    "enabled": true,
+    "dependencies": ["act-plugin-a"]
+}
+```
+
+- 插件管理器会按拓扑顺序加载插件，确保依赖的插件先被加载
+- 若存在循环依赖，会抛出错误并停止加载
+
+---
 
 ## 常见问题
 
@@ -418,18 +445,20 @@ class Action(Plugin):
 A: 检查以下几点：
 1. 文件名和 `plugin.json` 中的键是否一致
 2. 模块导入路径是否正确（如 `action.act-xxx`）
+3. 类名是否为 `Action`
+4. `self.id` 是否与 `plugin.json` 中的键一致
 
-**Q: 在`__init__`/`setup`中获取主窗口（`self.window()`）报错：AttributeError: 'NoneType' object has no attribute 'xxx'怎么办**
+**Q: 在 `__init__`/`setup` 中获取主窗口（`self.window`）报错：AttributeError: 'NoneType' object has no attribute 'xxx' 怎么办**
 
-A: 主窗口还未完成初始化，**初始化中涉及主窗口的操作应移至`setup`，并先调用`super().setup(window)`**
+A: 主窗口还未完成初始化，**初始化中涉及主窗口的操作应移至 `setup`，并先调用 `super().setup(window)`**。
 
 **Q: 行动开始后宠物不响应鼠标操作？**
 
-A: 检查其他插件是否拦截了事件
+A: 检查其他插件是否拦截了事件（`eventFilter` 返回了 `True`），或当前插件是否是自启动插件（自启动插件不会暂停其他状态切换）。
 
 **Q: 如何让行动在结束后自动恢复待机？**
 
-A: 无需处理，行动结束时会自动切换回 `idle` 状态.
+A: 无需处理，行动结束时会自动切换回 `idle` 状态。
 
 **Q: 动画不播放怎么办？**
 
@@ -440,4 +469,8 @@ A: 检查：
 
 **Q: 自动启动插件和普通插件有什么区别？**
 
-A: `auto = True` 的插件在程序启动时自动运行，不会出现在行动面板中，不暂停其他状态的自动切换，适合后台任务；普通插件需要在行动面板中手动点击执行，暂停切换。
+A: `auto = True` 的插件在程序启动时自动运行，不会出现在行动面板中，**不暂停其他状态的自动切换**，适合后台任务；普通插件需要在行动面板中手动点击执行，**会暂停其他状态切换**。
+
+**Q: `PluginManager` 和 `PetWindow` 的关系是什么？**
+
+A: `PetWindow` 持有 `PluginManager` 实例，通过它管理所有插件的加载、启动和停止。`PetWindow` 的 `startAct`、`stopAct`、`getAct` 等方法是对 `PluginManager` 的封装。

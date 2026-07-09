@@ -4,11 +4,12 @@ from PySide6.QtGui import QMouseEvent
 from tool.plugin import Plugin
 from tool import mouse
 
-class Drag(Plugin):
+class Action(Plugin):
     def __init__(self):
         super().__init__()
         
         self.id = "act-drag"
+        self.state = "drag"
         self.auto = True
         
         self.dragPosition = QPoint() # 记录鼠标按下时的位置
@@ -29,14 +30,14 @@ class Drag(Plugin):
             self.dragPosition = event.globalPosition().toPoint() - self.window.frameGeometry().topLeft()
     
     def mouseMoveEvent(self, event: QMouseEvent):
-        if event.buttons() == Qt.MouseButton.LeftButton and "after-" not in self.window.state:
+        if event.buttons() == Qt.MouseButton.LeftButton and self.window.state == "idle":
             collision = mouse.getCollision(self.window, event.position().toPoint())
             if not collision:
                 event.accept()
-                if self.window.state != self.id:
-                    self.window.replyState(self.id)
+                if self.window.state != self.state:
+                    self.window.replyState(self.state)
                 self.window.move(event.globalPosition().toPoint() - self.dragPosition)
     
     def mouseReleaseEvent(self, event: QMouseEvent):
-        if self.window.state == self.id:
+        if self.window.state == self.state:
             self.window.replyState("idle", True)

@@ -76,7 +76,7 @@ pip install pyside6
 │   ├── conv.py             # 对话回复生成器
 │   ├── mouse.py            # 鼠标交互辅助
 │   ├── stateMachine.py     # 状态机
-│   └── plugin.py           # 插件基类
+│   └── plugin.py           # 插件基类与插件管理器
 │
 ├── window/                 # 窗口模块
 │   ├── petWindow.py        # 主窗口（宠物本体）
@@ -102,8 +102,8 @@ pip install pyside6
 
 | 操作 | 反馈 |
 | :---: | :---: |
-| 左键拖拽 | 切换 `act-drag` 状态，宠物跟随鼠标移动 |
-| 左键点击 `head` 碰撞区 | 触发 `act-stroke` 状态 |
+| 左键拖拽 | 切换 `drag` 状态，宠物跟随鼠标移动 |
+| 左键点击 `head` 碰撞区 | 触发 `stroke` 状态 |
 | 闲置等待 | 自动进入 `idle` 状态，随机移动 |
 | 右键菜单 | 打开对话/状态/行动/设置面板 |
 
@@ -123,10 +123,11 @@ pip install pyside6
 4. 自定义行动（插件系统）
     - 通过 `action/` 目录添加插件模块
     - 在 `plugin.json` 中注册后即可在行动面板调用
-    - 插件须继承 `tool.plugin.Plugin` 基类
+    - 插件须继承 `tool.plugin.Plugin` 基类，类名必须为 `Action`
     - 支持自动启动插件（`auto = True`）
+    - 支持插件依赖排序（通过 `dependencies` 字段）
 5. 设置面板
-    - 可视化编辑所有 JSON 配置文件（后续添加的 JSON 需在 `SettingMenu.addWidget` 新建编辑页）
+    - 可视化编辑所有 JSON 配置文件（后续添加的 JSON 需在 `SettingMenu.addPage` 新建编辑页）
     - 支持动态增删状态/对话文本条目
 
 ## 自定义
@@ -146,7 +147,7 @@ pip install pyside6
 ### anime.json 动画配置
 
 ``` json
-"动画": {
+"动画名": {
     "path": "./img/文件夹路径",
     "fps": 30,
     "loop": true
@@ -196,6 +197,7 @@ pip install pyside6
 ```
 
 - 状态切换时从对应数组中随机选取一条回复
+- 若状态不需要回复，设置为空数组即可
 
 ---
 
@@ -217,7 +219,7 @@ pip install pyside6
 **快速上手**：
 
 1. 在 `action/` 目录新建 Python 文件（如 `act-my-action.py`）
-2. 编写继承自 `tool.plugin.Plugin` 的类
+2. 编写继承自 `tool.plugin.Plugin` 的类 `Action`
 3. 在 `./data/plugin.json` 中注册插件
 4. （可选）配置动画、碰撞体和状态反馈文本
 
@@ -231,6 +233,7 @@ class Action(Plugin):
     def __init__(self):
         super().__init__()
         self.id = "act-action"
+        self.state = "state"
         self.auto = False
         self.name = "Action"
         self.description = "This is an action"
@@ -248,10 +251,12 @@ class Action(Plugin):
 > - 行动开始后会暂停其他状态切换，直至调用 `stop` 或点击"结束"按钮
 > - 可通过 `self.window` 访问主窗口的公开方法
 > - 设置 `self.auto = True` 可使插件在程序启动后自动运行
-> - **初始化中涉及主窗口的操作应移至`setup`，并先调用`super().setup(window)`（主窗口还未完成初始化）**
+> - **初始化中涉及主窗口的操作应移至 `setup`，并先调用 `super().setup(window)`**
+> - 插件 ID 须与 `plugin.json` 中的键一致
+> - **类名必须为 `Action`**
 
 ---
 
 ## 更新日志
 
-详见 [changelog.md](./changelog.md)。
+详见 [CHANGELOG.md](./CHANGELOG.md)。

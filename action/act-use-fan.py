@@ -4,10 +4,11 @@ from PySide6.QtGui import QMouseEvent
 from tool.plugin import Plugin
 from tool.mouse import getCollision
 
-class UseFan(Plugin):
+class Action(Plugin):
     def __init__(self):
         super().__init__()
         self.id = "act-use-fan"
+        self.state = "use-fan"
         self.name = "吹风扇"
         self.description = "吹风扇，点风扇开关关闭风扇"
 
