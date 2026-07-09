@@ -33,6 +33,8 @@
     - [进阶：自启动插件](#进阶自启动插件)
     - [进阶：事件过滤器](#进阶事件过滤器)
     - [进阶：插件依赖](#进阶插件依赖)
+    - [进阶：扩展设置面板](#进阶扩展设置面板)
+    - [进阶：控制插件卸载行为](#进阶控制插件卸载行为)
   - [常见问题](#常见问题)
 
 ---
@@ -204,7 +206,7 @@ action/
 
 #### 2. 编写插件类
 
-**基础模板：**
+**模板：**
 
 ``` python
 # action/act-action.py
@@ -216,10 +218,11 @@ class Action(Plugin):  # 类名必须为 Action
 
         # 必须设置 id 和 state
         self.id = "act-action"   # 应与文件名一致
-        self.state = "act-action"  # 状态名，用于状态机切换
-        self.auto = False        # 是否在程序启动时自动运行，默认为 False
         self.name = "行动"       # 在行动面板显示的名称（非自启动插件必须设置）
         self.description = "这是插件的描述"  # 可选，用于行动面板的鼠标悬浮提示
+        self.state = "act-action"  # 状态名，用于状态机切换
+        self.auto = False        # 是否在程序启动时自动运行，默认为 False
+        self.teardownImmed = True   # 是否在行动停止后立即卸载插件，默认为True
 
     def start(self):
         """开始行动"""
@@ -227,14 +230,26 @@ class Action(Plugin):  # 类名必须为 Action
         super().start()
 
     def stop(self):
-        """结束行动"""
+        """停止行动"""
         # do something here
         super().stop()
     
     def eventFilter(self, obj, event: QEvent):
-        """事件过滤器"""
+        """处理输入事件"""
         # do something here
         return super().eventFilter(obj, event)
+    
+    ### 更多功能
+
+    def setup(self, window) -> None:
+        """绑定信号等操作"""
+        super().setup(window)
+        # do something here ### 注意：写在super().setup(window)下面
+    
+    def teardown(self) -> None:
+        """信号解绑与释放资源等操作"""
+        # do something here
+        super().teardown()
 ```
 
 > **关键说明**：
@@ -418,7 +433,7 @@ class Action(Plugin):
 ```
 
 > **注意**：
-> - 事件过滤器的安装和卸载由基类的 `start`/`stop` 自动处理，无需手动操作
+> - 事件过滤器的安装和移除由基类的 `start`/`stop` 自动处理，无需手动操作
 > - 拦截事件可能影响宠物正常交互，请谨慎使用
 
 ### 进阶：插件依赖
@@ -435,6 +450,47 @@ class Action(Plugin):
 
 - 插件管理器会按拓扑顺序加载插件，确保依赖的插件先被加载
 - 若存在循环依赖，会抛出错误并停止加载
+
+### 进阶：扩展设置面板
+
+插件可以通过 `SettingMenu.addPage` 向设置面板添加自定义配置页：
+
+``` python
+def setup(self, window) -> None:
+    super().setup(window)
+    
+    # 创建自定义设置页面
+    self.pg = QWidget()
+    layout = QFormLayout()
+    self.myEdit = QLineEdit("默认值")
+    layout.addRow("我的配置:", self.myEdit)
+    self.pg.setLayout(layout)
+    
+    # 添加到设置面板
+    self.window.settingMenu.addPage(self.pg, "我的插件配置")
+    
+    # 监听数据更新信号以保存配置
+    self.window.settingMenu.dataUpdated.connect(self.saveConfig)
+```
+
+### 进阶：控制插件卸载行为
+
+插件提供 `teardownImmed` 属性控制停止后的卸载行为：
+
+- `teardownImmed = True`（默认）：插件停止后立即调用 `teardown` 卸载，释放资源
+- `teardownImmed = False`：插件停止后保留实例，`teardown` 不会立即调用
+
+``` python
+class Action(Plugin):
+    def __init__(self):
+        super().__init__()
+        self.id = "act-persistent"
+        self.teardownImmed = False  # 停止后保留实例
+```
+
+适用场景：
+- 插件需要频繁启动/停止，保留实例可避免重复初始化开销
+- 插件需要在停止后保留某些状态供下次使用
 
 ---
 
@@ -473,4 +529,8 @@ A: `auto = True` 的插件在程序启动时自动运行，不会出现在行动
 
 **Q: `PluginManager` 和 `PetWindow` 的关系是什么？**
 
-A: `PetWindow` 持有 `PluginManager` 实例，通过它管理所有插件的加载、启动和停止。`PetWindow` 的 `startAct`、`stopAct`、`getAct` 等方法是对 `PluginManager` 的封装。
+A: `PetWindow` 持有 `PluginManager` 实例，通过它管理所有插件的加载、启动和停止。`PetWindow` 的 `startAct`、`stopCurrentAct`、`getAct` 等方法是对 `PluginManager` 的封装。
+
+**Q: `teardownImmed` 和 `teardown` 有什么区别？**
+
+A: `teardownImmed` 是一个控制属性，决定插件停止后是否立即调用 `teardown` 方法。`teardown` 是实际执行资源清理的方法，你可以在其中进行信号解绑、删除临时控件等。

@@ -1,5 +1,6 @@
 from PySide6.QtCore import Qt, QEvent
 from PySide6.QtGui import QMouseEvent
+from PySide6.QtCore import QTimer
 
 from tool.plugin import Plugin
 from tool.mouse import getCollision
@@ -8,9 +9,11 @@ class Action(Plugin):
     def __init__(self):
         super().__init__()
         self.id = "act-use-fan"
-        self.state = "use-fan"
         self.name = "吹风扇"
         self.description = "吹风扇，点风扇开关关闭风扇"
+        self.state = "use-fan"
+        self.teardownImmed = False
+
 
     def start(self):
         self.window.changeAnime("using-fan")

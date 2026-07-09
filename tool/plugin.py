@@ -17,10 +17,12 @@ class Plugin(QObject):
     def __init__(self):
         super().__init__()
         self.id: str = "plugin-plugin"
-        self.state: str = "plugin"
-        self.auto: bool = False
         self.name: str = "未命名插件"
         self.description: str = ""
+        self.state: str = "plugin"
+        self.auto: bool = False
+        self.teardownImmed: bool = True
+        
         self._window: "PetWindow | None" = None
     
     @property
@@ -28,21 +30,21 @@ class Plugin(QObject):
         return self._window
     
     def setup(self, window: 'PetWindow') -> None:
-        """插件安装，安装事件过滤器"""
+        """插件安装，关联主窗口"""
         self._window = window
     
     def teardown(self) -> None:
-        """插件卸载，卸载事件过滤器"""
+        """插件卸载，解绑主窗口"""
         if self._window:
             self._window = None
     
     def start(self) -> None:
-        """运行插件"""
+        """安装事件过滤器，运行插件"""
         self._window.installEventFilter(self)
         self.started.emit()
     
     def stop(self) -> None:
-        """结束插件"""
+        """卸载事件过滤器，结束插件"""
         if self._window:
             self._window.removeEventFilter(self)
         self.stopped.emit()
@@ -70,17 +72,20 @@ class PluginManager(QObject):
     
     @currentPlugin.setter
     def currentPlugin(self, plugin: Plugin | None) -> None:
-        if not plugin or plugin in self.plugins:
+        if not plugin or plugin in self.plugins.values():
             # 停止上一个插件
             if self._currentPlugin:
-                self._currentPlugin.stop()
+                prevPlugin = self._currentPlugin
+                self._currentPlugin = None
+                prevPlugin.stop()
+                if prevPlugin.teardownImmed:
+                    prevPlugin.teardown()
             
             if plugin:
                 # 运行新插件
                 self._currentPlugin = plugin
+                self._currentPlugin.setup(self._petWindow)
                 self._currentPlugin.start()
-            else:
-                self._currentPlugin = None
 
     def loadAllPlugins(self) -> None:
         ids = self.sortPlugins()
@@ -102,7 +107,6 @@ class PluginManager(QObject):
             
             if pluginClass and issubclass(pluginClass, Plugin) and pluginClass is not Plugin:
                 plugin = pluginClass()
-                plugin.setup(self._petWindow)
                 self.plugins[id] = plugin
                 
                 self.pluginLoadSucceeded.emit(f"succeeded to load plugin \"{id}\"")
@@ -169,6 +173,7 @@ class PluginManager(QObject):
         """启动所有自启动插件"""
         for plugin in self.plugins.values():
             if plugin.auto:
+                plugin.setup(self._petWindow)
                 plugin.start()
     
     def getPlugin(self, id: str) -> Plugin | None:
@@ -184,7 +189,9 @@ class PluginManager(QObject):
     def stopPlugin(self, id: str) -> None:
         plugin = self.plugins.get(id)
         if plugin:
-            if self._currentPlugin.id == id:
+            if self._currentPlugin == plugin:
                 self.currentPlugin = None
             else:
                 plugin.stop()
+                if plugin.teardownImmed:
+                    plugin.teardown()

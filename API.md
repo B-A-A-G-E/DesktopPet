@@ -37,6 +37,7 @@
     - [类 PluginManager(QObject)](#类-pluginmanagerqobject)
       - [信号](#信号-2)
       - [属性](#属性-1)
+      - [属性（Property）](#属性property-1)
       - [方法 loadAllPlugins() -> None](#方法-loadallplugins---none)
       - [方法 loadPlugin(id: str) -> Plugin | None](#方法-loadpluginid-str---plugin--none)
       - [方法 sortPlugins() -> list[str]](#方法-sortplugins---liststr)
@@ -48,7 +49,7 @@
     - [类 StateMachine(QObject)](#类-statemachineqobject)
       - [信号](#信号-3)
       - [属性](#属性-2)
-      - [属性（Property）](#属性property-1)
+      - [属性（Property）](#属性property-2)
       - [方法 addState(state: str) -> None](#方法-addstatestate-str---none)
       - [方法 removeState(state: str) -> bool](#方法-removestatestate-str---bool)
       - [槽函数 onIdleTimeout() -> None](#槽函数-onidletimeout---none)
@@ -66,12 +67,12 @@
       - [核心方法 replyState(state: str, afterEvent: bool = False, isContinue: bool = False, isAsync: bool = True) -> None](#核心方法-replystatestate-str-afterevent-bool--false-iscontinue-bool--false-isasync-bool--true---none)
       - [核心方法 changeAnime(state: str, isContinue: bool = False, isAsync: bool = True) -> None](#核心方法-changeanimestate-str-iscontinue-bool--false-isasync-bool--true---none)
       - [核心方法 startAct(id: str) -> None](#核心方法-startactid-str---none)
-      - [核心方法 stopAct(id: str) -> None](#核心方法-stopactid-str---none)
+      - [核心方法 stopCurrentAct() -> None](#核心方法-stopcurrentact---none)
       - [核心方法 getAct(id: str) -> Plugin | None](#核心方法-getactid-str---plugin--none)
       - [核心方法 updateData() -> None](#核心方法-updatedata---none)
       - [信号](#信号-5)
       - [属性](#属性-3)
-      - [属性（Property）](#属性property-2)
+      - [属性（Property）](#属性property-3)
       - [槽函数 onStateChanged(prevState: str, currentState: str) -> None](#槽函数-onstatechangedprevstate-str-currentstate-str---none)
       - [槽函数 onActStopped(id: str) -> None](#槽函数-onactstoppedid-str---none)
 
@@ -257,6 +258,7 @@
 | `auto` | bool | 是否在程序启动时自动运行，默认为 `False` |
 | `name` | str | 在行动面板显示的名称 |
 | `description` | str | 插件描述，用于行动面板的鼠标悬浮提示 |
+| `teardownImmed` | bool | 插件停止后是否立即卸载，默认为 `True` |
 | `_window` | PetWindow \| None | 关联的主窗口实例（内部使用，通过 `window` 属性访问） |
 
 #### 属性（Property）
@@ -288,7 +290,7 @@
 插件卸载，解除与主窗口的关联。
 
 - **说明**
-  - 由 `PluginManager` 在切换插件时自动调用
+  - 由 `PluginManager` 在插件停止且 `teardownImmed` 为 `True` 时自动调用
 
 #### 方法 start() -> None
 
@@ -320,7 +322,7 @@
   - `True` 表示事件已被处理，不再传递；`False` 表示继续传递
 - **说明**
   - 默认返回 `False`，子类可按需重写
-  - 事件过滤器的安装和卸载由基类的 `start`/`stop` 自动处理
+  - 事件过滤器的安装和移除由基类的 `start`/`stop` 自动处理
 
 ---
 
@@ -334,6 +336,7 @@
 | :--- | :--- |
 | `pluginLoadSucceeded(str)` | 插件加载成功，携带插件 ID |
 | `pluginError(str)` | 插件加载或操作失败，携带错误信息 |
+| `currentPluginChanged(str, str)` | 当前插件变更时发射，携带旧插件 ID 和新插件 ID |
 
 #### 属性
 
@@ -366,7 +369,6 @@
   - 若 `plugin[id]["enabled"]` 为 `False`，直接返回 `None`
   - 若插件已加载，返回已有实例
   - 导入模块并实例化 `Action` 类
-  - 调用 `setup` 方法安装插件
   - 发射 `pluginLoadSucceeded` 或 `pluginError` 信号
 - **返回**
   - 插件实例，若加载失败则返回 `None`
@@ -387,7 +389,7 @@
 启动所有自启动插件（`auto = True`）。
 
 - **行为**
-  - 遍历所有已加载的插件，对 `auto` 为 `True` 的插件调用 `start`
+  - 遍历所有已加载的插件，对 `auto` 为 `True` 的插件调用 `setup` 和 `start`
 
 #### 方法 getPlugin(id: str) -> Plugin | None
 
@@ -416,6 +418,7 @@
 - **行为**
   - 若该插件为当前正在运行的插件，将 `currentPlugin` 置为 `None` 以停止它
   - 否则调用该插件的 `stop` 方法
+  - 若 `teardownImmed` 为 `True`，则同时调用 `teardown`
 
 ---
 
@@ -580,14 +583,12 @@
   - 通过 `pluginManager.currentPlugin` 切换当前插件（自动停止上一个插件并启动新插件）
   - 通过 `stateMachine.currentState` 更新状态
 
-#### 核心方法 stopAct(id: str) -> None
+#### 核心方法 stopCurrentAct() -> None
 
-停止指定 ID 的行动。
+停止当前正在执行的行动。
 
-- **参数**
-  - `id`: 插件 ID
 - **行为**
-  - 调用 `pluginManager.stopPlugin(id)` 停止插件
+  - 调用 `pluginManager.stopPlugin(pluginManager.currentPlugin.id)` 停止当前插件
 
 #### 核心方法 getAct(id: str) -> Plugin | None
 

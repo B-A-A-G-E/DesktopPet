@@ -30,7 +30,7 @@ class Action(Plugin):
             self.dragPosition = event.globalPosition().toPoint() - self.window.frameGeometry().topLeft()
     
     def mouseMoveEvent(self, event: QMouseEvent):
-        if event.buttons() == Qt.MouseButton.LeftButton and self.window.state == "idle":
+        if event.buttons() == Qt.MouseButton.LeftButton and self.window.state == "idle" or self.window.state == "drag":
             collision = mouse.getCollision(self.window, event.position().toPoint())
             if not collision:
                 event.accept()

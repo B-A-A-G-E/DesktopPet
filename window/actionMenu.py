@@ -16,7 +16,7 @@ class ActionMenu(QWidget):
 
         for k, v in self.petWindow.pluginManager.plugins.items():
             if v.auto:
-                break
+                continue
 
             self.hl[k] = QHBoxLayout()
 
@@ -41,7 +41,7 @@ class ActionMenu(QWidget):
             if not v.auto:
                 self.actBtn[k].clicked.connect(lambda clicked, id = k: self.petWindow.startAct(id))
 
-        def stopAct() -> None:
+        def stopCurrentAct() -> None:
             if self.petWindow.currentAct:
-                self.petWindow.stopAct()
-        self.stopBtn.clicked.connect(stopAct)
+                self.petWindow.stopCurrentAct()
+        self.stopBtn.clicked.connect(stopCurrentAct)

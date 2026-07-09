@@ -99,6 +99,8 @@ class PetWindow(QWidget):
         # 绑定插件管理器信号
         self.pluginManager.pluginLoadSucceeded.connect(lambda text: self.stateMenu.log(text, LogType.PluginLoaded))
         self.pluginManager.pluginError.connect(lambda text: self.stateMenu.log(text, LogType.Error))
+        for k, v in self.pluginManager.plugins.items():
+            v.stopped.connect(lambda id = k: self.onActStopped(id))
 
         # 绑定动画加载失败信号
         for anime in self.animes.values():
@@ -149,8 +151,8 @@ class PetWindow(QWidget):
             self.pluginManager.currentPlugin = act
             self.stateMachine.currentState = act.state
     
-    def stopAct(self, id: str) -> None:
-        self.pluginManager.stopPlugin(id)
+    def stopCurrentAct(self) -> None:
+        self.pluginManager.stopPlugin(self.pluginManager.currentPlugin.id)
     
     def getAct(self, id: str) -> Plugin | None:
         return self.pluginManager.getPlugin(id)
@@ -163,10 +165,11 @@ class PetWindow(QWidget):
             self.dialogMenu.addLine(conv.replyText("state", currentState))
         self.stateChanged.emit(currentState)
 
-    @Slot(str, str)
+    @Slot(str)
     def onActStopped(self, id: str) -> None:
         if self.pluginManager.currentPlugin and self.pluginManager.currentPlugin.id == id:
             self.pluginManager.currentPlugin = None
+        
         self.replyState("idle")
 
     @Slot()

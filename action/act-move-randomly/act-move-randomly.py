@@ -20,16 +20,16 @@ class Action(Plugin):
 
         self.loadData()
     
-    def setup(self, window):
+    def setup(self, window) -> None:
         super().setup(window)
         self.bind()
         self.addPage()
     
-    def start(self):
+    def start(self) -> None:
         self.moveTimer.start(self.data["idle-move-time"])
         super().start()
 
-    def eventFilter(self, obj, event: QEvent):
+    def eventFilter(self, obj, event: QEvent) -> None:
         if event.type() == QEvent.Type.MouseButtonPress:
             # 终止自动移动
             self.step = 0

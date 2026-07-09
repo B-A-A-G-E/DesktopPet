@@ -126,6 +126,7 @@ pip install pyside6
     - 插件须继承 `tool.plugin.Plugin` 基类，类名必须为 `Action`
     - 支持自动启动插件（`auto = True`）
     - 支持插件依赖排序（通过 `dependencies` 字段）
+    - 支持插件热卸载（`teardownImmed` 控制是否立即卸载）
 5. 设置面板
     - 可视化编辑所有 JSON 配置文件（后续添加的 JSON 需在 `SettingMenu.addPage` 新建编辑页）
     - 支持动态增删状态/对话文本条目
@@ -237,6 +238,7 @@ class Action(Plugin):
         self.auto = False
         self.name = "Action"
         self.description = "This is an action"
+        self.teardownImmed = True
 
     def start(self):
         # do something here
@@ -254,6 +256,7 @@ class Action(Plugin):
 > - **初始化中涉及主窗口的操作应移至 `setup`，并先调用 `super().setup(window)`**
 > - 插件 ID 须与 `plugin.json` 中的键一致
 > - **类名必须为 `Action`**
+> - `teardownImmed` 控制插件停止后是否立即卸载，默认为 `True`。若需在停止后保留插件实例（如用于后续复用），可设为 `False`
 
 ---
 
