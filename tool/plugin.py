@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING
 import importlib
 
 from tool import data
-from tool.data import LogType
 
 if TYPE_CHECKING:
     from window.petWindow import PetWindow

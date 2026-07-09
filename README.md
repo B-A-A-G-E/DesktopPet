@@ -85,7 +85,7 @@ pip install pyside6
 │   ├── actionMenu.py       # 行动面板
 │   └── settingMenu.py      # 设置面板
 │
-└── action/                 # 自定义行动（插件）目录
+└── plugin/                 # 自定义行动（插件）目录
     ├── act-stroke.py       # 抚摸事件
     ├── act-drag.py         # 拖拽事件
     ├── act-move-randomly/  # 随机移动事件目录
@@ -121,7 +121,7 @@ pip install pyside6
     - 反馈文本从 `state.json` 随机选取
     - 回复文本从 `dialog.json` 随机选取
 4. 自定义行动（插件系统）
-    - 通过 `action/` 目录添加插件模块
+    - 通过 `plugin/` 目录添加插件模块
     - 在 `plugin.json` 中注册后即可在行动面板调用
     - 插件须继承 `tool.plugin.Plugin` 基类，类名必须为 `Action`
     - 支持自动启动插件（`auto = True`）
@@ -219,7 +219,7 @@ pip install pyside6
 
 **快速上手**：
 
-1. 在 `action/` 目录新建 Python 文件（如 `act-my-action.py`）
+1. 在 `plugin/` 目录新建 Python 文件（如 `act-my-action.py`）
 2. 编写继承自 `tool.plugin.Plugin` 的类 `Action`
 3. 在 `./data/plugin.json` 中注册插件
 4. （可选）配置动画、碰撞体和状态反馈文本
@@ -227,17 +227,17 @@ pip install pyside6
 **插件基础模板**：
 
 ``` python
-# action/act-action.py
+# plugin/act-action.py
 from tool.plugin import Plugin
 
 class Action(Plugin):
     def __init__(self):
         super().__init__()
         self.id = "act-action"
-        self.state = "state"
-        self.auto = False
         self.name = "Action"
         self.description = "This is an action"
+        self.state = "state"
+        self.auto = False
         self.teardownImmed = True
 
     def start(self):

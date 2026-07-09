@@ -64,7 +64,7 @@
       - [信号](#信号-4)
       - [关键方法](#关键方法-2)
     - [PetWindow](#petwindow)
-      - [核心方法 replyState(state: str, afterEvent: bool = False, isContinue: bool = False, isAsync: bool = True) -> None](#核心方法-replystatestate-str-afterevent-bool--false-iscontinue-bool--false-isasync-bool--true---none)
+      - [核心方法 replyState(state: str, afterState: bool = False, isContinue: bool = False, isAsync: bool = True) -> None](#核心方法-replystatestate-str-afterstate-bool--false-iscontinue-bool--false-isasync-bool--true---none)
       - [核心方法 changeAnime(state: str, isContinue: bool = False, isAsync: bool = True) -> None](#核心方法-changeanimestate-str-iscontinue-bool--false-isasync-bool--true---none)
       - [核心方法 startAct(id: str) -> None](#核心方法-startactid-str---none)
       - [核心方法 stopCurrentAct() -> None](#核心方法-stopcurrentact---none)
@@ -254,10 +254,10 @@
 | 属性 | 类型 | 说明 |
 | :--- | :--- | :--- |
 | `id` | str | 插件唯一标识，应与文件名一致 |
-| `state` | str | 插件对应的状态名，用于状态机切换 |
-| `auto` | bool | 是否在程序启动时自动运行，默认为 `False` |
 | `name` | str | 在行动面板显示的名称 |
 | `description` | str | 插件描述，用于行动面板的鼠标悬浮提示 |
+| `state` | str | 插件对应的状态名，用于状态机切换 |
+| `auto` | bool | 是否在程序启动时自动运行，默认为 `False` |
 | `teardownImmed` | bool | 插件停止后是否立即卸载，默认为 `True` |
 | `_window` | PetWindow \| None | 关联的主窗口实例（内部使用，通过 `window` 属性访问） |
 
@@ -547,17 +547,17 @@
 
 主窗口（宠物本体），集成动画、状态机、碰撞检测、拖拽移动等核心功能。
 
-#### 核心方法 replyState(state: str, afterEvent: bool = False, isContinue: bool = False, isAsync: bool = True) -> None
+#### 核心方法 replyState(state: str, afterState: bool = False, isContinue: bool = False, isAsync: bool = True) -> None
 
 执行状态切换响应，包含回复文本、切换动画和更新状态。
 
 - **参数**
   - `state`: 目标状态名
-  - `afterEvent`: 是否先响应当前状态的 `after-{当前状态}`（仅当目标状态与当前状态不同时生效）
+  - `afterState`: 是否先响应当前状态的 `after-{当前状态}`（仅当目标状态与当前状态不同时生效）
   - `isContinue`: 切换动画时是否从上一次停止位置继续
   - `isAsync`: 动画是否异步播放
 - **行为**
-  - 若 `afterEvent` 为 True 且当前状态存在对应的 `after-{当前状态}` 动画，递归调用 `replyState` 播放后续动画（强制同步播放）
+  - 若 `afterState` 为 True 且当前状态存在对应的 `after-{当前状态}` 动画，递归调用 `replyState` 播放后续动画（强制同步播放）
   - 调用 `stateMachine.currentState` 更新状态
   - 调用 `conv.replyText("state", state)` 获取回复并写入对话面板
   - 调用 `changeAnime` 切换动画

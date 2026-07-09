@@ -1,6 +1,5 @@
 from PySide6.QtCore import Qt, QEvent
 from PySide6.QtGui import QMouseEvent
-from PySide6.QtCore import QTimer
 
 from tool.plugin import Plugin
 from tool.mouse import getCollision

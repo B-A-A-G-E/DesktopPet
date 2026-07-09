@@ -1,21 +1,21 @@
 {
   "act-stroke": {
-    "path": "action.act-stroke",
+    "path": "plugin.act-stroke",
     "enabled": true,
     "dependencies": []
   },
   "act-drag": {
-    "path": "action.act-drag",
+    "path": "plugin.act-drag",
     "enabled": true,
     "dependencies": []
   },
   "act-move-randomly": {
-    "path": "action.act-move-randomly.act-move-randomly",
+    "path": "plugin.act-move-randomly.act-move-randomly",
     "enabled": true,
     "dependencies": []
   },
   "act-use-fan": {
-    "path": "action.act-use-fan",
+    "path": "plugin.act-use-fan",
     "enabled": true,
     "dependencies": []
   }

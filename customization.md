@@ -186,7 +186,7 @@
 
 ### 步骤概览
 
-1. 在 `action/` 目录下新建 Python 文件（建议以 `act-` 为前缀）
+1. 在 `plugin/` 目录下新建 Python 文件（建议以 `act-` 为前缀）
 2. 编写继承自 `tool.plugin.Plugin` 的类 `Action`
 3. 在 `./data/plugin.json` 中注册插件
 4. （可选）配置动画、碰撞体和状态反馈文本
@@ -195,10 +195,10 @@
 
 #### 1. 创建插件文件
 
-在 `action/` 目录下新建 Python 文件，文件名建议以 `act-` 为前缀，单词间用连字符连接。
+在 `plugin/` 目录下新建 Python 文件，文件名建议以 `act-` 为前缀，单词间用连字符连接。
 
 ```
-action/
+plugin/
 ├── act-action.py   # 新插件
 ```
 
@@ -209,7 +209,7 @@ action/
 **模板：**
 
 ``` python
-# action/act-action.py
+# plugin/act-action.py
 from tool.plugin import Plugin
 
 class Action(Plugin):  # 类名必须为 Action
@@ -328,7 +328,7 @@ class Action(Plugin):  # 类名必须为 Action
 #### 插件代码
 
 ``` python
-# action/act-dance.py
+# plugin/act-dance.py
 from tool.plugin import Plugin
 from tool import conv
 
@@ -441,7 +441,7 @@ class Action(Plugin):
 
 ``` json
 "act-plugin-b": {
-    "path": "action.act-plugin-b",
+    "path": "plugin.act-plugin-b",
     "enabled": true,
     "dependencies": ["act-plugin-a"]
 }

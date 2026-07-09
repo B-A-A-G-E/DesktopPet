@@ -50,7 +50,7 @@ class Action(Plugin):
         self.window.settingMenu.dataUpdated.connect(self.updateData)
     
     def loadData(self) -> None:
-        with open("./action/act-move-randomly/data.json", "r", encoding = "utf-8") as f:
+        with open("./plugin/act-move-randomly/data.json", "r", encoding = "utf-8") as f:
             self.data = json.load(f)
 
     def addPage(self) -> None:
@@ -127,5 +127,5 @@ class Action(Plugin):
             edit, isInt = v
             self.data[key] = int(edit.text()) if isInt else edit.text()
         
-        with open("./action/act-move-randomly/data.json", "w", encoding = "utf-8") as f:
+        with open("./plugin/act-move-randomly/data.json", "w", encoding = "utf-8") as f:
             f.write(json.dumps(self.data, ensure_ascii = False, indent = 2))
