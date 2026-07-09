@@ -276,7 +276,7 @@
 
 #### 方法 setup(window: PetWindow) -> None
 
-插件安装，将插件与主窗口关联。
+插件安装，将插件与主窗口关联，绑定信号等操作。
 
 - **参数**
   - `window`: 主窗口实例
@@ -287,7 +287,7 @@
 
 #### 方法 teardown() -> None
 
-插件卸载，解除与主窗口的关联。
+插件卸载，解除与主窗口的关联，信号解绑与释放资源等操作。
 
 - **说明**
   - 由 `PluginManager` 在插件停止且 `teardownImmed` 为 `True` 时自动调用
@@ -382,7 +382,7 @@
 - **行为**
   - 构建依赖图，计算入度
   - 使用 Kahn 算法进行拓扑排序
-  - 若检测到循环依赖，抛出 `ValueError`
+  - 若检测到循环依赖，发射 `pluginError` 信号
 
 #### 方法 startAutoPlugins() -> None
 

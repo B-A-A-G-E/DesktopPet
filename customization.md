@@ -381,7 +381,7 @@ class Action(Plugin):
 
 ``` json
 // data/state.json
-"act-dance": [
+"dance": [
     "喵喵喵！",
     "一起来跳舞吧！"
 ]
@@ -409,8 +409,7 @@ class Action(Plugin):
 ```
 
 > **注意**：
-> - 自动启动的插件会在宠物窗口初始化后自动运行
-> - 多个自动插件会按 `plugin.json` 中的加载顺序依次启动
+> - 自启动插件会在宠物窗口初始化后自动运行
 > - 自动插件不会显示在行动面板中
 > - 自启动插件**不会暂停其他状态的自动切换**
 
@@ -504,13 +503,13 @@ A: 检查以下几点：
 3. 类名是否为 `Action`
 4. `self.id` 是否与 `plugin.json` 中的键一致
 
-**Q: 在 `__init__`/`setup` 中获取主窗口（`self.window`）报错：AttributeError: 'NoneType' object has no attribute 'xxx' 怎么办**
+**Q: 在 `__init__`/`setup` 中获取主窗口（`self.window`）报错：AttributeError: 'NoneType' object has no attribute 'xxx' 怎么办？**
 
-A: 主窗口还未完成初始化，**初始化中涉及主窗口的操作应移至 `setup`，并先调用 `super().setup(window)`**。
+A: 主窗口还未完成初始化。**初始化中涉及主窗口的操作应移至 `setup`，并先调用 `super().setup(window)`**。
 
 **Q: 行动开始后宠物不响应鼠标操作？**
 
-A: 检查其他插件是否拦截了事件（`eventFilter` 返回了 `True`），或当前插件是否是自启动插件（自启动插件不会暂停其他状态切换）。
+A: 检查其他插件是否拦截了事件（`eventFilter` 返回了 `True`）。
 
 **Q: 如何让行动在结束后自动恢复待机？**
 

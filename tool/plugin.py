@@ -92,7 +92,7 @@ class PluginManager(QObject):
         for id in ids:
             self.loadPlugin(id)
     
-    def loadPlugin(self, id: str) -> Plugin:
+    def loadPlugin(self, id: str) -> Plugin | None:
         try:
             # 检查是否启用
             if not data.plugin[id]["enabled"]:
