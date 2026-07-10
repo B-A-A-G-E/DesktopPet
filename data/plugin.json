@@ -1,21 +1,26 @@
 {
-  "act-stroke": {
-    "path": "plugin.act-stroke",
+  "stroke": {
+    "path": "plugin.stroke",
     "enabled": true,
     "dependencies": []
   },
-  "act-drag": {
-    "path": "plugin.act-drag",
+  "drag": {
+    "path": "plugin.drag",
     "enabled": true,
     "dependencies": []
   },
-  "act-move-randomly": {
-    "path": "plugin.act-move-randomly.act-move-randomly",
+  "move-randomly": {
+    "path": "plugin.move-randomly.move_randomly",
     "enabled": true,
     "dependencies": []
   },
-  "act-use-fan": {
-    "path": "plugin.act-use-fan",
+  "use-fan": {
+    "path": "plugin.use_fan",
+    "enabled": true,
+    "dependencies": []
+  },
+  "attr": {
+    "path": "plugin.attr.attr",
     "enabled": true,
     "dependencies": []
   }

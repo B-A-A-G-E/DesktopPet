@@ -8,8 +8,11 @@ from tool.data import LogType
 if __name__ == "__main__":
     app = QApplication([])
     apply_stylesheet(app, theme = "light_cyan_500.xml")
+
     window = PetWindow()
+    app.aboutToQuit.connect(window.aboutToQuit.emit)
     window.show()
     app.exec()
-    window.replyState("exit", isAsync = False)
+    
+    window.operateState("exit", "exit", isAsync = False)
     window.stateMenu.log("Succeeded to exit", LogType.Exit)

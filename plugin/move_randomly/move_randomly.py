@@ -10,8 +10,9 @@ class Action(Plugin):
     def __init__(self):
         super().__init__()
 
-        self.id = "act-move-randomly"
+        self.id = "move-randomly"
         self.auto = True
+        self.teardownImmed = False
         
         self.moveTimer = QTimer() # 触发随机移动时间
         self.step = 0 # 移动步数
@@ -36,8 +37,8 @@ class Action(Plugin):
             self.dir = QPoint(0, 0)
         return super().eventFilter(obj, event)
     
-    def bind(self):
-        def stopTimer(state: str) -> None:
+    def bind(self) -> None:
+        def stopTimer(prevState: str, state: str) -> None:
             if state != "idle":
                 self.moveTimer.stop()
             else:
@@ -50,7 +51,7 @@ class Action(Plugin):
         self.window.settingMenu.dataUpdated.connect(self.updateData)
     
     def loadData(self) -> None:
-        with open("./plugin/act-move-randomly/data.json", "r", encoding = "utf-8") as f:
+        with open("./plugin/move-randomly/data.json", "r", encoding = "utf-8") as f:
             self.data = json.load(f)
 
     def addPage(self) -> None:
@@ -127,5 +128,5 @@ class Action(Plugin):
             edit, isInt = v
             self.data[key] = int(edit.text()) if isInt else edit.text()
         
-        with open("./plugin/act-move-randomly/data.json", "w", encoding = "utf-8") as f:
+        with open("./plugin/move-randomly/data.json", "w", encoding = "utf-8") as f:
             f.write(json.dumps(self.data, ensure_ascii = False, indent = 2))

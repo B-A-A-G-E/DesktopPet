@@ -7,11 +7,10 @@ from tool.mouse import getCollision
 class Action(Plugin):
     def __init__(self):
         super().__init__()
-        self.id = "act-use-fan"
+        self.id = "use-fan"
         self.name = "吹风扇"
         self.description = "吹风扇，点风扇开关关闭风扇"
         self.state = "use-fan"
-        self.teardownImmed = False
 
 
     def start(self):

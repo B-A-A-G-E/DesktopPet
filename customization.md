@@ -34,6 +34,7 @@
     - [进阶：事件过滤器](#进阶事件过滤器)
     - [进阶：插件依赖](#进阶插件依赖)
     - [进阶：扩展设置面板](#进阶扩展设置面板)
+    - [进阶：扩展状态面板](#进阶扩展状态面板)
     - [进阶：控制插件卸载行为](#进阶控制插件卸载行为)
   - [常见问题](#常见问题)
 
@@ -48,6 +49,7 @@
 - 添加/修改状态反馈文本
 - 添加/修改对话文本
 - 开发新的交互行为（插件）
+- 扩展状态面板（添加属性页等）
 
 所有配置均通过 JSON 文件管理，插件通过 Python 模块实现。
 
@@ -95,7 +97,7 @@
 | `loop` | bool | 是否循环播放 |
 
 > **注意**：
-> - 动画名建议使用小写字母和连字符（如 `act-dance`），以保持统一风格
+> - 动画名建议使用小写字母和连字符（如 `using-fan`），以保持统一风格
 > - 帧图片需按数字顺序命名（如 `0.png`, `1.png`, `2.png`...）
 > - 若需在 `PetWindow.replyState` 中自动播放，动画名需与状态名一致
 
@@ -150,7 +152,7 @@
 ```
 
 - 新建的状态必须在此文件内注册，若不希望回复直接设置空数组即可
-- 用 `PetWindow.replyState` 切换状态时会从对应数组中随机选取一条回复
+- 用 `PetWindow.operateState` 切换状态时会从对应数组中随机选取一条回复并播放动画
 - 若状态无对应条目，则不显示回复
 
 ---
@@ -186,41 +188,40 @@
 
 ### 步骤概览
 
-1. 在 `plugin/` 目录下新建 Python 文件（建议以 `act-` 为前缀）
+1. 在 `plugin/` 目录下新建 Python 文件
 2. 编写继承自 `tool.plugin.Plugin` 的类 `Action`
 3. 在 `./data/plugin.json` 中注册插件
 4. （可选）配置动画、碰撞体和状态反馈文本
+5. （可选）在状态面板中添加属性页
 
 ### 详细步骤
 
 #### 1. 创建插件文件
 
-在 `plugin/` 目录下新建 Python 文件，文件名建议以 `act-` 为前缀，单词间用连字符连接。
+在 `plugin/` 目录下新建 Python 文件，单词间用下划线连接（如 `use_fan.py`）。
 
 ```
 plugin/
-├── act-action.py   # 新插件
+├── action.py   # 新插件
 ```
-
-> **命名规范**：文件名中的 `act-` 前缀用于标识行动插件，便于统一管理。
 
 #### 2. 编写插件类
 
 **模板：**
 
 ``` python
-# plugin/act-action.py
+# plugin/action.py
 from tool.plugin import Plugin
 
 class Action(Plugin):  # 类名必须为 Action
     def __init__(self):
         super().__init__()
 
-        # 必须设置 id 和 state
-        self.id = "act-action"   # 应与文件名一致
+        # 必须设置 id
+        self.id = "action"   # 应与 `plugin.json` 中的键 一致
         self.name = "行动"       # 在行动面板显示的名称（非自启动插件必须设置）
         self.description = "这是插件的描述"  # 可选，用于行动面板的鼠标悬浮提示
-        self.state = "act-action"  # 状态名，用于状态机切换
+        self.state = "action"  # 状态名，用于状态机切换
         self.auto = False        # 是否在程序启动时自动运行，默认为 False
         self.teardownImmed = True   # 是否在行动停止后立即卸载插件，默认为True
 
@@ -264,8 +265,8 @@ class Action(Plugin):  # 类名必须为 Action
 编辑 `./data/plugin.json`：
 
 ``` json
-"act-action": {
-    "path": "action.act-action",
+"action": {
+    "path": "plugin.action",
     "enabled": true,
     "dependencies": []
 }
@@ -273,7 +274,7 @@ class Action(Plugin):  # 类名必须为 Action
 
 - 键：插件 ID（须与 `self.id` 一致）
 - 值：
-    - `path`: 模块导入路径（如 `action.act-action`）
+    - `path`: 模块导入路径（如 `action.action`）
     - `enabled`: 是否启用
     - `dependencies`: 依赖的插件 ID 列表（用于控制加载顺序）
 
@@ -328,7 +329,7 @@ class Action(Plugin):  # 类名必须为 Action
 #### 插件代码
 
 ``` python
-# plugin/act-dance.py
+# plugin/dance.py
 from tool.plugin import Plugin
 from tool import conv
 
@@ -336,7 +337,7 @@ class Action(Plugin):
     def __init__(self):
         super().__init__()
 
-        self.id = "act-dance"
+        self.id = "dance"
         self.state = "dance"
         self.name = "跳舞"
         self.description = "让宠物跳舞"
@@ -358,8 +359,8 @@ class Action(Plugin):
 ``` json
 // data/plugin.json
 {
-    "act-dance": {
-        "path": "action.act-dance",
+    "dance": {
+        "path": "plugin.dance",
         "enabled": true,
         "dependencies": []
     }
@@ -370,8 +371,8 @@ class Action(Plugin):
 
 ``` json
 // data/anime.json
-"act-dance": {
-    "path": "./img/act-dance",
+"dance": {
+    "path": "./img/dance",
     "fps": 20,
     "loop": true
 }
@@ -395,8 +396,8 @@ class Action(Plugin):
 class Action(Plugin):
     def __init__(self):
         super().__init__()
-        self.id = "act-auto"
-        self.state = "act-auto"
+        self.id = "auto"
+        self.state = "auto"
         self.auto = True  # 程序启动时自动运行
 
     def start(self):
@@ -440,10 +441,10 @@ class Action(Plugin):
 若插件需要依赖其他插件，可在 `plugin.json` 中通过 `dependencies` 字段声明：
 
 ``` json
-"act-plugin-b": {
-    "path": "plugin.act-plugin-b",
+"plugin-b": {
+    "path": "plugin.plugin-b",
     "enabled": true,
-    "dependencies": ["act-plugin-a"]
+    "dependencies": ["plugin-a"]
 }
 ```
 
@@ -472,6 +473,35 @@ def setup(self, window) -> None:
     self.window.settingMenu.dataUpdated.connect(self.saveConfig)
 ```
 
+### 进阶：扩展状态面板
+
+插件可以通过 `StateMenu.addPage` 向状态面板添加自定义标签页，用于显示宠物属性或状态信息：
+
+``` python
+def setup(self, window) -> None:
+    super().setup(window)
+    
+    # 创建自定义属性页面
+    self.pg = QWidget()
+    layout = QFormLayout()
+    
+    # 添加进度条显示属性
+    self.bar = QProgressBar(minimum=0, maximum=100, value=50)
+    layout.addRow("好感度:", self.bar)
+    self.pg.setLayout(layout)
+    
+    # 添加到状态面板
+    self.window.stateMenu.addPage(self.pg, "我的属性")
+    
+    # 监听状态变化以更新属性
+    self.window.stateChanged.connect(self.onStateChanged)
+```
+
+> **说明**：
+> - `StateMenu.addPage` 与 `SettingMenu.addPage` 用法一致
+> - 属性面板位于状态面板的标签页中，与日志面板并列
+> - 可参考 `plugin/attr/attr.py` 的完整实现
+
 ### 进阶：控制插件卸载行为
 
 插件提供 `teardownImmed` 属性控制停止后的卸载行为：
@@ -483,12 +513,12 @@ def setup(self, window) -> None:
 class Action(Plugin):
     def __init__(self):
         super().__init__()
-        self.id = "act-persistent"
+        self.id = "persistent"
         self.teardownImmed = False  # 停止后保留实例
 ```
 
 适用场景：
-- 插件需要频繁启动/停止，保留实例可避免重复初始化开销
+- 插件需要频繁启动/停止，可避免重复安装开销
 - 插件需要在停止后保留某些状态供下次使用
 
 ---
@@ -499,7 +529,7 @@ class Action(Plugin):
 
 A: 检查以下几点：
 1. 文件名和 `plugin.json` 中的键是否一致
-2. 模块导入路径是否正确（如 `action.act-xxx`）
+2. 模块导入路径是否正确（如 `plugin.xxx`）
 3. 类名是否为 `Action`
 4. `self.id` 是否与 `plugin.json` 中的键一致
 
@@ -533,3 +563,7 @@ A: `PetWindow` 持有 `PluginManager` 实例，通过它管理所有插件的加
 **Q: `teardownImmed` 和 `teardown` 有什么区别？**
 
 A: `teardownImmed` 是一个控制属性，决定插件停止后是否立即调用 `teardown` 方法。`teardown` 是实际执行资源清理的方法，你可以在其中进行信号解绑、删除临时控件等。
+
+**Q: 如何在状态面板中添加自定义属性页？**
+
+A: 在插件的 `setup` 方法中调用 `self.window.stateMenu.addPage(page, label)` 即可。可参考 `plugin/attr/attr.py` 的实现。

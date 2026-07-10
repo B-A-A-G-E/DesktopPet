@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QPlainTextEdit, QGroupBox
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QPlainTextEdit, QGroupBox, QTabWidget
 from PySide6.QtGui import Qt, QAction
 
 from datetime import datetime
@@ -13,15 +13,14 @@ class StateMenu(QWidget):
         self.setWindowTitle("State Menu")
         self.resize(400, 300)
 
-        self.lyt = QVBoxLayout()
+        self.pages: dict[str, QWidget] = {} # 插件传入的页面
 
-        self.logLyt = QGroupBox("日志")
-        self.logLyt.lyt = QVBoxLayout()
+        self.lyt = QVBoxLayout()
+        self.tabW = QTabWidget()
 
         self.logBox = QPlainTextEdit(readOnly = True)
 
-        self.logLyt.lyt.addWidget(self.logBox)
-        self.logLyt.setLayout(self.logLyt.lyt)
+        self.lyt.addWidget(self.tabW)
         self.lyt.addWidget(self.logBox)
         self.setLayout(self.lyt)
 
@@ -42,3 +41,10 @@ class StateMenu(QWidget):
         # 写入日志文件
         with open(data.base["log-path"], "a", encoding = "utf-8") as f:
             f.write(logLine +  '\n')
+    
+    def addPage(self, page: QWidget, label: str) -> None:
+        self.pages[label] = page
+        self.tabW.addTab(page, label)
+    
+    def getPage(self, label: str):
+        return self.pages.get(label)

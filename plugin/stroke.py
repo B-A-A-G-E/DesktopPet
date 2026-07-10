@@ -8,9 +8,12 @@ class Action(Plugin):
     def __init__(self):
         super().__init__()
         
-        self.id = "act-stroke"
+        self.id = "stroke"
         self.state = "stroke"
         self.auto = True
+        self.teardownImmed = False
+        
+        self.anime = "stroke"
     
     def eventFilter(self, obj, event: QEvent):
         if event.type() == QEvent.Type.MouseMove:
@@ -22,10 +25,11 @@ class Action(Plugin):
     def mouseMoveEvent(self, event: QMouseEvent):
         if event.buttons() == Qt.MouseButton.LeftButton and self.window.state == "idle":
             collision = mouse.getCollision(self.window, event.position().toPoint())
-            if self.window.state != "act-drag" and self.window.state != self.state and collision == "head":
+            if self.window.state != "drag" and self.window.state != self.state and collision == "head":
                 event.accept()
-                self.window.replyState(self.state)
+                self.window.operateState(self.state, self.anime)
     
     def mouseReleaseEvent(self, event: QMouseEvent):
         if self.window.state == self.state:
-            self.window.replyState("idle", True)
+            self.window.operateState(f"after-{self.state}", f"after-{self.anime}", isAsync = False)
+            self.window.operateState("idle", "idle")

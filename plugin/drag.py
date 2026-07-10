@@ -8,10 +8,12 @@ class Action(Plugin):
     def __init__(self):
         super().__init__()
         
-        self.id = "act-drag"
+        self.id = "drag"
         self.state = "drag"
         self.auto = True
+        self.teardownImmed = False
         
+        self.anime = "drag"
         self.dragPosition = QPoint() # 记录鼠标按下时的位置
     
     def eventFilter(self, obj, event: QEvent):
@@ -35,9 +37,10 @@ class Action(Plugin):
             if not collision:
                 event.accept()
                 if self.window.state != self.state:
-                    self.window.replyState(self.state)
+                    self.window.operateState(self.state, self.anime)
                 self.window.move(event.globalPosition().toPoint() - self.dragPosition)
     
     def mouseReleaseEvent(self, event: QMouseEvent):
         if self.window.state == self.state:
-            self.window.replyState("idle", True)
+            #self.window.operateState(f"after-{self.state}", f"after-{self.anime}", isAsync = False)
+            self.window.operateState("idle", "idle")

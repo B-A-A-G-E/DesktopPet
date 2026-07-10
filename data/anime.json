@@ -15,17 +15,17 @@
     "loop": true
   },
   "stroke": {
-    "path": "./img/act-stroke",
+    "path": "./img/stroke",
     "fps": 30,
     "loop": true
   },
   "drag": {
-    "path": "./img/act-drag",
+    "path": "./img/drag",
     "fps": 30,
     "loop": true
   },
   "after-stroke": {
-    "path": "./img/after-act-stroke",
+    "path": "./img/after-stroke",
     "fps": 50,
     "loop": false
   },

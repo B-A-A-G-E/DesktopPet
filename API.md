@@ -58,23 +58,28 @@
       - [关键属性](#关键属性)
     - [DialogMenu](#dialogmenu)
       - [关键方法](#关键方法)
+      - [槽函数 addNewOption() -> None](#槽函数-addnewoption---none)
     - [StateMenu](#statemenu)
       - [关键方法](#关键方法-1)
+      - [扩展方法](#扩展方法)
     - [SettingMenu](#settingmenu)
       - [信号](#信号-4)
       - [关键方法](#关键方法-2)
+      - [扩展方法](#扩展方法-1)
     - [PetWindow](#petwindow)
-      - [核心方法 replyState(state: str, afterState: bool = False, isContinue: bool = False, isAsync: bool = True) -> None](#核心方法-replystatestate-str-afterstate-bool--false-iscontinue-bool--false-isasync-bool--true---none)
-      - [核心方法 changeAnime(state: str, isContinue: bool = False, isAsync: bool = True) -> None](#核心方法-changeanimestate-str-iscontinue-bool--false-isasync-bool--true---none)
+      - [核心方法 operateState(state: str, anime: str, isContinue: bool = False, isAsync: bool = True) -> None](#核心方法-operatestatestate-str-anime-str-iscontinue-bool--false-isasync-bool--true---none)
+      - [核心方法 changeState(state: str) -> None](#核心方法-changestatestate-str---none)
+      - [核心方法 replyState(state: str) -> None](#核心方法-replystatestate-str---none)
+      - [核心方法 changeAnime(name: str, isContinue: bool = False, isAsync: bool = True) -> None](#核心方法-changeanimename-str-iscontinue-bool--false-isasync-bool--true---none)
       - [核心方法 startAct(id: str) -> None](#核心方法-startactid-str---none)
-      - [核心方法 stopCurrentAct() -> None](#核心方法-stopcurrentact---none)
+      - [核心方法 stopAct(id: str) -> None](#核心方法-stopactid-str---none)
       - [核心方法 getAct(id: str) -> Plugin | None](#核心方法-getactid-str---plugin--none)
-      - [核心方法 updateData() -> None](#核心方法-updatedata---none)
+      - [槽函数 updateData() -> None](#槽函数-updatedata---none)
+      - [槽函数 onStateChanged(prevState: str, currentState: str) -> None](#槽函数-onstatechangedprevstate-str-currentstate-str---none)
+      - [槽函数 onActStopped(id: str) -> None](#槽函数-onactstoppedid-str---none)
       - [信号](#信号-5)
       - [属性](#属性-3)
       - [属性（Property）](#属性property-3)
-      - [槽函数 onStateChanged(prevState: str, currentState: str) -> None](#槽函数-onstatechangedprevstate-str-currentstate-str---none)
-      - [槽函数 onActStopped(id: str) -> None](#槽函数-onactstoppedid-str---none)
 
 ---
 
@@ -253,7 +258,7 @@
 
 | 属性 | 类型 | 说明 |
 | :--- | :--- | :--- |
-| `id` | str | 插件唯一标识，应与文件名一致 |
+| `id` | str | 插件唯一标识，应与 `plugin.json` 中的键一致 |
 | `name` | str | 在行动面板显示的名称 |
 | `description` | str | 插件描述，用于行动面板的鼠标悬浮提示 |
 | `state` | str | 插件对应的状态名，用于状态机切换 |
@@ -336,7 +341,6 @@
 | :--- | :--- |
 | `pluginLoadSucceeded(str)` | 插件加载成功，携带插件 ID |
 | `pluginError(str)` | 插件加载或操作失败，携带错误信息 |
-| `currentPluginChanged(str, str)` | 当前插件变更时发射，携带旧插件 ID 和新插件 ID |
 
 #### 属性
 
@@ -514,15 +518,25 @@
 - **行为**
   - 提问后自动从列表中移除该问题，并从剩余问题中随机补充（包括刚刚移除的）
 
+#### 槽函数 addNewOption() -> None
+
+用户点击"发送"按钮时触发，显示选中的问题及随机回复，并从下拉框中移除该问题。
+
 ### StateMenu
 
-状态日志面板，显示运行日志并支持写入文件。
+状态日志面板，显示运行日志并支持写入文件。同时作为属性面板的容器，允许插件通过 `addPage` 添加自定义标签页。
 
 #### 关键方法
 
 | 方法 | 说明 |
 | :--- | :--- |
 | `log(text: str, type: LogType = None)` | 添加日志条目，格式为 `时间  LogType.xxx/None:    文本` |
+#### 扩展方法
+
+| 方法 | 说明 |
+| :--- | :--- |
+| `addPage(page: QWidget, label: str)` | 由插件调用，添加属性/配置页面到状态面板的标签页中 |
+| `getPage(label: str)` | 获取已添加的页面，用于在数据更新时刷新页面内容 |
 
 ### SettingMenu
 
@@ -540,36 +554,65 @@
 | :--- | :--- |
 | `apply()` | 读取所有输入框内容，更新 `data` 全局变量并写回 JSON 文件 |
 | `cancel()` | 关闭窗口，不保存更改 |
-| `addPage(page: QWidget, label: str)` | 向设置面板添加自定义标签页（供插件扩展使用） |
-| `getPage(label: str)` | 获取指定标签名的自定义页面，若不存在则返回 `None` |
+
+#### 扩展方法
+
+| 方法 | 说明 |
+| :--- | :--- |
+| `addPage(page: QWidget, label: str)` | 由插件调用，添加自定义配置页面到设置面板的标签页中 |
+| `getPage(label: str)` | 获取已添加的页面，用于在数据更新时刷新页面内容 |
 
 ### PetWindow
 
 主窗口（宠物本体），集成动画、状态机、碰撞检测、拖拽移动等核心功能。
 
-#### 核心方法 replyState(state: str, afterState: bool = False, isContinue: bool = False, isAsync: bool = True) -> None
+#### 核心方法 operateState(state: str, anime: str, isContinue: bool = False, isAsync: bool = True) -> None
 
-执行状态切换响应，包含回复文本、切换动画和更新状态。
+执行状态切换响应，包含回复文本、切换动画和更新状态。此为 `changeState`、`replyState` 和 `changeAnime` 的组合方法，用于一次性完成状态切换、回复和动画播放。
 
 - **参数**
   - `state`: 目标状态名
-  - `afterState`: 是否先响应当前状态的 `after-{当前状态}`（仅当目标状态与当前状态不同时生效）
+  - `anime`: 要播放的动画名（通常与状态名一致）
   - `isContinue`: 切换动画时是否从上一次停止位置继续
   - `isAsync`: 动画是否异步播放
 - **行为**
-  - 若 `afterState` 为 True 且当前状态存在对应的 `after-{当前状态}` 动画，递归调用 `replyState` 播放后续动画（强制同步播放）
-  - 调用 `stateMachine.currentState` 更新状态
-  - 调用 `conv.replyText("state", state)` 获取回复并写入对话面板
-  - 调用 `changeAnime` 切换动画
+  - 调用 `stateMachine.currentState = state` 更新状态
+  - 调用 `replyState(state)` 获取并显示回复
+  - 调用 `changeAnime(anime, isContinue, isAsync)` 切换动画
 - **说明**
   - 若目标状态与当前状态相同且非 idle，不执行任何操作
 
-#### 核心方法 changeAnime(state: str, isContinue: bool = False, isAsync: bool = True) -> None
+#### 核心方法 changeState(state: str) -> None
+
+仅更新状态，不触发回复和动画切换。
+
+- **参数**
+  - `state`: 目标状态名
+- **行为**
+  - 调用 `stateMachine.currentState = state` 更新状态
+- **说明**
+  - 若目标状态与当前状态相同且非 idle，不执行任何操作
+  - 通常与 `replyState` 和 `changeAnime` 配合使用
+
+#### 核心方法 replyState(state: str) -> None
+
+仅显示状态回复文本，不切换状态和动画。
+
+- **参数**
+  - `state`: 状态名
+- **行为**
+  - 调用 `conv.replyText("state", state)` 获取随机回复
+  - 通过 `dialogMenu.addLine` 写入对话面板
+- **说明**
+  - 若目标状态与当前状态相同且非 idle，不执行任何操作
+  - 若状态无对应回复文本，则不显示
+
+#### 核心方法 changeAnime(name: str, isContinue: bool = False, isAsync: bool = True) -> None
 
 切换动画，停止当前动画并播放目标动画。
 
 - **参数**
-  - `state`: 目标状态名
+  - `name`: 目标动画名（须在 `data.anime` 中定义）
   - `isContinue`: 是否从上一次停止位置继续
   - `isAsync`: 动画是否异步播放
 
@@ -583,12 +626,14 @@
   - 通过 `pluginManager.currentPlugin` 切换当前插件（自动停止上一个插件并启动新插件）
   - 通过 `stateMachine.currentState` 更新状态
 
-#### 核心方法 stopCurrentAct() -> None
+#### 核心方法 stopAct(id: str) -> None
 
-停止当前正在执行的行动。
+停止指定 ID 的行动。
 
+- **参数**
+  - `id`: 插件 ID
 - **行为**
-  - 调用 `pluginManager.stopPlugin(pluginManager.currentPlugin.id)` 停止当前插件
+  - 调用 `pluginManager.stopPlugin(id)` 停止指定插件
 
 #### 核心方法 getAct(id: str) -> Plugin | None
 
@@ -599,22 +644,44 @@
 - **返回**
   - 插件实例，若未找到则返回 `None`
 
-#### 核心方法 updateData() -> None *[Slot]*
+#### 槽函数 updateData() -> None
 
-重新加载配置数据并刷新动画和碰撞体。
+重新加载配置数据并刷新动画和碰撞体。由 `SettingMenu.dataUpdated` 信号触发调用。
 
 - **说明**
-  - 由 `SettingMenu.dataUpdated` 信号触发调用
   - 更新 `stateMachine.idleTime`
   - 重新从 `data.anime` 和 `data.collision` 构建动画对象和碰撞体
   - 调用 `dialogMenu.resetQuesSelecter()` 刷新对话选项
   - 记录日志
 
+#### 槽函数 onStateChanged(prevState: str, currentState: str) -> None
+
+状态变更响应槽函数。由 `stateMachine.stateChanged` 信号触发调用。
+
+- **参数**
+  - `prevState`: 前一状态名
+  - `currentState`: 新状态名
+- **行为**
+  - 向状态日志面板写入状态变更日志
+  - 若切换至 idle 状态，显示 idle 回复
+  - 发射 `stateChanged` 信号
+
+#### 槽函数 onActStopped(id: str) -> None
+
+行动停止响应槽函数。由插件 `stopped` 信号触发调用。
+
+- **参数**
+  - `id`: 停止的插件 ID
+- **行为**
+  - 若当前正在运行的插件 ID 匹配，通过 `pluginManager.currentPlugin = None` 停止
+  - 调用 `operateState("idle", "idle")` 切换回待机状态
+
 #### 信号
 
 | 信号 | 触发时机 |
 | :--- | :--- |
-| `stateChanged(str)` | 状态变更时发射，携带新状态名 |
+| `stateChanged(str, str)` | 状态变更时发射，携带前一状态名和新状态名 |
+| `aboutToQuit()` | 程序即将退出时发射 |
 
 #### 属性
 
@@ -635,24 +702,3 @@
 | :--- | :--- | :--- | :--- |
 | `state` | str | 读写（getter/setter） | 获取或设置当前状态，通过 setter 调用 `stateMachine.currentState` |
 | `currentAct` | Plugin \| None | 只读（getter） | 获取当前正在运行的非自启动插件，通过 `pluginManager.currentPlugin` |
-
-#### 槽函数 onStateChanged(prevState: str, currentState: str) -> None
-
-状态变更响应槽函数。
-
-- **参数**
-  - `prevState`: 前一状态名
-  - `currentState`: 新状态名
-- **行为**
-  - 向状态日志面板写入状态变更日志
-  - 若切换至 idle 状态，显示 idle 回复
-  - 发射 `stateChanged` 信号
-
-#### 槽函数 onActStopped(id: str) -> None
-
-行动停止响应槽函数。
-
-- **参数**
-  - `id`: 停止的插件 ID
-- **行为**
-  - 若当前正在运行的插件 ID 匹配，通过 `pluginManager.currentPlugin = None` 停止并切换回 `idle` 状态

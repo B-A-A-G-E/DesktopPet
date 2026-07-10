@@ -64,9 +64,9 @@ pip install pyside6
 │   ├── entre/              # 入场动画帧
 │   ├── exit/               # 退场动画帧
 │   ├── idle/               # 待机动画帧
-│   ├── act-stroke/         # 抚摸动画帧
-│   ├── act-drag/           # 拖拽动画帧
-│   ├── after-act-stroke/   # 抚摸后动画帧
+│   ├── stroke/             # 抚摸动画帧
+│   ├── drag/               # 拖拽动画帧
+│   ├── after-stroke/       # 抚摸后动画帧
 │   ├── using-fan/          # 吹风扇动画帧
 │   └── turn-off-fan/       # 关风扇动画帧
 │
@@ -86,12 +86,15 @@ pip install pyside6
 │   └── settingMenu.py      # 设置面板
 │
 └── plugin/                 # 自定义行动（插件）目录
-    ├── act-stroke.py       # 抚摸事件
-    ├── act-drag.py         # 拖拽事件
-    ├── act-move-randomly/  # 随机移动事件目录
-    │   ├── act-move-randomly.py  # 随机移动事件
+    ├── stroke.py           # 抚摸事件
+    ├── drag.py             # 拖拽事件
+    ├── move-randomly/      # 随机移动事件目录
+    │   ├── move_randomly.py  # 随机移动事件
     │   └── data.json       # 配置文件
-    └── act-use-fan.py      # 吹风扇行动
+    ├── use_fan.py          # 吹风扇行动
+    └── attr/               # 属性系统插件目录
+        ├── attr.py         # 属性系统主文件
+        └── data.json       # 属性配置文件
 ```
 
 ## API
@@ -162,7 +165,7 @@ pip install pyside6
 | `loop` | bool | 是否循环播放 |
 
 > **注意**：
-> - 动画名建议使用小写字母和连字符（如 `act-dance`），以保持风格统一
+> - 动画名建议使用小写字母和连字符（如 `using-fan`），以保持风格统一
 > - 帧图片需按数字顺序命名（如 `0.png`, `1.png`, `2.png`...）
 > - 若需在 `PetWindow.replyState` 中自动播放，动画名需与状态名一致
 
@@ -219,7 +222,7 @@ pip install pyside6
 
 **快速上手**：
 
-1. 在 `plugin/` 目录新建 Python 文件（如 `act-my-action.py`）
+1. 在 `plugin/` 目录新建 Python 文件（如 `action.py`）
 2. 编写继承自 `tool.plugin.Plugin` 的类 `Action`
 3. 在 `./data/plugin.json` 中注册插件
 4. （可选）配置动画、碰撞体和状态反馈文本
@@ -227,13 +230,13 @@ pip install pyside6
 **插件基础模板**：
 
 ``` python
-# plugin/act-action.py
+# plugin/action.py
 from tool.plugin import Plugin
 
 class Action(Plugin):
     def __init__(self):
         super().__init__()
-        self.id = "act-action"
+        self.id = "action"
         self.name = "Action"
         self.description = "This is an action"
         self.state = "state"
@@ -256,7 +259,8 @@ class Action(Plugin):
 > - **初始化中涉及主窗口的操作应移至 `setup`，并先调用 `super().setup(window)`**
 > - 插件 ID 须与 `plugin.json` 中的键一致
 > - **类名必须为 `Action`**
-> - `teardownImmed` 控制插件停止后是否立即卸载，默认为 `True`。若需在停止后保留插件实例（如用于后续复用），可设为 `False`
+> - `teardownImmed` 控制插件停止后是否立即卸载，默认为 `True`。若不希望卸载（如用于后续复用），可设为 `False`
+> - 如需在状态面板中添加自定义属性页，可调用 `StateMenu.addPage`
 
 ---
 

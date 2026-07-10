@@ -60,7 +60,7 @@ class SettingMenu(QWidget):
         self.setWindowTitle("Setting Menu")
         self.resize(600, 450)
 
-        self.otherPage: dict = {} # 插件传入的页面
+        self.otherPages: dict[str, QWidget] = {} # 插件传入的页面
 
         self.lyt = QVBoxLayout()
         self.tabW = QTabWidget()
@@ -388,13 +388,10 @@ class SettingMenu(QWidget):
         self.close()
 
     def addPage(self, page: QWidget, label: str) -> None:
-        self.otherPage[label] = page
+        self.otherPages[label] = page
         self.tabW.addTab(page, label)
     
-    def getPage(self, label: str):
+    def getPage(self, label: str) -> QWidget | None:
         """获取插件传入的页面"""
-        if label in self.otherPage.keys():
-            return self.otherPage[label]
-        else:
-            return None
+        return self.otherPages.get(label)
         

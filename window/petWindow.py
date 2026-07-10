@@ -18,7 +18,8 @@ from window.actionMenu import ActionMenu
 from window.settingMenu import SettingMenu
 
 class PetWindow(QWidget):
-    stateChanged = Signal(str)
+    stateChanged = Signal(str, str)
+    aboutToQuit = Signal()
     
     def __init__(self):
         super().__init__()
@@ -73,8 +74,8 @@ class PetWindow(QWidget):
 
         # 入场并切换待机
         self.stateMenu.log("Succeeded to entre", LogType.Entre)
-        #self.replyState("entre", isAsync = False)
-        self.replyState("idle")
+        #self.operateState("entre", "entre", isAsync = False)
+        self.operateState("idle", "idle")
 
     def bind(self) -> None:
         """绑定子窗口及信号"""
@@ -122,23 +123,30 @@ class PetWindow(QWidget):
     def currentAct(self) -> Plugin | None:
         return self.pluginManager.currentPlugin
 
-    def replyState(self, state: str, afterEvent: bool = False, isContinue: bool = False, isAsync: bool = True) -> None:
-        """
-        执行对应行动时进行响应\n
-        若afterEvent为True，则先响应当前状态的after-state事件（动画只能同步播放）\n
-        """
+    def operateState(self, state: str, anime: str, isContinue: bool = False, isAsync: bool = True) -> None:
+        """执行对应行动时进行响应"""
         currentState = self.stateMachine.currentState
         
         if currentState != state or (state == "idle" and currentState == "idle"):
-            if afterEvent and f"after-{currentState}" in self.animes.keys():
-                self.replyState(f"after-{currentState}", isAsync = False)
             # 更新状态
             self.stateMachine.currentState = state
             # 在dialogMenu回复
-            self.dialogMenu.addLine(conv.replyText("state", state))
+            self.replyState(state)
             # 切换动画
-            self.changeAnime(state, isContinue, isAsync)
+            self.changeAnime(anime, isContinue, isAsync)
     
+    def changeState(self, state: str) -> None:
+        """更新状态"""
+        currentState = self.stateMachine.currentState
+        if currentState != state or (state == "idle" and currentState == "idle"):
+                self.stateMachine.currentState = state
+    
+    def replyState(self, state: str) -> None:
+        """回复状态"""
+        currentState = self.stateMachine.currentState
+        if (currentState != state and state != "idle") or (state == "idle" and currentState == "idle"):
+            self.dialogMenu.addLine(conv.replyText("state", state))
+
     def changeAnime(self, name: str, isContinue: bool = False, isAsync: bool = True) -> None:
         """切换动画"""
         if name in self.animes.keys():
@@ -165,14 +173,14 @@ class PetWindow(QWidget):
         if prevState == "idle" and currentState == "idle":
             # 在dialogMenu回复
             self.dialogMenu.addLine(conv.replyText("state", currentState))
-        self.stateChanged.emit(currentState)
+        self.stateChanged.emit(prevState, currentState)
 
     @Slot(str)
     def onActStopped(self, id: str) -> None:
         if self.pluginManager.currentPlugin and self.pluginManager.currentPlugin.id == id:
             self.pluginManager.currentPlugin = None
         
-        self.replyState("idle")
+        self.operateState("idle", "idle")
 
     @Slot()
     def updateData(self) -> None:

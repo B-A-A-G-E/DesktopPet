@@ -1,0 +1,19 @@
+{
+  "name": "Pet",
+  "satiety": {
+    "min": 0,
+    "max": 100,
+    "value": 100
+  },
+  "fb": {
+    "min": 0,
+    "max": 100,
+    "value": 3
+  },
+  "settings": {
+    "stroke": {
+      "time": 3000,
+      "delta": 1
+    }
+  }
+}
