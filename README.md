@@ -86,15 +86,16 @@ pip install pyside6
 │   └── settingMenu.py      # 设置面板
 │
 └── plugin/                 # 自定义行动（插件）目录
-    ├── stroke.py           # 抚摸事件
-    ├── drag.py             # 拖拽事件
-    ├── move-randomly/      # 随机移动事件目录
-    │   ├── move_randomly.py  # 随机移动事件
-    │   └── data.json       # 配置文件
-    ├── use_fan.py          # 吹风扇行动
+    ├── idle.py             # 待机状态插件
+    ├── stroke.py           # 抚摸事件插件
+    ├── drag.py             # 拖拽事件插件
+    ├── move_randomly/      # 随机移动事件插件目录
+    │   ├── move_randomly.py
+    │   └── data.json
+    ├── use_fan.py          # 吹风扇行动插件
     └── attr/               # 属性系统插件目录
-        ├── attr.py         # 属性系统主文件
-        └── data.json       # 属性配置文件
+        ├── attr.py
+        └── data.json
 ```
 
 ## API

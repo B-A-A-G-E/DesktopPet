@@ -50,7 +50,7 @@ class PetWindow(QWidget):
         self.setLayout(self.mainlayout)
 
         # 状态机
-        self.stateMachine = StateMachine([k for k in data.state.keys()], data.base["idle-time"], "idle")
+        self.stateMachine = StateMachine([k for k in data.state.keys()])
 
         # 插件管理器
         self.pluginManager = PluginManager(self)
@@ -71,11 +71,6 @@ class PetWindow(QWidget):
         self.bind()
 
         self.pluginManager.startAutoPlugins()
-
-        # 入场并切换待机
-        self.stateMenu.log("Succeeded to entre", LogType.Entre)
-        #self.operateState("entre", "entre", isAsync = False)
-        self.operateState("idle", "idle")
 
     def bind(self) -> None:
         """绑定子窗口及信号"""
@@ -98,7 +93,7 @@ class PetWindow(QWidget):
         self.stateMachine.stateUndefined.connect(lambda state: self.stateMenu.log(f"Undefined state \"{state}\"", LogType.Error))
 
         # 绑定插件管理器信号
-        self.pluginManager.pluginLoadSucceeded.connect(lambda text: self.stateMenu.log(text, LogType.PluginLoaded))
+        self.pluginManager.pluginLoadSucceeded.connect(lambda text: self.stateMenu.log(f"succeeded to load plugin \"{text}\"", LogType.PluginLoaded))
         self.pluginManager.pluginError.connect(lambda text: self.stateMenu.log(text, LogType.Error))
 
         # 绑定动画加载失败信号
@@ -127,7 +122,7 @@ class PetWindow(QWidget):
         """执行对应行动时进行响应"""
         currentState = self.stateMachine.currentState
         
-        if currentState != state or (state == "idle" and currentState == "idle"):
+        if currentState != state:
             # 更新状态
             self.stateMachine.currentState = state
             # 在dialogMenu回复
@@ -138,14 +133,12 @@ class PetWindow(QWidget):
     def changeState(self, state: str) -> None:
         """更新状态"""
         currentState = self.stateMachine.currentState
-        if currentState != state or (state == "idle" and currentState == "idle"):
+        if currentState != state:
                 self.stateMachine.currentState = state
     
     def replyState(self, state: str) -> None:
         """回复状态"""
-        currentState = self.stateMachine.currentState
-        if (currentState != state and state != "idle") or (state == "idle" and currentState == "idle"):
-            self.dialogMenu.addLine(conv.replyText("state", state))
+        self.dialogMenu.addLine(conv.replyText("state", state))
 
     def changeAnime(self, name: str, isContinue: bool = False, isAsync: bool = True) -> None:
         """切换动画"""
@@ -170,23 +163,17 @@ class PetWindow(QWidget):
     @Slot(str, str)
     def onStateChanged(self, prevState: str, currentState: str) -> None:
         self.stateMenu.log(self.state, LogType.StateChanged)
-        if prevState == "idle" and currentState == "idle":
-            # 在dialogMenu回复
-            self.dialogMenu.addLine(conv.replyText("state", currentState))
         self.stateChanged.emit(prevState, currentState)
 
     @Slot(str)
     def onActStopped(self, id: str) -> None:
         if self.pluginManager.currentPlugin and self.pluginManager.currentPlugin.id == id:
             self.pluginManager.currentPlugin = None
-        
-        self.operateState("idle", "idle")
 
     @Slot()
     def updateData(self) -> None:
         """更新数据"""
         # petWindow
-        self.stateMachine.idleTime = data.base["idle-time"]
         self.animes = { k: anime.Anime(v["path"], v["fps"], v["loop"], self, self.imgLb) for k, v in data.anime.items()}
         self.collisions = { k: QRect(v["left"], v["top"], v["width"], v["height"]) for k, v in data.collision.items()}
         # dialogWindow

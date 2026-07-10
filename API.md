@@ -52,7 +52,6 @@
       - [属性（Property）](#属性property-2)
       - [方法 addState(state: str) -> None](#方法-addstatestate-str---none)
       - [方法 removeState(state: str) -> bool](#方法-removestatestate-str---bool)
-      - [槽函数 onIdleTimeout() -> None](#槽函数-onidletimeout---none)
   - [窗口类](#窗口类)
     - [ActionMenu](#actionmenu)
       - [关键属性](#关键属性)
@@ -428,7 +427,7 @@
 
 ## 模块 tool.stateMachine
 
-状态机模块，管理宠物的状态切换、状态列表和闲置计时器。
+状态机模块，管理宠物的状态切换、状态列表。
 
 ### 类 StateMachine(QObject)
 
@@ -438,7 +437,6 @@
 | :--- | :--- |
 | `stateChanged(str, str)` | 状态变更时发射，携带前一状态名和新状态名 |
 | `stateUndefined(str)` | 尝试切换至未定义状态时发射，携带状态名 |
-| `stateTimeout(str)` | 闲置超时时发射，携带超时状态名 |
 
 #### 属性
 
@@ -446,8 +444,6 @@
 | :--- | :--- | :--- |
 | `_stateList` | list[str] | 所有已注册状态的列表（内部存储） |
 | `_currentState` | str | 当前状态（内部存储） |
-| `_idleTime` | int | 闲置超时时间（毫秒）（内部存储） |
-| `_idleTimer` | QTimer | 闲置计时器（内部存储） |
 
 #### 属性（Property）
 
@@ -455,7 +451,6 @@
 | :--- | :--- | :--- | :--- |
 | `stateList` | list[str] | 读写（getter/setter） | 获取或设置所有已注册状态的列表 |
 | `currentState` | str | 读写（getter/setter） | 获取或设置当前状态，通过 setter 触发状态切换逻辑 |
-| `idleTime` | int | 读写（getter/setter） | 获取或设置闲置超时时间（毫秒），设置时会重启计时器 |
 
 #### 方法 addState(state: str) -> None
 
@@ -476,13 +471,6 @@
   - 是否成功移除（状态是否存在）
 - **说明**
   - 若状态不存在，发射 `stateUndefined` 信号并返回 `False`
-
-#### 槽函数 onIdleTimeout() -> None
-
-闲置超时处理槽函数。
-
-- **行为**
-  - 将当前状态切换为 `"idle"`
 
 ---
 
@@ -649,7 +637,6 @@
 重新加载配置数据并刷新动画和碰撞体。由 `SettingMenu.dataUpdated` 信号触发调用。
 
 - **说明**
-  - 更新 `stateMachine.idleTime`
   - 重新从 `data.anime` 和 `data.collision` 构建动画对象和碰撞体
   - 调用 `dialogMenu.resetQuesSelecter()` 刷新对话选项
   - 记录日志
@@ -663,7 +650,6 @@
   - `currentState`: 新状态名
 - **行为**
   - 向状态日志面板写入状态变更日志
-  - 若切换至 idle 状态，显示 idle 回复
   - 发射 `stateChanged` 信号
 
 #### 槽函数 onActStopped(id: str) -> None

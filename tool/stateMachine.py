@@ -3,18 +3,12 @@ from PySide6.QtCore import QObject, Signal, Slot, QTimer
 class StateMachine(QObject):
     stateChanged = Signal(str, str) # prevState, currentState
     stateUndefined = Signal(str)
-    stateTimeout = Signal(str) # 超时状态名
 
-    def __init__(self, stateList: list, idleTime: int, state: str = "idle"):
+    def __init__(self, stateList: list, state: str = ""):
         super().__init__()
 
         self._stateList: list[str] = stateList
         self._currentState: str = state
-        self._idleTime: int = idleTime
-
-        self._idleTimer: QTimer = QTimer()
-
-        self.bind()
     
     @property
     def stateList(self) -> list:
@@ -32,35 +26,18 @@ class StateMachine(QObject):
     @currentState.setter
     def currentState(self, state: str) -> bool:
         """更新状态"""
-        if self._currentState != state or (state == "idle" and self._currentState == "idle"):
+        # 防止重复更改
+        if self._currentState != state:
             if state not in self._stateList:
                 self.stateUndefined.emit(state)
                 return False
-            
-            # 切换计时器状态
-            if state != "idle":
-                self._idleTimer.stop()
-            else:
-                self._idleTimer.start(self._idleTime)
-            
+
             # 更新状态
             prevState = self._currentState
             self._currentState = state
             self.stateChanged.emit(prevState, self._currentState)
             return True
         return False
-    
-    @property
-    def idleTime(self) -> int:
-        return self._idleTime
-    
-    def bind(self):
-        self._idleTimer.timeout.connect(self.onIdleTimeout)
-    
-    @idleTime.setter
-    def idleTime(self, time: int) -> int:
-        self._idleTime = time
-        self._idleTimer.start(time)
 
     def addState(self, state: str) -> None:
         """添加新状态到状态列表"""
@@ -75,7 +52,3 @@ class StateMachine(QObject):
         else:
             self.stateUndefined.emit(state)
             return False
-
-    @Slot()
-    def onIdleTimeout(self) -> None:
-        self.currentState = "idle"

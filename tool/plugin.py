@@ -114,6 +114,7 @@ class PluginManager(QObject):
                 self.pluginError.emit(f"plugin \"{id}\" has not inherited from the base class \"Plugin\"")
                 return None
         except Exception as e:
+            print(e)
             self.pluginError.emit(f"failed to load plugin \"{id}\": {e}")
             return None
     

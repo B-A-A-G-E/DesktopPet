@@ -1,4 +1,9 @@
 {
+  "idle": {
+    "path": "plugin.idle",
+    "enabled": true,
+    "dependencies": []
+  },
   "stroke": {
     "path": "plugin.stroke",
     "enabled": true,
@@ -10,7 +15,7 @@
     "dependencies": []
   },
   "move-randomly": {
-    "path": "plugin.move-randomly.move_randomly",
+    "path": "plugin.move_randomly.move_randomly",
     "enabled": true,
     "dependencies": []
   },

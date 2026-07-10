@@ -5,11 +5,12 @@ import json
 import random
 
 from tool.plugin import Plugin
+from tool.data import LogType
 
 class Action(Plugin):
     def __init__(self):
         super().__init__()
-
+    
         self.id = "move-randomly"
         self.auto = True
         self.teardownImmed = False
@@ -51,7 +52,7 @@ class Action(Plugin):
         self.window.settingMenu.dataUpdated.connect(self.updateData)
     
     def loadData(self) -> None:
-        with open("./plugin/move-randomly/data.json", "r", encoding = "utf-8") as f:
+        with open("./plugin/move_randomly/data.json", "r", encoding = "utf-8") as f:
             self.data = json.load(f)
 
     def addPage(self) -> None:
@@ -79,6 +80,7 @@ class Action(Plugin):
             self.window.settingMenu.addPage(self.pg, "移动配置")
         except Exception as e:
             print(e)
+            self.window.stateMenu.log(e, LogType.Error)
     @Slot()
     def moveRandomly(self) -> None:
         if self.window.state == "idle":
@@ -128,5 +130,5 @@ class Action(Plugin):
             edit, isInt = v
             self.data[key] = int(edit.text()) if isInt else edit.text()
         
-        with open("./plugin/move-randomly/data.json", "w", encoding = "utf-8") as f:
+        with open("./plugin/move_randomly/data.json", "w", encoding = "utf-8") as f:
             f.write(json.dumps(self.data, ensure_ascii = False, indent = 2))
