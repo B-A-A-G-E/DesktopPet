@@ -35,9 +35,10 @@
 
 - Python 3.10+
 - PySide6
+- qtvscodestyle（可选，用于设置编辑器风格的主题）
 
 ``` shell
-pip install pyside6
+pip install pyside6 qtvscodestyle
 ```
 
 ## 项目结构
@@ -49,6 +50,7 @@ pip install pyside6
 ├── README.md
 ├── API.md                  # API 文档
 ├── customization.md        # 自定义教程
+├── CHANGELOG.md            # 更新日志
 ├── .gitignore
 ├── .gitattributes
 │
@@ -75,6 +77,7 @@ pip install pyside6
 │   ├── data.py             # 数据加载与全局变量
 │   ├── conv.py             # 对话回复生成器
 │   ├── mouse.py            # 鼠标交互辅助
+│   ├── pageFactory.py      # 页面工厂（用于设置面板）
 │   ├── stateMachine.py     # 状态机
 │   └── plugin.py           # 插件基类与插件管理器
 │
@@ -131,9 +134,6 @@ pip install pyside6
     - 支持自动启动插件（`auto = True`）
     - 支持插件依赖排序（通过 `dependencies` 字段）
     - 支持插件热卸载（`teardownImmed` 控制是否立即卸载）
-5. 设置面板
-    - 可视化编辑所有 JSON 配置文件（后续添加的 JSON 需在 `SettingMenu.addPage` 新建编辑页）
-    - 支持动态增删状态/对话文本条目
 
 ## 自定义
 
@@ -261,7 +261,6 @@ class Action(Plugin):
 > - 插件 ID 须与 `plugin.json` 中的键一致
 > - **类名必须为 `Action`**
 > - `teardownImmed` 控制插件停止后是否立即卸载，默认为 `True`。若不希望卸载（如用于后续复用），可设为 `False`
-> - 如需在状态面板中添加自定义属性页，可调用 `StateMenu.addPage`
 
 ---
 

@@ -25,7 +25,7 @@ class PetWindow(QWidget):
         super().__init__()
         
         # 无边框及透明背景
-        self.setWindowFlag(Qt.WindowType.FramelessWindowHint)
+        self.setWindowFlag(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         # 添加控件

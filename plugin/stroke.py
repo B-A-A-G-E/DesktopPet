@@ -1,4 +1,4 @@
-from PySide6.QtCore import Qt, QEvent, QPoint
+from PySide6.QtCore import Qt, QEvent
 from PySide6.QtGui import QMouseEvent
 
 from tool.plugin import Plugin

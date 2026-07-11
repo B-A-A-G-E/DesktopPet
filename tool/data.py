@@ -24,17 +24,20 @@ def loadData() -> None:
     global state, dialog
     global plugin
 
-    with open("./data/base.json", "r", encoding = "utf-8") as f:
-       base = json.load(f)
-    with open("./data/anime.json", "r", encoding = "utf-8") as f:
-       anime = json.load(f)
-    with open("./data/collision.json", "r", encoding = "utf-8") as f:
-       collision = json.load(f)
-    with open("./data/state.json", "r", encoding = "utf-8") as f:
-        state = json.load(f)
-    with open("./data/dialog.json", "r", encoding = "utf-8") as f:
-        dialog = json.load(f)
-    with open("./data/plugin.json", "r", encoding = "utf-8") as f:
-        plugin = json.load(f)
+    try:
+        with open("./data/base.json", "r", encoding = "utf-8") as f:
+            base = json.load(f)
+        with open("./data/anime.json", "r", encoding = "utf-8") as f:
+            anime = json.load(f)
+        with open("./data/collision.json", "r", encoding = "utf-8") as f:
+            collision = json.load(f)
+        with open("./data/state.json", "r", encoding = "utf-8") as f:
+            state = json.load(f)
+        with open("./data/dialog.json", "r", encoding = "utf-8") as f:
+            dialog = json.load(f)
+        with open("./data/plugin.json", "r", encoding = "utf-8") as f:
+            plugin = json.load(f)
+    except Exception as e:
+        print(e)
 
 loadData()

@@ -24,6 +24,19 @@
     - [函数 loadData() -> None](#函数-loaddata---none)
   - [模块 tool.mouse](#模块-toolmouse)
     - [函数 getCollision(widget: QWidget, pos: QPoint) -> str | None](#函数-getcollisionwidget-qwidget-pos-qpoint---str--none)
+  - [模块 tool.pageFactory](#模块-toolpagefactory)
+    - [函数 deleteLyt(lyt: QLayout) -> None](#函数-deletelytlyt-qlayout---none)
+    - [函数 clearLyt(lyt: QLayout) -> None](#函数-clearlytlyt-qlayout---none)
+    - [函数 getVal(edit: Any, dataType: str) -> Any](#函数-getvaledit-any-datatype-str---any)
+    - [函数 setVal(edit: Any, dataType: str, val: Any) -> None](#函数-setvaledit-any-datatype-str-val-any---none)
+    - [函数 createEdit(dataType: str) -> QWidget | None](#函数-createeditdatatype-str---qwidget--none)
+    - [类 FileSelecter(QWidget)](#类-fileselecterqwidget)
+    - [类 RemovableRow(QHBoxLayout)](#类-removablerowqhboxlayout)
+    - [类 PageFactory(QWidget)](#类-pagefactoryqwidget)
+    - [类 FormFactory(PageFactory)](#类-formfactorypagefactory)
+    - [类 DynamicListFactory(PageFactory)](#类-dynamiclistfactorypagefactory)
+    - [类 FormBoxFactory(PageFactory)](#类-formboxfactorypagefactory)
+    - [类 ListBoxFactory(PageFactory)](#类-listboxfactorypagefactory)
   - [模块 tool.plugin](#模块-toolplugin)
     - [类 Plugin(QObject)](#类-pluginqobject)
       - [属性](#属性)
@@ -116,7 +129,7 @@
 
 ### 函数 showLoadFailedMsg(window: QWidget, path: str = "") -> None
 
-显示图片加载失败的错误对话框，并提供恢复选项。
+显示图片加载失败的错误对话框。
 
 - **参数**
   - `window`: 父窗口
@@ -244,6 +257,134 @@
   - 命中状态名（键名），若未命中则返回 `None`
 - **说明**
   - `collisions` 格式：`{ "碰撞体名": QRect, ... }`
+
+---
+
+## 模块 tool.pageFactory
+
+页面工厂模块，用于构建设置面板和属性面板的配置界面。
+
+### 函数 deleteLyt(lyt: QLayout) -> None
+
+递归删除布局及其所有子控件。
+
+- **参数**
+  - `lyt`: 要删除的布局
+
+### 函数 clearLyt(lyt: QLayout) -> None
+
+清空布局中的所有子控件。
+
+- **参数**
+  - `lyt`: 要清空的布局
+
+### 函数 getVal(edit: Any, dataType: str) -> Any
+
+从编辑器控件获取值。
+
+- **参数**
+  - `edit`: 编辑器控件
+  - `dataType`: 数据类型，可选 `"bool"`、`"int"`、`"float"`、`"str"`、`"file"`、`"folder"`
+- **返回**
+  - 控件当前值
+
+### 函数 setVal(edit: Any, dataType: str, val: Any) -> None
+
+向编辑器控件设置值。
+
+- **参数**
+  - `edit`: 编辑器控件
+  - `dataType`: 数据类型
+  - `val`: 要设置的值
+
+### 函数 createEdit(dataType: str) -> QWidget | None
+
+根据数据类型创建对应的编辑器控件。
+
+- **参数**
+  - `dataType`: 数据类型
+- **返回**
+  - 对应的编辑器控件，如 `QCheckBox`、`QSpinBox`、`QLineEdit`、`FileSelecter` 等
+
+### 类 FileSelecter(QWidget)
+
+文件/文件夹选择器控件。
+
+- **信号**
+  - `textChanged(str)`: 路径改变时发射
+- **方法**
+  - `getFile() -> str`: 获取当前路径
+  - `setFile(file: str) -> None`: 设置路径
+
+### 类 RemovableRow(QHBoxLayout)
+
+可删除的编辑行，包含一个编辑器控件和一个删除按钮。
+
+- **信号**
+  - `aboutToRemove()`: 行被删除前发射
+- **方法**
+  - `getVal() -> Any`: 获取编辑器的值
+  - `setVal(val: Any) -> None`: 设置编辑器的值
+
+### 类 PageFactory(QWidget)
+
+创建标签页的工厂基类。
+
+- **信号**
+  - `valChanged(str, Any)`: 值改变时发射，携带键和新值
+  - `dataUpdated()`: 数据更新时发射
+- **方法**
+  - `build() -> None`: 构建页面
+  - `updateTab(data) -> None`: 更新界面
+  - `getData() -> Any`: 获取更新后的数据
+  - `setData(data) -> None`: 设置数据并更新界面
+  - `clear() -> None`: 清空页面内容
+
+### 类 FormFactory(PageFactory)
+
+表单工厂，用于创建键值对编辑页面。
+
+- **参数**
+  - `fields: list[tuple[str, str, str]]`: 字段列表，每个元素为 `(显示名称, 键, 数据类型)`
+  - `data: dict`: 数据字典
+- **方法**
+  - `getData() -> dict[str, Any]`: 获取所有字段的值
+
+### 类 DynamicListFactory(PageFactory)
+
+动态列表工厂，用于创建可增删的字符串列表编辑页面。
+
+- **参数**
+  - `data: list[str]`: 初始数据列表
+  - `rmBtnText: str`: 删除按钮文本，默认为 `"删除"`
+  - `addBtnText: str`: 添加按钮文本，默认为 `"新建"`
+- **方法**
+  - `getData() -> list[str]`: 获取列表数据
+
+### 类 FormBoxFactory(PageFactory)
+
+表单盒子工厂，用于创建分组的表单编辑页面（`QToolBox` 容器）。
+
+- **参数**
+  - `fields: list[tuple[str, str, list[tuple[str, str, str]]]]`: 字段列表，每个元素为 `(分组名称, 键, FormFactory.fields)`
+  - `data: dict`: 数据字典
+- **信号**
+  - `formValChanged(str, str, Any)`: 表单值改变时发射，携带分组键、表单键和新值
+  - `formDataUpdated(str)`: 表单数据更新时发射，携带分组键
+- **方法**
+  - `getData() -> dict[str, dict[str, Any]]`: 获取所有分组的数据
+
+### 类 ListBoxFactory(PageFactory)
+
+列表盒子工厂，用于创建分组的列表编辑页面（`QToolBox` 容器）。
+
+- **参数**
+  - `fields: list[tuple[str, str]]`: 字段列表，每个元素为 `(分组名称, 键)`
+  - `data: dict`: 数据字典
+- **信号**
+  - `listDataUpdated(str)`: 列表数据更新时发射，携带分组键
+- **方法**
+  - `getData() -> dict[str, list[str]]`: 获取所有分组的列表数据
 
 ---
 
@@ -519,6 +660,7 @@
 | 方法 | 说明 |
 | :--- | :--- |
 | `log(text: str, type: LogType = None)` | 添加日志条目，格式为 `时间  LogType.xxx/None:    文本` |
+
 #### 扩展方法
 
 | 方法 | 说明 |
@@ -535,6 +677,8 @@
 | 信号 | 触发时机 |
 | :--- | :--- |
 | `dataUpdated()` | 应用配置后发射，用于通知刷新数据 |
+| `updateCancelled()` | 取消配置后发射 |
+| `saveError()` | 保存配置失败时发射 |
 
 #### 关键方法
 
@@ -568,7 +712,7 @@
   - 调用 `replyState(state)` 获取并显示回复
   - 调用 `changeAnime(anime, isContinue, isAsync)` 切换动画
 - **说明**
-  - 若目标状态与当前状态相同且非 idle，不执行任何操作
+  - 若目标状态与当前状态相同，不执行任何操作
 
 #### 核心方法 changeState(state: str) -> None
 
@@ -579,7 +723,7 @@
 - **行为**
   - 调用 `stateMachine.currentState = state` 更新状态
 - **说明**
-  - 若目标状态与当前状态相同且非 idle，不执行任何操作
+  - 若目标状态与当前状态相同，不执行任何操作
   - 通常与 `replyState` 和 `changeAnime` 配合使用
 
 #### 核心方法 replyState(state: str) -> None
@@ -592,7 +736,6 @@
   - 调用 `conv.replyText("state", state)` 获取随机回复
   - 通过 `dialogMenu.addLine` 写入对话面板
 - **说明**
-  - 若目标状态与当前状态相同且非 idle，不执行任何操作
   - 若状态无对应回复文本，则不显示
 
 #### 核心方法 changeAnime(name: str, isContinue: bool = False, isAsync: bool = True) -> None
@@ -660,7 +803,6 @@
   - `id`: 停止的插件 ID
 - **行为**
   - 若当前正在运行的插件 ID 匹配，通过 `pluginManager.currentPlugin = None` 停止
-  - 调用 `operateState("idle", "idle")` 切换回待机状态
 
 #### 信号
 

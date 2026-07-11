@@ -5,7 +5,7 @@ import json
 import random
 
 from tool.plugin import Plugin
-from tool.data import LogType
+from tool.pageFactory import FormFactory
 
 class Action(Plugin):
     def __init__(self):
@@ -56,31 +56,17 @@ class Action(Plugin):
             self.data = json.load(f)
 
     def addPage(self) -> None:
-        try:
-            self.pg = QWidget()
-            layout = QFormLayout()
-
-            # 字段配置: (显示名称(label), 数据键(key), 是否整数(isInt))
-            fields = [
-                ("待机移动时间（毫秒）", "idle-move-time", True),
-                ("移动最小步长", "move-min-step", True),
-                ("移动最大步长", "move-max-step", True),
-                ("移动步进时间（毫秒）", "move-step-time", True),
-                ("移动速度（像素/步）", "move-speed", True),
-            ]
-
-            self.pg.edits = {}
-            for label, key, isInt in fields:
-                value = self.data[key]
-                edit = QLineEdit(text = str(value) if isInt else value)
-                layout.addRow(label, edit)
-                self.pg.edits[key] = (edit, isInt)
-
-            self.pg.setLayout(layout)
-            self.window.settingMenu.addPage(self.pg, "移动配置")
-        except Exception as e:
-            print(e)
-            self.window.stateMenu.log(e, LogType.Error)
+        page = FormFactory([
+                ("待机移动时间（毫秒）", "idle-move-time", "int"),
+                ("移动最小步长", "move-min-step", "int"),
+                ("移动最大步长", "move-max-step", "int"),
+                ("移动步进时间（毫秒）", "move-step-time", "int"),
+                ("移动速度（像素/步）", "move-speed", "int"),
+            ], self.data
+        )
+        page.build()
+        self.window.settingMenu.addPage(page, "移动配置")
+    
     @Slot()
     def moveRandomly(self) -> None:
         if self.window.state == "idle":
@@ -124,11 +110,7 @@ class Action(Plugin):
     
     @Slot()
     def updateData(self) -> None:
-        self.pg = self.window.settingMenu.getPage("移动配置")
-        
-        for key, v in self.pg.edits.items():
-            edit, isInt = v
-            self.data[key] = int(edit.text()) if isInt else edit.text()
-        
+        self.data = self.window.settingMenu.getPage("移动配置").getData()
+
         with open("./plugin/move_randomly/data.json", "w", encoding = "utf-8") as f:
             f.write(json.dumps(self.data, ensure_ascii = False, indent = 2))
