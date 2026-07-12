@@ -35,10 +35,9 @@
 
 - Python 3.10+
 - PySide6
-- qtvscodestyle（可选，用于设置编辑器风格的主题）
 
 ``` shell
-pip install pyside6 qtvscodestyle
+pip install pyside6
 ```
 
 ## 项目结构
