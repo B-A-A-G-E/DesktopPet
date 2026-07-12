@@ -110,6 +110,7 @@ class SettingMenu(QWidget):
             self.saveError.emit(e)
         
         self.dataUpdated.emit()
+        self.close()
 
     def cancel(self) -> None:
         self.pages[0].setData(data.base)

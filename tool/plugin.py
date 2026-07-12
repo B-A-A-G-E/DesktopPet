@@ -1,7 +1,10 @@
 from PySide6.QtCore import QObject, Signal, QEvent
 
 from typing import TYPE_CHECKING
-import importlib
+from types import ModuleType
+from importlib import util
+import sys
+import os
 
 from tool import data
 
@@ -101,7 +104,7 @@ class PluginManager(QObject):
             if id in self.plugins:
                 return
             
-            module = importlib.import_module(data.plugin[id]["path"])
+            module = self.importModule(data.plugin[id]["path"])
             pluginClass = getattr(module, "Action")
             
             if pluginClass and issubclass(pluginClass, Plugin) and pluginClass is not Plugin:
@@ -118,6 +121,31 @@ class PluginManager(QObject):
             self.pluginError.emit(f"failed to load plugin \"{id}\": {e}")
             return None
     
+    def importModule(self, path: str) -> ModuleType:
+        if path.startswith("./") or path.startswith(".\\"): # path 为相对路径（window/macos，linux 不用处理）
+            path = os.path.abspath(os.path.join(os.getcwd(), path[2:])) # 工作目录绝对路径 + 插件相对路径（去 ./ 或 .\）
+        elif (len(path) > 3 and path[1] == ":") or path.startswith("/"): # path 为绝对路径
+            path = os.path.abspath(path)
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"cannot find plugin \"{path}\"")
+        
+        fileName = os.path.basename(path)
+        moduleName = os.path.splitext(fileName)[0]
+
+        spec = util.spec_from_file_location(moduleName, path)
+        if spec is None:
+            raise ImportError(f"cannot load module from \"path\"")
+        
+        module = util.module_from_spec(spec)
+
+        # 添加到 sys.modules
+        if moduleName not in sys.modules:
+            sys.modules[moduleName] = module
+        
+        spec.loader.exec_module(module)
+
+        return module
+        
     def sortPlugins(self) -> list[str]:
         """通过检查依赖项对插件加载顺序排序"""
         # 1. 构建依赖图
@@ -127,7 +155,7 @@ class PluginManager(QObject):
         
         # 初始化所有插件
         for id in ids:
-            deps = data.plugin.get(id, {}).get("dependencies", [])
+            deps = data.plugin.get(id, {}).get("deps", [])
             graph[id] = deps
             inDegree[id] = 0  # 初始入度为0
         

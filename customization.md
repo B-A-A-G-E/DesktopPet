@@ -25,6 +25,7 @@
       - [4. 注册状态并配置状态反馈文本](#4-注册状态并配置状态反馈文本)
       - [5. 配置动画（可选）](#5-配置动画可选)
       - [6. 配置碰撞体（可选）](#6-配置碰撞体可选)
+      - [7. 使用页面工厂构建自定义面板（可选）](#7-使用页面工厂构建自定义面板可选)
     - [完整示例：跳舞插件](#完整示例跳舞插件)
       - [插件代码](#插件代码)
       - [注册](#注册)
@@ -33,8 +34,7 @@
     - [进阶：自启动插件](#进阶自启动插件)
     - [进阶：事件过滤器](#进阶事件过滤器)
     - [进阶：插件依赖](#进阶插件依赖)
-    - [进阶：扩展设置面板](#进阶扩展设置面板)
-    - [进阶：扩展状态面板](#进阶扩展状态面板)
+    - [进阶：使用页面工厂扩展设置面板](#进阶使用页面工厂扩展设置面板)
     - [进阶：控制插件卸载行为](#进阶控制插件卸载行为)
   - [常见问题](#常见问题)
 
@@ -193,8 +193,6 @@
 2. 编写继承自 `tool.plugin.Plugin` 的类 `Action`
 3. 在 `./data/plugin.json` 中注册插件
 4. （可选）配置动画、碰撞体和状态反馈文本
-5. （可选）在状态面板中添加属性页
-6. （可选）在设置面板中添加配置页
 
 ### 详细步骤
 
@@ -268,17 +266,18 @@ class Action(Plugin):  # 类名必须为 Action
 
 ``` json
 "action": {
-    "path": "plugin.action",
+    "path": "./plugin/action.py",
     "enabled": true,
-    "dependencies": []
+    "deps": []
 }
 ```
 
 - 键：插件 ID（须与 `self.id` 一致）
 - 值：
-    - `path`: 模块导入路径（如 `plugin.action`）
+    - `path`: 模块导入路径（如 `./plugin/action.py`）
     - `enabled`: 是否启用
-    - `dependencies`: 依赖的插件 ID 列表（用于控制加载顺序）
+    - `deps`: 依赖的插件 ID 列表（用于控制加载顺序）
+
 
 #### 4. 注册状态并配置状态反馈文本
 
@@ -326,6 +325,17 @@ class Action(Plugin):  # 类名必须为 Action
 
 导入 `tool.mouse.getCollision` 函数获取鼠标所在的碰撞体。
 
+#### 7. 使用页面工厂构建自定义面板（可选）
+
+页面工厂（`tool.pageFactory`）提供了四种工厂类，可用于快速构建插件配置界面：
+
+- **`FormFactory`**：创建键值对表单
+- **`DynamicListFactory`**：创建可增删的动态列表
+- **`FormBoxFactory`**：创建分组表单（`QToolBox` 容器）
+- **`ListBoxFactory`**：创建分组列表（`QToolBox` 容器）
+
+使用示例见下方的 [进阶：使用页面工厂扩展设置面板](#进阶使用页面工厂扩展设置面板)。
+
 ### 完整示例：跳舞插件
 
 #### 插件代码
@@ -362,9 +372,9 @@ class Action(Plugin):
 // data/plugin.json
 {
     "dance": {
-        "path": "plugin.dance",
+        "path": "./plugin/dance.py",
         "enabled": true,
-        "dependencies": []
+        "deps": []
     }
 }
 ```
@@ -440,69 +450,51 @@ class Action(Plugin):
 
 ### 进阶：插件依赖
 
-若插件需要依赖其他插件，可在 `plugin.json` 中通过 `dependencies` 字段声明：
+若插件需要依赖其他插件，可在 `plugin.json` 中通过 `deps` 字段声明：
 
 ``` json
 "plugin-b": {
-    "path": "plugin.plugin-b",
+    "path": "./plugin/plugin_b.py",
     "enabled": true,
-    "dependencies": ["plugin-a"]
+    "deps": ["plugin-a"]
 }
 ```
 
 - 插件管理器会按拓扑顺序加载插件，确保依赖的插件先被加载
 - 若存在循环依赖，会抛出错误并停止加载
 
-### 进阶：扩展设置面板
+### 进阶：使用页面工厂扩展设置面板
 
-插件可以通过 `SettingMenu.addPage` 向设置面板添加自定义配置页：
-
-``` python
-def setup(self, window) -> None:
-    super().setup(window)
-    
-    # 创建自定义设置页面
-    self.pg = QWidget()
-    layout = QFormLayout()
-    self.myEdit = QLineEdit("默认值")
-    layout.addRow("我的配置:", self.myEdit)
-    self.pg.setLayout(layout)
-    
-    # 添加到设置面板
-    self.window.settingMenu.addPage(self.pg, "我的插件配置")
-    
-    # 监听数据更新信号以保存配置
-    self.window.settingMenu.dataUpdated.connect(self.saveConfig)
-```
-
-### 进阶：扩展状态面板
-
-插件可以通过 `StateMenu.addPage` 向状态面板添加自定义标签页，用于显示宠物属性或状态信息：
+v0.6.1 提供了页面工厂，插件可以通过 `SettingMenu.addPage` 向设置面板添加自定义配置页：
 
 ``` python
-def setup(self, window) -> None:
-    super().setup(window)
-    
-    # 创建自定义属性页面
-    self.pg = QWidget()
-    layout = QFormLayout()
-    
-    # 添加进度条显示属性
-    self.bar = QProgressBar(minimum=0, maximum=100, value=50)
-    layout.addRow("好感度:", self.bar)
-    self.pg.setLayout(layout)
-    
-    # 添加到状态面板
-    self.window.stateMenu.addPage(self.pg, "我的属性")
-    
-    # 监听状态变化以更新属性
-    self.window.stateChanged.connect(self.onStateChanged)
+from tool.pageFactory import FormFactory
+
+class Action(Plugin):
+    def setup(self, window) -> None:
+        super().setup(window)
+        
+        # 使用 FormFactory 创建配置页面
+        page = FormFactory([
+            ("配置项1", "config1", "str"),
+            ("配置项2", "config2", "int"),
+            ("启用功能", "enabled", "bool"),
+        ], self.config_data)
+        page.build()
+        
+        # 添加到设置面板
+        self.window.settingMenu.addPage(page, "我的插件配置")
+        
+        # 监听数据更新
+        page.valChanged.connect(self.onConfigChanged)
+        self.window.settingMenu.dataUpdated.connect(self.saveConfig)
 ```
 
-> **说明**：
-> - `StateMenu.addPage` 与 `SettingMenu.addPage` 用法一致
-> - 属性面板位于状态面板的标签页中，与日志面板并列
-> - 可参考 `plugin/attr/attr.py` 的完整实现
+**页面工厂类型选择**：
+- **`FormFactory`**：适用于键值对配置
+- **`DynamicListFactory`**：适用于可增删字符串列表配置
+- **`FormBoxFactory`**：适用于分组表单配置
+- **`ListBoxFactory`**：适用于分组列表配置
 
 ### 进阶：控制插件卸载行为
 
@@ -531,7 +523,7 @@ class Action(Plugin):
 
 A: 检查以下几点：
 1. 文件名和 `plugin.json` 中的键是否一致
-2. 模块导入路径是否正确（如 `plugin.xxx`）
+2. 模块导入路径是否正确（如 `C:/DesktopPet/plugin/xxx.py` 或 `./plugin/xxx.py`）
 3. 类名是否为 `Action`
 4. `self.id` 是否与 `plugin.json` 中的键一致
 
@@ -565,11 +557,3 @@ A: `PetWindow` 持有 `PluginManager` 实例，通过它管理所有插件的加
 **Q: `teardownImmed` 和 `teardown` 有什么区别？**
 
 A: `teardownImmed` 是一个控制属性，决定插件停止后是否立即调用 `teardown` 方法。`teardown` 是实际执行资源清理的方法，你可以在其中进行信号解绑、删除临时控件等。
-
-**Q: 如何在状态面板中添加自定义属性页？**
-
-A: 在插件的 `setup` 方法中调用 `self.window.stateMenu.addPage(page, label)` 即可。可参考 `plugin/attr/attr.py` 的实现。
-
-**Q: 如何在设置面板中添加自定义配置页？**
-
-A: 在插件的 `setup` 方法中调用 `self.window.settingMenu.addPage(page, label)` 即可。

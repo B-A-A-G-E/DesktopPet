@@ -1,18 +1,15 @@
-from PySide6.QtWidgets import QApplication
+import PySide6.QtWidgets
 
-import qtvscodestyle
-
+import tool
 from window.petWindow import PetWindow
-from tool.data import LogType
 
 if __name__ == "__main__":
-    app = QApplication([])
-    app.setStyleSheet(qtvscodestyle.load_stylesheet(qtvscodestyle.Theme.LIGHT_VS))
+    app = PySide6.QtWidgets.QApplication([])
 
-    window = PetWindow()
-    app.aboutToQuit.connect(window.aboutToQuit.emit)
-    window.show()
+    petWindow = PetWindow()
+    app.aboutToQuit.connect(petWindow.aboutToQuit.emit)
+    petWindow.show()
     app.exec()
     
-    window.operateState("exit", "exit", isAsync = False)
-    window.stateMenu.log("Succeeded to exit", LogType.Exit)
+    petWindow.operateState("exit", "exit", isAsync = False)
+    petWindow.stateMenu.log("Succeeded to exit", tool.data.LogType.Exit)

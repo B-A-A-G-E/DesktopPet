@@ -53,6 +53,7 @@
       - [属性（Property）](#属性property-1)
       - [方法 loadAllPlugins() -> None](#方法-loadallplugins---none)
       - [方法 loadPlugin(id: str) -> Plugin | None](#方法-loadpluginid-str---plugin--none)
+      - [方法 importModule(path: str) -> ModuleType](#方法-importmodulepath-str---moduletype)
       - [方法 sortPlugins() -> list[str]](#方法-sortplugins---liststr)
       - [方法 startAutoPlugins() -> None](#方法-startautoplugins---none)
       - [方法 getPlugin(id: str) -> Plugin | None](#方法-getpluginid-str---plugin--none)
@@ -517,6 +518,30 @@
 - **返回**
   - 插件实例，若加载失败则返回 `None`
 
+#### 方法 importModule(path: str) -> ModuleType
+
+导入指定路径的 Python 模块，支持相对路径和绝对路径。
+
+- **参数**
+  - `path`: 模块文件路径，支持以下格式：
+    - 相对路径：`./plugin/action.py` 或 `.\plugin\action.py` (Windows, MacOS) 或 `plugin/action.py` (Linux)
+    - 绝对路径：`C:/DesktopPet/plugin/action.py` (Windows) 或 `/home/user/plugin/action.py` (Linux, MacOS)
+- **返回**
+  - 导入的模块对象（`ModuleType`）
+- **异常**
+  - `FileNotFoundError`: 当指定的路径不存在时抛出
+  - `ImportError`: 当无法从路径加载模块时抛出
+- **行为**
+  1. 将相对路径转换为绝对路径
+  2. 检查路径是否存在
+  3. 使用 `importlib.util.spec_from_file_location` 创建模块规格
+  4. 创建模块对象并添加到 `sys.modules`
+  5. 执行模块代码并返回模块对象
+- **说明**
+  - 该函数解决了 PyInstaller 等打包工具下插件加载失败的问题
+  - 支持跨平台路径格式（Windows 和 Linux/macOS）
+  - 导入的模块会被缓存到 `sys.modules` 中，避免重复导入
+
 #### 方法 sortPlugins() -> list[str]
 
 通过检查依赖项对插件加载顺序进行拓扑排序。
@@ -665,7 +690,7 @@
 
 | 方法 | 说明 |
 | :--- | :--- |
-| `addPage(page: QWidget, label: str)` | 由插件调用，添加属性/配置页面到状态面板的标签页中 |
+| `addPage(page: QWidget, label: str)` | 由插件调用，添加属性/配置页面到状态面板的标签页中。**推荐使用 `PageFactory` 的子类构建页面** |
 | `getPage(label: str)` | 获取已添加的页面，用于在数据更新时刷新页面内容 |
 
 ### SettingMenu
@@ -691,7 +716,7 @@
 
 | 方法 | 说明 |
 | :--- | :--- |
-| `addPage(page: QWidget, label: str)` | 由插件调用，添加自定义配置页面到设置面板的标签页中 |
+| `addPage(page: QWidget, label: str)` | 由插件调用，添加自定义配置页面到设置面板的标签页中。**推荐使用 `PageFactory` 的子类构建页面** |
 | `getPage(label: str)` | 获取已添加的页面，用于在数据更新时刷新页面内容 |
 
 ### PetWindow

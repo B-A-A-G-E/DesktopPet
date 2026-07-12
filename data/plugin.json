@@ -1,32 +1,32 @@
 {
   "idle": {
-    "path": "plugin.idle",
+    "path": "./plugin/idle.py",
     "enabled": true,
-    "dependencies": []
+    "deps": []
   },
   "stroke": {
-    "path": "plugin.stroke",
+    "path": "./plugin/stroke.py",
     "enabled": true,
-    "dependencies": []
+    "deps": []
   },
   "drag": {
-    "path": "plugin.drag",
+    "path": "./plugin/drag.py",
     "enabled": true,
-    "dependencies": []
+    "deps": []
   },
   "move-randomly": {
-    "path": "plugin.move_randomly.move_randomly",
+    "path": "./plugin/move_randomly/move_randomly.py",
     "enabled": true,
-    "dependencies": []
+    "deps": []
   },
   "use-fan": {
-    "path": "plugin.use_fan",
+    "path": "./plugin/use_fan.py",
     "enabled": true,
-    "dependencies": []
+    "deps": []
   },
   "attr": {
-    "path": "plugin.attr.attr",
+    "path": "./plugin/attr/attr.py",
     "enabled": true,
-    "dependencies": []
+    "deps": []
   }
 }

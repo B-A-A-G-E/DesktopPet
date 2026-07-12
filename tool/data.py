@@ -17,6 +17,7 @@ class LogType(Enum):
     PluginLoaded = 5
 
 
+
 def loadData() -> None:
     global base
     global anime

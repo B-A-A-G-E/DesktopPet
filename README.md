@@ -77,7 +77,7 @@ pip install pyside6 qtvscodestyle
 │   ├── data.py             # 数据加载与全局变量
 │   ├── conv.py             # 对话回复生成器
 │   ├── mouse.py            # 鼠标交互辅助
-│   ├── pageFactory.py      # 页面工厂（用于设置面板）
+│   ├── pageFactory.py      # 页面工厂（用于构建设置/属性面板）
 │   ├── stateMachine.py     # 状态机
 │   └── plugin.py           # 插件基类与插件管理器
 │
@@ -86,7 +86,7 @@ pip install pyside6 qtvscodestyle
 │   ├── dialogMenu.py       # 对话面板
 │   ├── stateMenu.py        # 状态日志面板
 │   ├── actionMenu.py       # 行动面板
-│   └── settingMenu.py      # 设置面板
+│   └── settingMenu.py      # 设置面板（基于 PageFactory 构建）
 │
 └── plugin/                 # 自定义行动（插件）目录
     ├── idle.py             # 待机状态插件
@@ -103,7 +103,7 @@ pip install pyside6 qtvscodestyle
 
 ## API
 
-详见 [API.md](./API.md)。
+详见 [API.md](./API.md)，其中 `tool.pageFactory` 模块提供了用于构建设置面板和属性面板的工厂类。
 
 ## 操作简介（宠物本体）
 
@@ -134,6 +134,10 @@ pip install pyside6 qtvscodestyle
     - 支持自动启动插件（`auto = True`）
     - 支持插件依赖排序（通过 `dependencies` 字段）
     - 支持插件热卸载（`teardownImmed` 控制是否立即卸载）
+5. 页面工厂（v0.6.1 新增）
+    - 提供 `FormFactory`、`DynamicListFactory`、`FormBoxFactory`、`ListBoxFactory` 等工厂类
+    - 用于快速构建设置面板和插件属性面板
+    - 支持数据绑定、自动信号转发和值同步
 
 ## 自定义
 
@@ -227,6 +231,7 @@ pip install pyside6 qtvscodestyle
 2. 编写继承自 `tool.plugin.Plugin` 的类 `Action`
 3. 在 `./data/plugin.json` 中注册插件
 4. （可选）配置动画、碰撞体和状态反馈文本
+5. （可选）使用 `PageFactory` 在状态面板/设置面板中添加自定义页面
 
 **插件基础模板**：
 
@@ -261,6 +266,7 @@ class Action(Plugin):
 > - 插件 ID 须与 `plugin.json` 中的键一致
 > - **类名必须为 `Action`**
 > - `teardownImmed` 控制插件停止后是否立即卸载，默认为 `True`。若不希望卸载（如用于后续复用），可设为 `False`
+> - 在插件中可使用 `tool.pageFactory` 提供的工厂类快速构建设置页面或属性面板
 
 ---
 
