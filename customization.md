@@ -78,14 +78,14 @@
 
 ### 步骤
 
-1. **准备帧图片**：在 `./img/` 下新建文件夹放入帧图片。图片须**按数字顺序命名**（如 `0.png`, `1.png`, `2.png`...）。
-2. **编辑 `./data/anime.json`**：配置动画，格式如下：
+1. **准备帧图片**：在 `./pet/你的宠物/img/` 下新建文件夹放入帧图片。图片须**按数字顺序命名**（如 `0.png`, `1.png`, `2.png`...）。
+2. **编辑 `./pet/你的宠物/config/anime.json`**：配置动画，格式如下：
 
 ### 动画配置示例
 
 ``` json
 "动画名": {
-    "path": "./img/文件夹路径",
+    "path": "./pet/你的宠物/img/文件夹路径",
     "fps": 30,
     "loop": true
 }
@@ -111,7 +111,7 @@
 ### 步骤
 
 1. **确定碰撞区域**：在图片上测量碰撞区相对于图片左上角的偏移和尺寸。
-2. **编辑 `./data/collision.json`**：配置碰撞体。
+2. **编辑 `./pet/你的宠物/config/collision.json`**：配置碰撞体。
 
 ### 碰撞体配置示例
 
@@ -139,7 +139,7 @@
 
 ### 步骤
 
-1. **编辑 `./data/state.json`**：添加或修改条目。
+1. **编辑 `./pet/你的宠物/config/state.json`**：添加或修改条目。
 
 ``` json
 "状态名": [
@@ -164,7 +164,7 @@
 
 ### 步骤
 
-1. **编辑 `./data/dialog.json`**：添加或修改条目。
+1. **编辑 `./pet/你的宠物/config/dialog.json`**：添加或修改条目。
 
 ``` json
 "问题": [
@@ -191,7 +191,7 @@
 
 1. 在 `plugin/` 目录下新建 Python 文件
 2. 编写继承自 `tool.plugin.Plugin` 的类 `Action`
-3. 在 `./data/plugin.json` 中注册插件
+3. 在 `./pet/你的宠物/config/plugin.json` 中注册插件
 4. （可选）配置动画、碰撞体和状态反馈文本
 
 ### 详细步骤
@@ -262,7 +262,7 @@ class Action(Plugin):  # 类名必须为 Action
 
 #### 3. 注册插件
 
-编辑 `./data/plugin.json`：
+编辑 `./pet/你的宠物/config/plugin.json`：
 
 ``` json
 "action": {
@@ -281,7 +281,7 @@ class Action(Plugin):  # 类名必须为 Action
 
 #### 4. 注册状态并配置状态反馈文本
 
-在 `./data/state.json` 中添加状态反馈文本（可选）：
+在 `./pet/你的宠物/config/state.json` 中添加状态反馈文本（可选）：
 
 ``` json
 "状态名": []  // 只注册状态，不显示回复
@@ -298,21 +298,21 @@ class Action(Plugin):  # 类名必须为 Action
 
 #### 5. 配置动画（可选）
 
-若行动需要播放动画，在 `./data/anime.json` 中添加条目：
+若行动需要播放动画，在 `./pet/你的宠物/config/anime.json` 中添加条目：
 
 ``` json
 "动画名": {
-    "path": "./img/帧文件夹路径",
+    "path": "./pet/你的宠物/img/帧文件夹路径",
     "fps": 30,
     "loop": true
 }
 ```
 
-在 `start` 中调用 `self.window.changeAnime(self.id)` 即可播放。
+在 `start` 中调用 `self.window.changeAnime(动画名)` 即可播放。
 
 #### 6. 配置碰撞体（可选）
 
-在 `./data/collision.json` 中添加碰撞体：
+在 `./pet/你的宠物/config/collision.json` 中添加碰撞体：
 
 ``` json
 "碰撞体名": {
@@ -369,7 +369,7 @@ class Action(Plugin):
 #### 注册
 
 ``` json
-// data/plugin.json
+// pet/你的宠物/config/plugin.json
 {
     "dance": {
         "path": "./plugin/dance.py",
@@ -382,9 +382,9 @@ class Action(Plugin):
 #### 动画配置
 
 ``` json
-// data/anime.json
+// pet/你的宠物/config/anime.json
 "dance": {
-    "path": "./img/dance",
+    "path": "./pet/你的宠物/img/dance",
     "fps": 20,
     "loop": true
 }
@@ -393,7 +393,7 @@ class Action(Plugin):
 #### 状态反馈文本
 
 ``` json
-// data/state.json
+// pet/你的宠物/config/state.json
 "dance": [
     "喵喵喵！",
     "一起来跳舞吧！"
@@ -465,7 +465,7 @@ class Action(Plugin):
 
 ### 进阶：使用页面工厂扩展设置面板
 
-v0.6.1 提供了页面工厂，插件可以通过 `SettingMenu.addPage` 向设置面板添加自定义配置页：
+插件可以通过 `SettingMenu.addPage` 向设置面板添加自定义配置页：
 
 ``` python
 from tool.pageFactory import FormFactory

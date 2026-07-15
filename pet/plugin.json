@@ -1,32 +1,26 @@
 {
   "idle": {
     "path": "./plugin/idle.py",
-    "enabled": true,
     "deps": []
   },
   "stroke": {
     "path": "./plugin/stroke.py",
-    "enabled": true,
     "deps": []
   },
   "drag": {
     "path": "./plugin/drag.py",
-    "enabled": true,
     "deps": []
   },
   "move-randomly": {
     "path": "./plugin/move_randomly/move_randomly.py",
-    "enabled": true,
     "deps": []
   },
   "use-fan": {
     "path": "./plugin/use_fan.py",
-    "enabled": true,
     "deps": []
   },
   "attr": {
     "path": "./plugin/attr/attr.py",
-    "enabled": true,
     "deps": []
   }
 }

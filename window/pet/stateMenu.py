@@ -3,15 +3,17 @@ from PySide6.QtGui import Qt, QAction
 
 from datetime import datetime
 
-from tool import data
-from tool.data import LogType
+from tool.config import ConfigManager
+from tool.config import LogType
 
 class StateMenu(QWidget):
-    def __init__(self):
+    def __init__(self, config: ConfigManager):
         super().__init__()
         
         self.setWindowTitle("State Menu")
         self.resize(400, 300)
+
+        self.config = config
 
         self.pages: dict[str, QWidget] = {} # 插件传入的页面
 
@@ -39,7 +41,7 @@ class StateMenu(QWidget):
         # 向logBox添加日志
         self.logBox.appendPlainText(logLine)
         # 写入日志文件
-        with open(data.base["log-path"], "a", encoding = "utf-8") as f:
+        with open(self.config.base["log-path"], "a", encoding = "utf-8") as f:
             f.write(logLine +  '\n')
     
     def addPage(self, page: QWidget, label: str) -> None:

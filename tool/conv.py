@@ -1,12 +1,12 @@
 import random
 
-from tool import data
+from tool.config import ConfigManager
 
-def replyText(type: str, act: str) -> str:
+def replyText(type: str, act: str, config: ConfigManager) -> str:
     if type == "state":
-        if act in data.state:
-            return data.state[act][random.randint(0, len(data.state[act]) - 1)]
+        if act in config.state:
+            return config.state[act][random.randint(0, len(config.state[act]) - 1)]
     elif type == "dialog":
-        if act in data.dialog:
-            return data.dialog[act][random.randint(0, len(data.dialog[act]) - 1)]
+        if act in config.dialog:
+            return config.dialog[act][random.randint(0, len(config.dialog[act]) - 1)]
     return ""

@@ -6,10 +6,8 @@ from importlib import util
 import sys
 import os
 
-from tool import data
-
 if TYPE_CHECKING:
-    from window.petWindow import PetWindow
+    from window.pet.petWindow import PetWindow
 
 class Plugin(QObject):
     """插件基类"""
@@ -61,7 +59,7 @@ class PluginManager(QObject):
     
     currentPluginChanged = Signal(str, str)
 
-    def __init__(self, petWindow):
+    def __init__(self, petWindow: "PetWindow"):
         super().__init__()
 
         self.plugins: dict[str, Plugin] = {}
@@ -97,14 +95,14 @@ class PluginManager(QObject):
     def loadPlugin(self, id: str) -> Plugin | None:
         try:
             # 检查是否启用
-            if not data.plugin[id]["enabled"]:
+            if not self._petWindow.configManager.pluginState[id]:
                 return
             
             # 检查是否已加载
             if id in self.plugins:
                 return
             
-            module = self.importModule(data.plugin[id]["path"])
+            module = self.importModule(self._petWindow.configManager.plugin[id]["path"])
             pluginClass = getattr(module, "Action")
             
             if pluginClass and issubclass(pluginClass, Plugin) and pluginClass is not Plugin:
@@ -151,11 +149,11 @@ class PluginManager(QObject):
         # 1. 构建依赖图
         graph = {}  # {插件ID: [依赖的插件ID列表]}
         inDegree = {}  # {插件ID: 入度（依赖它的插件数量）}
-        ids = set(data.plugin.keys())
+        ids = set(self._petWindow.configManager.plugin.keys())
         
         # 初始化所有插件
         for id in ids:
-            deps = data.plugin.get(id, {}).get("deps", [])
+            deps = self._petWindow.configManager.plugin.get(id, {}).get("deps", [])
             graph[id] = deps
             inDegree[id] = 0  # 初始入度为0
         

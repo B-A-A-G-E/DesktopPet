@@ -1,7 +1,7 @@
-# 桌面宠物 API
+# 桌面宠物 API（宠物本体）
 
 ## 目录
-- [桌面宠物 API](#桌面宠物-api)
+- [桌面宠物 API（宠物本体）](#桌面宠物-api宠物本体)
   - [目录](#目录)
   - [概述](#概述)
   - [模块 tool.anime](#模块-toolanime)
@@ -16,15 +16,20 @@
       - [方法 over() -> None](#方法-over---none)
       - [方法 replay() -> None](#方法-replay---none)
       - [槽函数 nextImg() -> None](#槽函数-nextimg---none)
-  - [模块 tool.conv](#模块-toolconv)
-    - [函数 replyText(type: str, act: str) -> str](#函数-replytexttype-str-act-str---str)
-  - [模块 tool.data](#模块-tooldata)
-    - [全局变量](#全局变量)
+  - [模块 tool.config](#模块-toolconfig)
+    - [类 ConfigManager(QObject)](#类-configmanagerqobject)
+      - [属性](#属性)
+      - [方法 loadConfig() -> None](#方法-loadconfig---none)
+      - [方法 saveConfig() -> None](#方法-saveconfig---none)
+      - [信号](#信号-1)
+    - [函数 loadPets() -> None](#函数-loadpets---none)
+    - [全局变量 pets](#全局变量-pets)
     - [枚举 LogType](#枚举-logtype)
-    - [函数 loadData() -> None](#函数-loaddata---none)
+  - [模块 tool.conv](#模块-toolconv)
+    - [函数 replyText(type: str, act: str, config: ConfigManager) -> str](#函数-replytexttype-str-act-str-config-configmanager---str)
   - [模块 tool.mouse](#模块-toolmouse)
     - [函数 getCollision(widget: QWidget, pos: QPoint) -> str | None](#函数-getcollisionwidget-qwidget-pos-qpoint---str--none)
-  - [模块 tool.pageFactory](#模块-toolpagefactory)
+  - [模块 tool.widgetFactory](#模块-toolwidgetfactory)
     - [函数 deleteLyt(lyt: QLayout) -> None](#函数-deletelytlyt-qlayout---none)
     - [函数 clearLyt(lyt: QLayout) -> None](#函数-clearlytlyt-qlayout---none)
     - [函数 getVal(edit: Any, dataType: str) -> Any](#函数-getvaledit-any-datatype-str---any)
@@ -32,24 +37,27 @@
     - [函数 createEdit(dataType: str) -> QWidget | None](#函数-createeditdatatype-str---qwidget--none)
     - [类 FileSelecter(QWidget)](#类-fileselecterqwidget)
     - [类 RemovableRow(QHBoxLayout)](#类-removablerowqhboxlayout)
-    - [类 PageFactory(QWidget)](#类-pagefactoryqwidget)
-    - [类 FormFactory(PageFactory)](#类-formfactorypagefactory)
-    - [类 DynamicListFactory(PageFactory)](#类-dynamiclistfactorypagefactory)
-    - [类 FormBoxFactory(PageFactory)](#类-formboxfactorypagefactory)
-    - [类 ListBoxFactory(PageFactory)](#类-listboxfactorypagefactory)
+    - [类 WidgetFactory(QWidget)](#类-widgetfactoryqwidget)
+    - [类 FormFactory(WidgetFactory)](#类-formfactorywidgetfactory)
+    - [类 DynamicListFactory(WidgetFactory)](#类-dynamiclistfactorywidgetfactory)
+    - [类 FormBoxFactory(WidgetFactory)](#类-formboxfactorywidgetfactory)
+    - [类 ListBoxFactory(WidgetFactory)](#类-listboxfactorywidgetfactory)
+    - [类 SearchableList(QWidget)](#类-searchablelistqwidget)
+    - [类 SearchStackController(QObject)](#类-searchstackcontrollerqobject)
+    - [类 SearchStackFactory(WidgetFactory)](#类-searchstackfactorywidgetfactory)
   - [模块 tool.plugin](#模块-toolplugin)
     - [类 Plugin(QObject)](#类-pluginqobject)
-      - [属性](#属性)
+      - [属性](#属性-1)
       - [属性（Property）](#属性property)
-      - [信号](#信号-1)
+      - [信号](#信号-2)
       - [方法 setup(window: PetWindow) -> None](#方法-setupwindow-petwindow---none)
       - [方法 teardown() -> None](#方法-teardown---none)
       - [方法 start() -> None](#方法-start---none)
       - [方法 stop() -> None](#方法-stop---none)
       - [方法 eventFilter(obj, event: QEvent) -> bool](#方法-eventfilterobj-event-qevent---bool)
     - [类 PluginManager(QObject)](#类-pluginmanagerqobject)
-      - [信号](#信号-2)
-      - [属性](#属性-1)
+      - [信号](#信号-3)
+      - [属性](#属性-2)
       - [属性（Property）](#属性property-1)
       - [方法 loadAllPlugins() -> None](#方法-loadallplugins---none)
       - [方法 loadPlugin(id: str) -> Plugin | None](#方法-loadpluginid-str---plugin--none)
@@ -61,8 +69,8 @@
       - [方法 stopPlugin(id: str) -> None](#方法-stoppluginid-str---none)
   - [模块 tool.stateMachine](#模块-toolstatemachine)
     - [类 StateMachine(QObject)](#类-statemachineqobject)
-      - [信号](#信号-3)
-      - [属性](#属性-2)
+      - [信号](#信号-4)
+      - [属性](#属性-3)
       - [属性（Property）](#属性property-2)
       - [方法 addState(state: str) -> None](#方法-addstatestate-str---none)
       - [方法 removeState(state: str) -> bool](#方法-removestatestate-str---bool)
@@ -76,7 +84,7 @@
       - [关键方法](#关键方法-1)
       - [扩展方法](#扩展方法)
     - [SettingMenu](#settingmenu)
-      - [信号](#信号-4)
+      - [信号](#信号-5)
       - [关键方法](#关键方法-2)
       - [扩展方法](#扩展方法-1)
     - [PetWindow](#petwindow)
@@ -90,8 +98,8 @@
       - [槽函数 updateData() -> None](#槽函数-updatedata---none)
       - [槽函数 onStateChanged(prevState: str, currentState: str) -> None](#槽函数-onstatechangedprevstate-str-currentstate-str---none)
       - [槽函数 onActStopped(id: str) -> None](#槽函数-onactstoppedid-str---none)
-      - [信号](#信号-5)
-      - [属性](#属性-3)
+      - [信号](#信号-6)
+      - [属性](#属性-4)
       - [属性（Property）](#属性property-3)
 
 ---
@@ -189,36 +197,60 @@
 
 ---
 
-## 模块 tool.conv
+## 模块 tool.config
 
-对话回复生成器，从配置中随机选取回复文本。
+配置管理模块，负责加载和保存宠物配置。
 
-### 函数 replyText(type: str, act: str) -> str
+### 类 ConfigManager(QObject)
 
-根据类型和动作名从 `data.state` 或 `data.dialog` 中随机选取一条回复。
+配置管理器，管理单个宠物的所有配置。
 
-- **参数**
-  - `type`: 类型，可选 `"state"` 或 `"dialog"`
-  - `act`: 动作/状态名或问题键名
-- **返回**
-  - 随机选取的回复文本；若未匹配则返回空字符串
+#### 属性
 
----
-
-## 模块 tool.data
-
-数据加载与全局配置管理。
-
-### 全局变量
-
-| 变量 | 类型 | 数据来源 |
+| 属性 | 类型 | 数据来源 |
 | :--- | :--- | :--- |
-| `base` | dict | `./data/base.json` |
-| `anime` | dict | `./data/anime.json` |
-| `collision` | dict | `./data/collision.json` |
-| `state` | dict | `./data/state.json` |
-| `dialog` | dict | `./data/dialog.json` |
-| `plugin` | dict | `./data/plugin.json` |
+| `path` | str | 宠物资源包根路径 |
+| `base` | dict | `./pet/你的宠物/config/base.json` |
+| `anime` | dict | `./pet/你的宠物/config/anime.json` |
+| `collision` | dict | `./pet/你的宠物/config/collision.json` |
+| `state` | dict | `./pet/你的宠物/config/state.json` |
+| `dialog` | dict | `./pet/你的宠物/config/dialog.json` |
+| `pluginState` | dict | `./pet/你的宠物/config/pluginState.json` |
+| `plugin` | dict | `./pet/plugin.json` |
+
+#### 方法 loadConfig() -> None
+
+加载所有 JSON 配置文件到对应属性。
+
+- **说明**
+  - 由 `PetWindow.__init__` 在启动时调用
+
+#### 方法 saveConfig() -> None
+
+将所有配置写回 JSON 文件。
+
+- **信号**
+  - `saveError(str)`: 保存失败时发射，携带错误信息
+
+#### 信号
+
+| 信号 | 触发时机 |
+| :--- | :--- |
+| `saveError(str)` | 保存配置失败时发射，携带错误信息 |
+
+### 函数 loadPets() -> None
+
+加载 `./pet/config.json` 中注册的所有宠物。
+
+- **说明**
+  - 由 `config.py` 在导入时自动调用
+  - 结果存入全局变量 `pets`
+
+### 全局变量 pets
+
+| 变量 | 类型 | 说明 |
+| :--- | :--- | :--- |
+| `pets` | dict[str, str] | 键为宠物名，值为资源包路径 |
 
 ### 枚举 LogType
 
@@ -233,13 +265,22 @@
 | `StateChanged` | 4 | 状态切换事件 |
 | `PluginLoaded` | 5 | 插件加载事件 |
 
-### 函数 loadData() -> None
+---
 
-加载所有 JSON 配置文件到全局变量。
+## 模块 tool.conv
 
-- **说明**
-  - 模块导入时自动执行
-  - 文件路径固定为 `./data/` 目录下
+对话回复生成器，从配置中随机选取回复文本。
+
+### 函数 replyText(type: str, act: str, config: ConfigManager) -> str
+
+根据类型和动作名从 `config.state` 或 `config.dialog` 中随机选取一条回复。
+
+- **参数**
+  - `type`: 类型，可选 `"state"` 或 `"dialog"`
+  - `act`: 动作/状态名或问题键名
+  - `config`: `ConfigManager` 实例
+- **返回**
+  - 随机选取的回复文本；若未匹配则返回空字符串
 
 ---
 
@@ -261,7 +302,7 @@
 
 ---
 
-## 模块 tool.pageFactory
+## 模块 tool.widgetFactory
 
 页面工厂模块，用于构建设置面板和属性面板的配置界面。
 
@@ -327,9 +368,9 @@
   - `getVal() -> Any`: 获取编辑器的值
   - `setVal(val: Any) -> None`: 设置编辑器的值
 
-### 类 PageFactory(QWidget)
+### 类 WidgetFactory(QWidget)
 
-创建标签页的工厂基类。
+创建控件的工厂基类。
 
 - **信号**
   - `valChanged(str, Any)`: 值改变时发射，携带键和新值
@@ -341,7 +382,7 @@
   - `setData(data) -> None`: 设置数据并更新界面
   - `clear() -> None`: 清空页面内容
 
-### 类 FormFactory(PageFactory)
+### 类 FormFactory(WidgetFactory)
 
 表单工厂，用于创建键值对编辑页面。
 
@@ -351,7 +392,7 @@
 - **方法**
   - `getData() -> dict[str, Any]`: 获取所有字段的值
 
-### 类 DynamicListFactory(PageFactory)
+### 类 DynamicListFactory(WidgetFactory)
 
 动态列表工厂，用于创建可增删的字符串列表编辑页面。
 
@@ -362,7 +403,7 @@
 - **方法**
   - `getData() -> list[str]`: 获取列表数据
 
-### 类 FormBoxFactory(PageFactory)
+### 类 FormBoxFactory(WidgetFactory)
 
 表单盒子工厂，用于创建分组的表单编辑页面（`QToolBox` 容器）。
 
@@ -375,7 +416,7 @@
 - **方法**
   - `getData() -> dict[str, dict[str, Any]]`: 获取所有分组的数据
 
-### 类 ListBoxFactory(PageFactory)
+### 类 ListBoxFactory(WidgetFactory)
 
 列表盒子工厂，用于创建分组的列表编辑页面（`QToolBox` 容器）。
 
@@ -386,6 +427,42 @@
   - `listDataUpdated(str)`: 列表数据更新时发射，携带分组键
 - **方法**
   - `getData() -> dict[str, list[str]]`: 获取所有分组的列表数据
+
+### 类 SearchableList(QWidget)
+
+可搜索的列表控件，包含搜索框和列表。
+
+- **信号**
+  - `itemSelected(QWidget)`: 列表项被选中时发射
+  - `itemDoubleClicked(QWidget)`: 列表项被双击时发射
+- **方法**
+  - `setItems(items: list[QWidget]) -> None`: 设置列表项
+  - `getSelected() -> QWidget | None`: 获取当前选中的项
+
+### 类 SearchStackController(QObject)
+
+搜索列表与堆叠页面的联动控制器。
+
+- **信号**
+  - `pageChanged(str, int, QWidget)`: 页面切换时发射，携带键、索引和页面控件
+- **属性（Property）**
+  - `pageCount: int`: 页面总数（只读）
+  - `keys: list[str]`: 所有页面的键列表（只读）
+  - `currentPage: tuple[str, QWidget, QWidget] | None`: 当前页面信息（只读）
+- **方法**
+  - `addPage(widget: QWidget, listItem: QWidget, key: str) -> None`: 添加页面
+  - `addPages(pages: dict[str, tuple[QWidget, QWidget]]) -> None`: 批量添加页面
+  - `removePage(key: str) -> None`: 移除页面
+  - `changePageByKey(key: str) -> None`: 通过键切换页面
+  - `changePageByIndex(index: int) -> None`: 通过索引切换页面
+
+### 类 SearchStackFactory(WidgetFactory)
+
+搜索列表与堆叠页面的组合工厂。
+
+- **参数**
+  - `data: Any`: 数据对象
+  - `pages: dict[str, tuple[QWidget, QWidget]] | None`: 初始页面字典
 
 ---
 
@@ -482,6 +559,7 @@
 | :--- | :--- |
 | `pluginLoadSucceeded(str)` | 插件加载成功，携带插件 ID |
 | `pluginError(str)` | 插件加载或操作失败，携带错误信息 |
+| `currentPluginChanged(str, str)` | 当前插件变更时发射，携带旧 ID 和新 ID |
 
 #### 属性
 
@@ -498,7 +576,7 @@
 
 #### 方法 loadAllPlugins() -> None
 
-加载 `data.plugin` 中注册的所有插件。
+加载 `config.plugin` 中注册的所有插件。
 
 - **行为**
   - 调用 `sortPlugins` 获取排序后的插件 ID 列表
@@ -506,12 +584,12 @@
 
 #### 方法 loadPlugin(id: str) -> Plugin | None
 
-加载 `data.plugin` 中注册的指定插件。
+加载 `config.plugin` 中注册的指定插件。
 
 - **参数**
   - `id`: 插件 ID
 - **行为**
-  - 若 `plugin[id]["enabled"]` 为 `False`，直接返回 `None`
+  - 若 `pluginState[id]` 为 `False`，直接返回 `None`
   - 若插件已加载，返回已有实例
   - 导入模块并实例化 `Action` 类
   - 发射 `pluginLoadSucceeded` 或 `pluginError` 信号
@@ -524,23 +602,13 @@
 
 - **参数**
   - `path`: 模块文件路径，支持以下格式：
-    - 相对路径：`./plugin/action.py` 或 `.\plugin\action.py` (Windows, MacOS) 或 `plugin/action.py` (Linux)
-    - 绝对路径：`C:/DesktopPet/plugin/action.py` (Windows) 或 `/home/user/plugin/action.py` (Linux, MacOS)
+    - 相对路径：`./plugin/action.py` 或 `.\plugin\action.py` 或 `plugin/action.py`
+    - 绝对路径：`C:/DesktopPet/plugin/action.py` 或 `/home/user/plugin/action.py`
 - **返回**
   - 导入的模块对象（`ModuleType`）
 - **异常**
   - `FileNotFoundError`: 当指定的路径不存在时抛出
   - `ImportError`: 当无法从路径加载模块时抛出
-- **行为**
-  1. 将相对路径转换为绝对路径
-  2. 检查路径是否存在
-  3. 使用 `importlib.util.spec_from_file_location` 创建模块规格
-  4. 创建模块对象并添加到 `sys.modules`
-  5. 执行模块代码并返回模块对象
-- **说明**
-  - 该函数解决了 PyInstaller 等打包工具下插件加载失败的问题
-  - 支持跨平台路径格式（Windows 和 Linux/macOS）
-  - 导入的模块会被缓存到 `sys.modules` 中，避免重复导入
 
 #### 方法 sortPlugins() -> list[str]
 
@@ -644,7 +712,7 @@
 
 ### ActionMenu
 
-行动面板，显示 `data.plugin` 中注册的所有非自启动行动按钮。
+行动面板，显示 `config.plugin` 中注册的所有非自启动行动按钮。
 
 #### 关键属性
 
@@ -656,7 +724,7 @@
 
 - **说明**
   - 插件名称显示在 `QLabel` 中，鼠标悬浮时显示 `description` 作为提示
-  - 仅显示 `self.auto = False` 的插件（自启动插件不会出现在行动面板中）
+  - 仅显示 `auto = False` 的插件（自启动插件不会出现在行动面板中）
 
 ### DialogMenu
 
@@ -666,7 +734,7 @@
 
 | 方法 | 说明 |
 | :--- | :--- |
-| `resetQuesSelecter()` | 从 `data.dialog` 中随机抽取指定数量的问题填充下拉框 |
+| `resetQuesSelecter()` | 从 `config.dialog` 中随机抽取指定数量的问题填充下拉框 |
 | `addLine(content: str)` | 向回复框追加一行文本 |
 
 - **行为**
@@ -690,7 +758,7 @@
 
 | 方法 | 说明 |
 | :--- | :--- |
-| `addPage(page: QWidget, label: str)` | 由插件调用，添加属性/配置页面到状态面板的标签页中。**推荐使用 `PageFactory` 的子类构建页面** |
+| `addPage(page: QWidget, label: str)` | 由插件调用，添加属性/配置页面到状态面板的标签页中。**推荐使用 `WidgetFactory` 的子类构建页面** |
 | `getPage(label: str)` | 获取已添加的页面，用于在数据更新时刷新页面内容 |
 
 ### SettingMenu
@@ -703,20 +771,20 @@
 | :--- | :--- |
 | `dataUpdated()` | 应用配置后发射，用于通知刷新数据 |
 | `updateCancelled()` | 取消配置后发射 |
-| `saveError()` | 保存配置失败时发射 |
+| `saveError(str)` | 保存配置失败时发射，携带错误信息 |
 
 #### 关键方法
 
 | 方法 | 说明 |
 | :--- | :--- |
-| `apply()` | 读取所有输入框内容，更新 `data` 全局变量并写回 JSON 文件 |
+| `apply()` | 读取所有输入框内容，更新 `config` 全局变量并写回 JSON 文件 |
 | `cancel()` | 关闭窗口，不保存更改 |
 
 #### 扩展方法
 
 | 方法 | 说明 |
 | :--- | :--- |
-| `addPage(page: QWidget, label: str)` | 由插件调用，添加自定义配置页面到设置面板的标签页中。**推荐使用 `PageFactory` 的子类构建页面** |
+| `addPage(page: QWidget, label: str)` | 由插件调用，添加自定义配置页面到设置面板的标签页中。**推荐使用 `WidgetFactory` 的子类构建页面** |
 | `getPage(label: str)` | 获取已添加的页面，用于在数据更新时刷新页面内容 |
 
 ### PetWindow
@@ -758,7 +826,7 @@
 - **参数**
   - `state`: 状态名
 - **行为**
-  - 调用 `conv.replyText("state", state)` 获取随机回复
+  - 调用 `conv.replyText("state", state, configManager)` 获取随机回复
   - 通过 `dialogMenu.addLine` 写入对话面板
 - **说明**
   - 若状态无对应回复文本，则不显示
@@ -768,7 +836,7 @@
 切换动画，停止当前动画并播放目标动画。
 
 - **参数**
-  - `name`: 目标动画名（须在 `data.anime` 中定义）
+  - `name`: 目标动画名（须在 `config.anime` 中定义）
   - `isContinue`: 是否从上一次停止位置继续
   - `isAsync`: 动画是否异步播放
 
@@ -805,7 +873,7 @@
 重新加载配置数据并刷新动画和碰撞体。由 `SettingMenu.dataUpdated` 信号触发调用。
 
 - **说明**
-  - 重新从 `data.anime` 和 `data.collision` 构建动画对象和碰撞体
+  - 重新从 `config.anime` 和 `config.collision` 构建动画对象和碰撞体
   - 调用 `dialogMenu.resetQuesSelecter()` 刷新对话选项
   - 记录日志
 
@@ -842,6 +910,7 @@
 | :--- | :--- | :--- |
 | `animes` | dict | 动画对象字典，键为状态名 |
 | `collisions` | dict | 碰撞体字典，键为状态名 |
+| `configManager` | ConfigManager | 配置管理器实例 |
 | `pluginManager` | PluginManager | 插件管理器实例 |
 | `dialogMenu` | DialogMenu | 对话面板实例 |
 | `stateMenu` | StateMenu | 状态日志面板实例 |

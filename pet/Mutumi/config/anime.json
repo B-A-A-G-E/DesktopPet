@@ -1,41 +1,41 @@
 {
   "entre": {
-    "path": "./img/entre",
+    "path": "./pet/Mutumi/img/entre",
     "fps": 60,
     "loop": false
   },
   "exit": {
-    "path": "./img/exit",
+    "path": "./pet/Mutumi/img/exit",
     "fps": 30,
     "loop": false
   },
   "idle": {
-    "path": "./img/idle",
+    "path": "./pet/Mutumi/img/idle",
     "fps": 30,
     "loop": true
   },
   "stroke": {
-    "path": "./img/stroke",
+    "path": "./pet/Mutumi/img/stroke/",
     "fps": 30,
     "loop": true
   },
   "drag": {
-    "path": "./img/drag",
+    "path": "./pet/Mutumi/img/drag/",
     "fps": 30,
     "loop": true
   },
   "after-stroke": {
-    "path": "./img/after-stroke",
+    "path": "./pet/Mutumi/img/after-stroke/",
     "fps": 50,
     "loop": false
   },
   "using-fan": {
-    "path": "./img/using-fan",
+    "path": "./pet/Mutumi/img/using-fan/",
     "fps": 20,
     "loop": true
   },
   "turn-off-fan": {
-    "path": "./img/turn-off-fan",
+    "path": "./img/turn-off-fan/",
     "fps": 20,
     "loop": true
   }

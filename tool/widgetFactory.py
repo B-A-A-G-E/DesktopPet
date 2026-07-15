@@ -1,9 +1,9 @@
 from PySide6.QtWidgets import (
     QWidget, QLayout, QVBoxLayout, QHBoxLayout, QFormLayout,
     QToolBox, QLineEdit, QPushButton, QCheckBox, QSpinBox,
-    QDoubleSpinBox, QFileDialog
+    QDoubleSpinBox, QFileDialog, QListWidget, QStackedWidget
 )
-from PySide6.QtCore import Signal, Slot
+from PySide6.QtCore import Qt, Signal, Slot, QObject
 
 from typing import Any
 
@@ -178,6 +178,93 @@ class FileSelecter(QWidget):
         """设置当前路径文本。"""
         self.edit.setText(file)
 
+class SearchBox(QWidget):
+    textChanged = Signal(str)
+    modeChanged = Signal(bool, bool) # 是否区分大小写, 是否全字匹配
+
+    def __init__(self):
+        super().__init__()
+        self.lyt = QHBoxLayout()
+
+        self.edit = QLineEdit()
+        self.csBtn = QPushButton("AA") # 区分大小写
+        self.emBtn = QPushButton("=") # 全字匹配
+
+        self.caseSensitive: bool = False
+        self.exactMatch: bool = False
+        
+        self.lyt.addWidget(self.edit)
+        self.lyt.addWidget(self.csBtn)
+        self.lyt.addWidget(self.emBtn)
+        self.setLayout(self.lyt)
+        
+        self.bind()
+    
+    def bind(self) -> None:
+        self.edit.textChanged.connect(self.textChanged)
+        self.csBtn.clicked.connect(lambda: self.changeMode(not self.caseSensitive, self.exactMatch))
+        self.emBtn.clicked.connect(lambda: self.changeMode(self.caseSensitive, not self.exactMatch))
+    
+    @Slot(bool, bool)
+    def changeMode(self, cs: bool, em: bool) -> None:
+        self.caseSensitive = cs
+        self.exactMatch = em
+        self.modeChanged.emit(cs, em)
+
+class SearchableList(QWidget):
+    itemSelected = Signal(QWidget)
+    itemDoubleClicked = Signal(QWidget)
+
+    def __init__(self):
+        super().__init__()
+        self.searchBox = SearchBox()
+        self.list = QListWidget()
+        self.lyt = QVBoxLayout()
+
+        self.items: list[QWidget] = []
+
+        self.lyt.addWidget(self.searchBox)
+        self.lyt.addWidget(self.list)
+        self.setLayout(self.lyt)
+
+        self.bind()
+    
+    def bind(self) -> None:
+        self.searchBox.textChanged.connect(lambda text: self.filterItems(text, self.searchBox.caseSensitive, self.searchBox.exactMatch))
+        self.searchBox.modeChanged.connect(lambda cs, em: self.filterItems(self.searchBox.edit.text(), cs, em))
+        
+        self.list.itemClicked.connect(lambda item: self.itemSelected.emit(item))
+        self.list.itemDoubleClicked.connect(lambda item: self.itemDoubleClicked.emit(item))
+    
+    def setItems(self, items: list[QWidget]) -> None:
+        self.items = items
+        self.list.clear()
+        self.list.addItems(items)
+        self.searchBox.edit.clear()
+    
+    def getSelected(self) -> QWidget | None:
+        if self.list.currentItem():
+            return self.list.currentItem()
+        else:
+            return None
+    
+    @Slot(str, bool, bool)
+    def filterItems(self, text: str, cs: bool, em: bool) -> None:
+        self.searchBox.csBtn.setText("AA" if cs else "Aa")
+        self.searchBox.emBtn.setText("=" if em else "≈")
+        text = text.strip()
+        # 按照设置的模式过滤列表
+        for i in range(self.list.count()):
+            item = self.list.item(i)
+            itemText = item.text().strip()
+            if not cs:
+                itemText = itemText.lower()
+                text = text.lower()
+            if em:
+                item.setHidden(text != itemText)
+            else:
+                item.setHidden(text not in itemText)
+
 class RemovableRow(QHBoxLayout):
     """
     可删除的行布局，包含一个编辑器和一个删除按钮。
@@ -237,9 +324,9 @@ class RemovableRow(QHBoxLayout):
         self._parent.removeItem(self)
         deleteLyt(self)
 
-class PageFactory(QWidget):
+class WidgetFactory(QWidget):
     """
-    创建 QTabWidget 标签页的工厂基类。
+    创建控件的工厂基类。
 
     提供页面构建、数据更新和清理的通用接口，子类需实现具体的 buildContent()、updateTab() 和 getData()。
     """
@@ -266,15 +353,15 @@ class PageFactory(QWidget):
         self.updateTab(self._data)
 
     def buildContent(self) -> None:
-        """构建页面内容，子类必须重写。"""
+        """构建页面内容"""
         pass
 
     def updateTab(self, data) -> None:
-        """用给定的数据更新界面，子类必须重写。"""
+        """用给定的数据更新界面"""
         pass
 
     def getData(self) -> Any:
-        """从界面收集数据并返回，子类必须重写。"""
+        """从界面收集数据并返回"""
         pass
 
     def setData(self, data) -> None:
@@ -287,7 +374,7 @@ class PageFactory(QWidget):
         """清空页面布局中的所有子项。"""
         clearLyt(self.lyt)
 
-class FormFactory(PageFactory):
+class FormFactory(WidgetFactory):
     """
     表单工厂，用于创建基于 QFormLayout 的编辑页面。
 
@@ -351,7 +438,7 @@ class FormFactory(PageFactory):
         self._data[key] = val
         self.valChanged.emit(key, val)
 
-class DynamicListFactory(PageFactory):
+class DynamicListFactory(WidgetFactory):
     """
     动态字符串列表工厂，允许添加和删除条目。
 
@@ -386,7 +473,7 @@ class DynamicListFactory(PageFactory):
         # 清空
         while len(self.edits) > 0:
             self.edits.pop(0)
-        clearLyt(self.lyt)
+        self.clear()
 
         for i in data:
             self.createRow(i)
@@ -423,7 +510,7 @@ class DynamicListFactory(PageFactory):
         edit.setVal(val)
         self.edits.append(edit)
 
-class FormBoxFactory(PageFactory):
+class FormBoxFactory(WidgetFactory):
     """
     工具箱（QToolBox）页面工厂，每个页面包含一个表单。
 
@@ -472,7 +559,7 @@ class FormBoxFactory(PageFactory):
         self._data[k][formK] = val
         self.formValChanged.emit(k, formK, val)
 
-class ListBoxFactory(PageFactory):
+class ListBoxFactory(WidgetFactory):
     """
     工具箱（QToolBox）页面工厂，每个页面包含一个动态字符串列表。
 
@@ -512,3 +599,99 @@ class ListBoxFactory(PageFactory):
     def getData(self) -> dict[str, list[str]]:
         """从所有列表收集数据，返回字典。"""
         return {key: self.lists[key].getData() for _, key in self.fields}
+
+class SearchStackController(QObject):
+    pageChanged = Signal(str, int, QWidget) # 标识，索引，页面
+
+    def __init__(self, list: SearchableList, stack: QStackedWidget, pages: dict[str, tuple[QWidget, QWidget]] | None = None):
+        super().__init__()
+        self.list = list
+        self.stack = stack
+
+        self.pages: dict[str, tuple[int, QWidget, QWidget]] = {} # key: (index, page, listItem)
+
+        if pages is not None:
+            self.addPages(pages)
+
+        self.bind()
+    
+    def bind(self) -> None:
+        self.list.itemSelected.connect(self.onItemSelected)
+    
+    @property
+    def pageCount(self) -> int:
+        return self.stack.count()
+    
+    @property
+    def keys(self) -> list[str]:
+        return [ key for key in self.pages.keys() ]
+    
+    @property
+    def currentPage(self) -> tuple[str, tuple[int, QWidget, QWidget]] | None:
+        currentIndex = self.stack.currentIndex()
+        for key, (index, widget, listItem) in self.pages.items():
+            if index == currentIndex:
+                return (key, widget, listItem)
+        return None
+
+    def addPage(self, widget: QWidget, listItem: QWidget, key: str) -> None:
+        if key in self.pages.keys():
+            raise ValueError(f"key \"{key}\" already exists")
+        self.pages[key] = (self.stack.count(), widget, listItem)
+        self.list.list.addItem(listItem)
+        self.stack.addWidget(widget)
+    
+    def addPages(self, pages: dict[str, tuple[QWidget, QWidget]]) -> None:
+        for k, v in pages.items():
+            self.addPage(v[0], v[1], k)
+    
+    def removePage(self, key: str) -> None:
+        if key not in self.pages.keys():
+            raise ValueError(f"key {key} not found")
+        
+        _, widget, listItem = self.pages.pop(key)
+        widget.deleteLater()
+        self.stack.removeWidget(widget)
+        for i in range(self.list.list.count()):
+            if self.list.list.takeItem(i) == listItem:
+                self.list.list.takeItem(i)
+                break
+    
+    def changePageByKey(self, key: str) -> None:
+        if key not in self.pages.keys():
+            raise ValueError(f"key {key} not found")
+        
+        index, widget, _ = self.pages[key]
+        self.stack.setCurrentIndex(index)
+        self.list.list.setCurrentRow(index)
+
+        self.pageChanged.emit(key, index, widget)
+    
+    def changePageByIndex(self, index: int) -> None:
+        if index < 0 or index >= self.stack.count():
+            raise ValueError(f"index out of range ({index})")
+        
+        self.stack.setCurrentIndex(index)
+        self.list.list.setCurrentRow(index)
+
+        for key, (i, widget, _) in self.pages.items():
+            if i == index:
+                self.pageChanged.emit(key, index, widget)
+    
+    @Slot(QWidget)
+    def onItemSelected(self, item: QWidget) -> None:
+        for key in self.pages.keys():
+            if self.pages[key][2] == item:
+                self.changePageByKey(key)
+
+class SearchStackFactory(WidgetFactory):
+    def __init__(self, data: Any, pages: dict[str, tuple[QWidget, QWidget]] | None = None):
+        super().__init__(QHBoxLayout(), data)
+        
+        self.list = SearchableList()
+        self.stack = QStackedWidget()
+        self.controller = SearchStackController(self.list, self.stack, pages)
+    
+    def buildContent(self) -> None:
+        self.lyt.addWidget(self.list)
+        self.lyt.addWidget(self.stack)

@@ -5,7 +5,7 @@ import json
 import random
 
 from tool.plugin import Plugin
-from tool.pageFactory import FormFactory
+from tool.widgetFactory import FormFactory
 
 class Action(Plugin):
     def __init__(self):

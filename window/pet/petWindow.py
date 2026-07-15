@@ -4,24 +4,23 @@ from PySide6.QtCore import Qt, Slot, Signal, QRect
 
 import importlib
 
-from tool import data
+from tool.config import ConfigManager
+from tool.config import LogType
 from tool import conv
 from tool import anime
 from tool.stateMachine import StateMachine
-from tool.data import LogType
-
 from tool.plugin import Plugin, PluginManager
 
-from window.dialogMenu import DialogMenu
-from window.stateMenu import StateMenu
-from window.actionMenu import ActionMenu
-from window.settingMenu import SettingMenu
+from window.pet.dialogMenu import DialogMenu
+from window.pet.stateMenu import StateMenu
+from window.pet.actionMenu import ActionMenu
+from window.pet.settingMenu import SettingMenu
 
 class PetWindow(QWidget):
     stateChanged = Signal(str, str)
     aboutToQuit = Signal()
     
-    def __init__(self):
+    def __init__(self, petPath: str):
         super().__init__()
         
         # 无边框及透明背景
@@ -49,19 +48,21 @@ class PetWindow(QWidget):
         self.mainlayout.addWidget(self.imgLb)
         self.setLayout(self.mainlayout)
 
+        # 配置管理器
+        self.configManager = ConfigManager(petPath)
         # 状态机
-        self.stateMachine = StateMachine([k for k in data.state.keys()])
+        self.stateMachine = StateMachine([k for k in self.configManager.state.keys()])
 
         # 插件管理器
         self.pluginManager = PluginManager(self)
         self.pluginManager.loadAllPlugins()
 
         # 添加动画
-        self.animes = { k: anime.Anime(v["path"], v["fps"], v["loop"], self, self.imgLb) for k, v in data.anime.items()}
+        self.animes = { k: anime.Anime(v["path"], v["fps"], v["loop"], self, self.imgLb) for k, v in self.configManager.anime.items()}
         self.currentAnime = self.animes["idle"]
 
         # 添加碰撞体
-        self.collisions = { k: QRect(v["left"], v["top"], v["width"], v["height"]) for k, v in data.collision.items()}
+        self.collisions = { k: QRect(v["left"], v["top"], v["width"], v["height"]) for k, v in self.configManager.collision.items()}
 
         # 安装事件过滤器来捕获所有输入事件
         self.installEventFilter(self)
@@ -74,10 +75,10 @@ class PetWindow(QWidget):
 
     def bind(self) -> None:
         """绑定子窗口及信号"""
-        self.dialogMenu = DialogMenu()
-        self.stateMenu = StateMenu()
+        self.dialogMenu = DialogMenu(self.configManager)
+        self.stateMenu = StateMenu(self.configManager)
         self.actionMenu = ActionMenu(self)
-        self.settingMenu = SettingMenu()
+        self.settingMenu = SettingMenu(self.configManager)
 
         self.settingMenu.dataUpdated.connect(self.updateData)
         
@@ -138,7 +139,7 @@ class PetWindow(QWidget):
     
     def replyState(self, state: str) -> None:
         """回复状态"""
-        self.dialogMenu.addLine(conv.replyText("state", state))
+        self.dialogMenu.addLine(conv.replyText("state", state, self.configManager))
 
     def changeAnime(self, name: str, isContinue: bool = False, isAsync: bool = True) -> None:
         """切换动画"""
@@ -174,8 +175,8 @@ class PetWindow(QWidget):
     def updateData(self) -> None:
         """更新数据"""
         # petWindow
-        self.animes = { k: anime.Anime(v["path"], v["fps"], v["loop"], self, self.imgLb) for k, v in data.anime.items()}
-        self.collisions = { k: QRect(v["left"], v["top"], v["width"], v["height"]) for k, v in data.collision.items()}
+        self.animes = { k: anime.Anime(v["path"], v["fps"], v["loop"], self, self.imgLb) for k, v in self.configManager.anime.items()}
+        self.collisions = { k: QRect(v["left"], v["top"], v["width"], v["height"]) for k, v in self.configManager.collision.items()}
         # dialogWindow
         self.dialogMenu.resetQuesSelecter()
         self.stateMenu.log("Data is updated", LogType.Set)

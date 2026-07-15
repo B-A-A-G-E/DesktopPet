@@ -1,23 +1,22 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QTabWidget, QPushButton
 from PySide6.QtCore import Signal
 
-import json
-from tool import data
-from tool.data import LogType
-from tool.pageFactory import PageFactory, FormFactory, FormBoxFactory, ListBoxFactory
+from tool.config import ConfigManager
+from tool.widgetFactory import WidgetFactory, FormFactory, FormBoxFactory, ListBoxFactory
 
 class SettingMenu(QWidget):
     dataUpdated = Signal()
     updateCancelled = Signal()
-    saveError = Signal()
+    saveError = Signal(str)
 
-    def __init__(self):
+    def __init__(self, config: ConfigManager):
         super().__init__()
 
         self.setWindowTitle("Setting Menu")
         self.resize(600, 450)
 
-        self.pages: list[PageFactory] = [] # 设置界面自带的页面
+        self.config = config
+        self.pages: list[WidgetFactory] = [] # 设置界面自带的页面
         self.otherPages: dict[str, QWidget] = {} # 插件传入的页面
 
         self.lyt = QVBoxLayout()
@@ -44,7 +43,7 @@ class SettingMenu(QWidget):
             ("对话面板最大显示问题数", "quesSelecter-item-count", "int"),
             ("待机判定时间（毫秒）", "idle-time", "int")
         ]
-        self.pages.append(FormFactory(f1, data.base))
+        self.pages.append(FormFactory(f1, self.config.base))
         self.pages[0].build()
         self.tabW.addTab(self.pages[0], "基础项")
 
@@ -54,8 +53,8 @@ class SettingMenu(QWidget):
             ("帧率", "fps", "int"),
             ("是否循环", "loop", "bool")
         ]
-        f2 = [(key, key, f2F) for key in data.anime.keys()]
-        self.pages.append(FormBoxFactory(f2, data.anime))
+        f2 = [(key, key, f2F) for key in self.config.anime.keys()]
+        self.pages.append(FormBoxFactory(f2, self.config.anime))
         self.pages[1].build()
         self.tabW.addTab(self.pages[1], "动画")
 
@@ -66,58 +65,46 @@ class SettingMenu(QWidget):
             ("宽度", "width", "int"),
             ("高度", "height", "int")
         ]
-        f3 = [(key, key, f3F) for key in data.collision.keys()]
-        self.pages.append(FormBoxFactory(f3, data.collision))
+        f3 = [(key, key, f3F) for key in self.config.collision.keys()]
+        self.pages.append(FormBoxFactory(f3, self.config.collision))
         self.pages[2].build()
         self.tabW.addTab(self.pages[2], "碰撞体")
 
         # page4 (状态反馈文本)
-        f4 = [(key, key) for key in data.state.keys()]
-        self.pages.append(ListBoxFactory(f4, data.state))
+        f4 = [(key, key) for key in self.config.state.keys()]
+        self.pages.append(ListBoxFactory(f4, self.config.state))
         self.pages[3].build()
         self.tabW.addTab(self.pages[3], "状态反馈文本")
 
         # page5 (对话文本)
-        f5 = [(key, key) for key in data.dialog.keys()]
-        self.pages.append(ListBoxFactory(f5, data.dialog))
+        f5 = [(key, key) for key in self.config.dialog.keys()]
+        self.pages.append(ListBoxFactory(f5, self.config.dialog))
         self.pages[4].build()
         self.tabW.addTab(self.pages[4], "对话文本")
 
     def bind(self) -> None:
         self.applyBtn.clicked.connect(self.apply)
         self.cancelBtn.clicked.connect(self.cancel)
+        self.config.saveError.connect(self.saveError)
     
     def apply(self) -> None:
-        data.base = self.pages[0].getData()
-        data.anime = self.pages[1].getData()
-        data.collision = self.pages[2].getData()
-        data.state = self.pages[3].getData()
-        data.dialog = self.pages[4].getData()
+        self.config.base = self.pages[0].getData()
+        self.config.anime = self.pages[1].getData()
+        self.config.collision = self.pages[2].getData()
+        self.config.state = self.pages[3].getData()
+        self.config.dialog = self.pages[4].getData()
 
-        try:
-            with open("./data/base.json", "w", encoding = "utf-8") as f:
-                f.write(json.dumps(data.base, ensure_ascii = False, indent = 2))
-            with open("./data/anime.json", "w", encoding = "utf-8") as f:
-                f.write(json.dumps(data.anime, ensure_ascii = False, indent = 2))
-            with open("./data/collision.json", "w", encoding = "utf-8") as f:
-                f.write(json.dumps(data.collision, ensure_ascii = False, indent = 2))
-            with open("./data/state.json", "w", encoding = "utf-8") as f:
-                f.write(json.dumps(data.state, ensure_ascii = False, indent = 2))
-            with open("./data/dialog.json", "w", encoding = "utf-8") as f:
-                f.write(json.dumps(data.dialog, ensure_ascii = False, indent = 2))
-        except Exception as e:
-            print(e)
-            self.saveError.emit(e)
+        self.config.saveConfig()
         
         self.dataUpdated.emit()
         self.close()
 
     def cancel(self) -> None:
-        self.pages[0].setData(data.base)
-        self.pages[1].setData(data.anime)
-        self.pages[2].setData(data.collision)
-        self.pages[3].setData(data.state)
-        self.pages[4].setData(data.dialog)
+        self.pages[0].setData(self.config.base)
+        self.pages[1].setData(self.config.anime)
+        self.pages[2].setData(self.config.collision)
+        self.pages[3].setData(self.config.state)
+        self.pages[4].setData(self.config.dialog)
         
         self.updateCancelled.emit()
         self.close()

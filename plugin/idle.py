@@ -4,8 +4,7 @@ idle 作为基础状态其插件必须启用，最先加载
 from PySide6.QtCore import Slot, QTimer
 
 from tool.plugin import Plugin
-from tool import data
-from tool.data import LogType
+from tool.config import LogType
 
 class Action(Plugin):
     def __init__(self):
@@ -17,11 +16,13 @@ class Action(Plugin):
         self.teardownImmed = False
         
         self.anime: str = "idle"
-        self.idleTime: int = data.base["idle-time"]
-        self.idleTimer: QTimer = QTimer()
     
     def setup(self, window) -> None:
         super().setup(window)
+
+        self.idleTime: int = window.configManager.base["idle-time"]
+        self.idleTimer: QTimer = QTimer()
+
         self.bind()
     
     def start(self) -> None:

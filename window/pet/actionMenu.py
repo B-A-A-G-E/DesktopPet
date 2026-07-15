@@ -6,7 +6,7 @@ class ActionMenu(QWidget):
         
         self.resize(400, 300)
 
-        self.petWindow = petWindow
+        self._petWindow = petWindow
 
         self.lyt = QVBoxLayout()
         self.actLyt = QVBoxLayout()
@@ -14,7 +14,7 @@ class ActionMenu(QWidget):
         self.lb = {}
         self.actBtn = {}
 
-        for k, v in self.petWindow.pluginManager.plugins.items():
+        for k, v in self._petWindow.pluginManager.plugins.items():
             if v.auto:
                 continue
 
@@ -37,11 +37,11 @@ class ActionMenu(QWidget):
         self.bind()
     
     def bind(self) -> None:
-        for k, v in self.petWindow.pluginManager.plugins.items():
+        for k, v in self._petWindow.pluginManager.plugins.items():
             if not v.auto:
-                self.actBtn[k].clicked.connect(lambda clicked, id = k: self.petWindow.startAct(id))
+                self.actBtn[k].clicked.connect(lambda clicked, id = k: self._petWindow.startAct(id))
 
         def stopCurrentAct() -> None:
-            if self.petWindow.currentAct:
-                self.petWindow.stopAct(self.petWindow.currentAct.id)
+            if self._petWindow.currentAct:
+                self._petWindow.stopAct(self._petWindow.currentAct.id)
         self.stopBtn.clicked.connect(stopCurrentAct)
