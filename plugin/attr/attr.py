@@ -25,6 +25,14 @@ class Action(Plugin):
         self.bind()
         self.addPage()
     
+    def stop(self):
+        self.strokeTimer.stop()
+        return super().stop()
+    
+    def teardown(self):
+        self.strokeTimer.deleteLater()
+        return super().teardown()
+    
     def bind(self) -> None:
         self.window.aboutToQuit.connect(self.updateData)
         self.window.stateChanged.connect(self.onStateChanged)

@@ -94,7 +94,7 @@ class SettingMenu(QWidget):
         self.config.state = self.pages[3].getData()
         self.config.dialog = self.pages[4].getData()
 
-        self.config.saveConfig()
+        self.config.saveConfig(ConfigManager.SaveMode.Common)
         
         self.dataUpdated.emit()
         self.close()

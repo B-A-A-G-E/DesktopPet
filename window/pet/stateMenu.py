@@ -42,7 +42,7 @@ class StateMenu(QWidget):
         self.logBox.appendPlainText(logLine)
         # 写入日志文件
         with open(self.config.base["log-path"], "a", encoding = "utf-8") as f:
-            f.write(logLine +  '\n')
+            f.write(logLine + '\n')
     
     def addPage(self, page: QWidget, label: str) -> None:
         self.pages[label] = page

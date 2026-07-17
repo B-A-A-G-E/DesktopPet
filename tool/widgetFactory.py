@@ -187,11 +187,11 @@ class SearchBox(QWidget):
         self.lyt = QHBoxLayout()
 
         self.edit = QLineEdit()
-        self.csBtn = QPushButton("AA") # 区分大小写
-        self.emBtn = QPushButton("=") # 全字匹配
+        self.csBtn = QPushButton("Aa")
+        self.emBtn = QPushButton("≈")
 
-        self.caseSensitive: bool = False
-        self.exactMatch: bool = False
+        self.caseSensitive: bool = False # 是否区分大小写
+        self.exactMatch: bool = False # 是否全字匹配
         
         self.lyt.addWidget(self.edit)
         self.lyt.addWidget(self.csBtn)
@@ -333,7 +333,7 @@ class WidgetFactory(QWidget):
     valChanged = Signal(str, Any)  # key, value — 当数据变更时发出
     dataUpdated = Signal()         # 当整个数据被更新时发出
 
-    def __init__(self, lyt: QLayout, data):
+    def __init__(self, lyt: QLayout, data: Any):
         """
         初始化页面工厂。
 
@@ -356,7 +356,7 @@ class WidgetFactory(QWidget):
         """构建页面内容"""
         pass
 
-    def updateTab(self, data) -> None:
+    def updateTab(self, data: Any) -> None:
         """用给定的数据更新界面"""
         pass
 
@@ -364,7 +364,7 @@ class WidgetFactory(QWidget):
         """从界面收集数据并返回"""
         pass
 
-    def setData(self, data) -> None:
+    def setData(self, data: Any) -> None:
         """设置新数据并刷新界面，同时发出 dataUpdated 信号。"""
         self._data = data
         self.updateTab(data)
@@ -603,15 +603,15 @@ class ListBoxFactory(WidgetFactory):
 class SearchStackController(QObject):
     pageChanged = Signal(str, int, QWidget) # 标识，索引，页面
 
-    def __init__(self, list: SearchableList, stack: QStackedWidget, pages: dict[str, tuple[QWidget, QWidget]] | None = None):
+    def __init__(self, list: SearchableList, stack: QStackedWidget, fields: dict[str, tuple[QWidget, QWidget]] | None = None):
         super().__init__()
         self.list = list
         self.stack = stack
 
-        self.pages: dict[str, tuple[int, QWidget, QWidget]] = {} # key: (index, page, listItem)
+        self.fields: dict[str, tuple[int, QWidget, QWidget]] = {} # key: (index, page, listItem)
 
-        if pages is not None:
-            self.addPages(pages)
+        if fields is not None:
+            self.addfields(fields)
 
         self.bind()
     
@@ -624,32 +624,40 @@ class SearchStackController(QObject):
     
     @property
     def keys(self) -> list[str]:
-        return [ key for key in self.pages.keys() ]
+        return [ key for key in self.fields.keys() ]
+    
+    @property
+    def pages(self) -> dict[str, QWidget]:
+        return { k: v[1] for k, v in self.fields.items() }
+    
+    @property
+    def listItems(self) -> dict[str, QWidget]:
+        return { k: v[2] for k, v in self.fields.items() }
     
     @property
     def currentPage(self) -> tuple[str, tuple[int, QWidget, QWidget]] | None:
         currentIndex = self.stack.currentIndex()
-        for key, (index, widget, listItem) in self.pages.items():
+        for key, (index, widget, listItem) in self.fields.items():
             if index == currentIndex:
                 return (key, widget, listItem)
         return None
 
     def addPage(self, widget: QWidget, listItem: QWidget, key: str) -> None:
-        if key in self.pages.keys():
+        if key in self.fields.keys():
             raise ValueError(f"key \"{key}\" already exists")
-        self.pages[key] = (self.stack.count(), widget, listItem)
+        self.fields[key] = (self.stack.count(), widget, listItem)
         self.list.list.addItem(listItem)
         self.stack.addWidget(widget)
     
-    def addPages(self, pages: dict[str, tuple[QWidget, QWidget]]) -> None:
-        for k, v in pages.items():
+    def addfields(self, fields: dict[str, tuple[QWidget, QWidget]]) -> None:
+        for k, v in fields.items():
             self.addPage(v[0], v[1], k)
     
     def removePage(self, key: str) -> None:
-        if key not in self.pages.keys():
+        if key not in self.fields.keys():
             raise ValueError(f"key {key} not found")
         
-        _, widget, listItem = self.pages.pop(key)
+        _, widget, listItem = self.fields.pop(key)
         widget.deleteLater()
         self.stack.removeWidget(widget)
         for i in range(self.list.list.count()):
@@ -658,10 +666,10 @@ class SearchStackController(QObject):
                 break
     
     def changePageByKey(self, key: str) -> None:
-        if key not in self.pages.keys():
+        if key not in self.fields.keys():
             raise ValueError(f"key {key} not found")
         
-        index, widget, _ = self.pages[key]
+        index, widget, _ = self.fields[key]
         self.stack.setCurrentIndex(index)
         self.list.list.setCurrentRow(index)
 
@@ -674,23 +682,23 @@ class SearchStackController(QObject):
         self.stack.setCurrentIndex(index)
         self.list.list.setCurrentRow(index)
 
-        for key, (i, widget, _) in self.pages.items():
+        for key, (i, widget, _) in self.fields.items():
             if i == index:
                 self.pageChanged.emit(key, index, widget)
     
     @Slot(QWidget)
     def onItemSelected(self, item: QWidget) -> None:
-        for key in self.pages.keys():
-            if self.pages[key][2] == item:
+        for key in self.fields.keys():
+            if self.fields[key][2] == item:
                 self.changePageByKey(key)
 
 class SearchStackFactory(WidgetFactory):
-    def __init__(self, data: Any, pages: dict[str, tuple[QWidget, QWidget]] | None = None):
+    def __init__(self, data: Any, fields: dict[str, tuple[QWidget, QWidget]] | None = None):
         super().__init__(QHBoxLayout(), data)
         
         self.list = SearchableList()
         self.stack = QStackedWidget()
-        self.controller = SearchStackController(self.list, self.stack, pages)
+        self.controller = SearchStackController(self.list, self.stack, fields)
     
     def buildContent(self) -> None:
         self.lyt.addWidget(self.list)

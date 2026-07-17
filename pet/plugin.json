@@ -12,11 +12,11 @@
     "deps": []
   },
   "move-randomly": {
-    "path": "./plugin/move_randomly/move_randomly.py",
+    "path": "./plugin/move-randomly/move-randomly.py",
     "deps": []
   },
   "use-fan": {
-    "path": "./plugin/use_fan.py",
+    "path": "./plugin/use-fan.py",
     "deps": []
   },
   "attr": {

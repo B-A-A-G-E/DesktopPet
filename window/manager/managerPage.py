@@ -1,31 +1,44 @@
 from PySide6.QtWidgets import (
     QWidget, QHBoxLayout, QVBoxLayout, QPushButton,
-    QStackedWidget, QTextEdit, QListWidgetItem, QTabWidget,
-    QFormLayout, QLabel
+    QTextEdit, QListWidgetItem, QTabWidget, QFormLayout,
+    QLabel, QMessageBox
 )
 from PySide6.QtGui import QPixmap
-from PySide6.QtCore import Signal, Slot, QObject
+from PySide6.QtCore import Signal, Slot, Qt
+from QMarkdownView import MarkdownView
 
+from typing import TYPE_CHECKING
 import json
 import subprocess
 import sys
+import os
+import shutil
 
-from tool.config import ConfigManager, pets
+from tool.config import ConfigManager
 from tool.widgetFactory import WidgetFactory, SearchStackFactory, ListBoxFactory, FormFactory, FormBoxFactory
+
+from window.pet.petWindow import PetWindow
+
+if TYPE_CHECKING:
+    from window.manager.mainWindow import MainWindow
 
 class ManagerPage(SearchStackFactory):
     saveError = Signal(str, str) # name, error
     launchError = Signal(str, str) # name, error
+    delError = Signal(str, str) # name, error
     dataUpdated = Signal(str) # name
     updateCancelled = Signal(str) # name
 
-    def __init__(self):
+    def __init__(self, mainWindow: "MainWindow"):
         super().__init__(None, None)
+        
+        self._mainWindow = mainWindow
+
         # 加载信息
         self._data: dict[str, dict] = {} # name, info
         self._petConfigs: dict[str, ConfigManager] = {}
         self._intro: dict[str, str] = {} # name, introduction
-        for name, path in pets.items():
+        for name, path in ConfigManager.pets.items():
             self._petConfigs[name] = ConfigManager(path)
             with open(f"{path}info.json", "r", encoding = "utf-8") as f:
                 info = json.load(f)
@@ -41,7 +54,10 @@ class ManagerPage(SearchStackFactory):
             listItem = QListWidgetItem(QPixmap(v["icon"]), v["name"])
             tabW = QTabWidget()
             
-            introPg = QTextEdit(markdown = self._intro[k], readOnly = True) # page1 (介绍)
+            introPg = MarkdownView() # page1 (介绍)
+            introPg.setExtensions(["markdown.extensions.tables", "markdown.extensions.extra"])
+            introPg.loadFinished.connect(lambda finished, name = k: introPg.setValue(self._intro[name]))
+            
             configPg = self.initConfigPage(k) # page2 (配置)
             setPg = self.initSettingPage(k) # page3 (设置)
             
@@ -174,7 +190,7 @@ class ManagerPage(SearchStackFactory):
         self._petConfigs[name].dialog = self.configPages[name][1][4].getData()
         self._petConfigs[name].pluginState = self.configPages[name][1][5].getData()
 
-        self._petConfigs[name].saveConfig()
+        self._petConfigs[name].saveConfig(ConfigManager.SaveMode.Common)
         
         self.dataUpdated.emit(name)
 
@@ -187,33 +203,86 @@ class ManagerPage(SearchStackFactory):
         self.configPages[name][1][4].setData(self._petConfigs[name].dialog)
         self.configPages[name][1][5].setData(self._petConfigs[name].pluginState)
         
+        self.repaint()
+        
         self.updateCancelled.emit(name)
     
     @Slot(str)
     def openPet(self, name: str) -> None:
-        pass
+        absPath = os.path.abspath(ConfigManager.pets[name])
+        if sys.platform == 'win32': # Windows
+            os.startfile(absPath)
+        elif sys.platform == 'darwin': # MacOS
+            subprocess.Popen(['open', absPath])
+        else: # Linux
+            subprocess.Popen(['xdg-open', absPath])
 
     @Slot(str)
     def delPet(self, name: str) -> None:
-        pass
+        from window.manager.mainWindow import MainWindow
+        
+        if MainWindow.getPet(name) is not None:
+            QMessageBox.critical(self, "无法删除", f"有正在运行中的实例，请先关闭此桌宠的所有实例后再尝试删除", QMessageBox.StandardButton.Ok)
+            return
+        if QMessageBox.question(self, "确认操作",
+            f"是否确认删除桌宠 \"{name}\"？",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No) == QMessageBox.StandardButton.No:
+            return
+        try:
+            absPath = os.path.abspath(ConfigManager.pets[name])
+
+            # 从 UI中移除
+            self.controller.removePage(name)
+
+            # 从内存数据中移除
+            if name in self._data:
+                del self._data[name]
+            if name in self._petConfigs:
+                del self._petConfigs[name]
+            if name in self._intro:
+                del self._intro[name]
+            if name in self.pages:
+                del self.pages[name]
+            if name in self.configPages:
+                del self.configPages[name]
+            if name in self.settingPages:
+                del self.settingPages[name]
+            
+            # 从注册文件中移除
+            with open("./pet/config.json", "r", encoding="utf-8") as f:
+                config = json.load(f)
+            
+            if name in config:
+                del config[name]
+            
+            with open("./pet/config.json", "w", encoding="utf-8") as f:
+                json.dump(config, f, ensure_ascii = False, indent = 2)
+            
+            # 更新ConfigManager.pets
+            ConfigManager.pets = config
+            
+            # 删除文件夹
+            if os.path.exists(absPath) and os.path.isdir(absPath):
+                shutil.rmtree(absPath)
+            else:
+                QMessageBox.warning(self, "警告", f"宠物文件夹 \"{absPath}\" 不存在或不是目录")
+            
+            # 7. 提示成功
+            QMessageBox.information(self, "删除成功", f"桌宠 \"{name}\" 已成功删除")
+        except Exception as e:
+            print(e)
+            self.delError.emit(name, e)
 
     @Slot(str)
     def launchPet(self, name: str) -> None:
         try:
-            petPath = pets.get(name)
-            if not petPath:
-                self.launchError.emit(name, f"cannot find the path of \"{name}\"")
-                return
-            
-            args = []
-            if sys.executable.endswith('python.exe') or sys.executable.endswith('python'):
-                args = ["python", "pet.py", petPath]
-            else:
-                args = ["pet.exe", petPath]
-            subprocess.Popen(
-                args,
-                stdout = subprocess.DEVNULL,
-                stderr = subprocess.DEVNULL
-            )
+            from window.manager.mainWindow import MainWindow
+            pet = PetWindow(name, ConfigManager.pets[name])
+            # 设置关闭时删除属性，确保窗口关闭时自动清理
+            pet.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
+            pet.show()
+            MainWindow.pets.append(pet)
         except Exception as e:
+            print(e)
             self.launchError.emit(name, e)

@@ -33,17 +33,16 @@ class Action(Plugin):
         self.idleTimer.start(self.idleTime)
         super().start()
     
-    def bind(self) -> None:
-        self.idleTimer.timeout.connect(lambda: self.window.replyState(self.state))
-        for v in self.window.pluginManager.plugins.values():
-            if v != self:
-                v.stopped.connect(lambda: self.window.operateState(self.state, self.anime))
+    def stop(self) -> None:
+        self.idleTimer.stop()
     
-    @Slot(str)
-    def onActStopped(self, id: str) -> None:
-        if id != self.id:
-            self.window.pluginManager.getPlugin(id).stopped.connect(lambda:
-                self.window.operateState(self.state, self.anime))
+    def teardown(self):
+        self.idleTimer.deleteLater()
+        return super().teardown()
+    
+    def bind(self) -> None:
+        self.window.stateChanged.connect(self.onStateChanged)
+        self.idleTimer.timeout.connect(lambda: self.window.replyState(self.state))
     
     @Slot(str, str)
     def onStateChanged(self, prevState: str, currentState: str) -> None:

@@ -6,6 +6,8 @@ from importlib import util
 import sys
 import os
 
+from tool.config import ConfigManager
+
 if TYPE_CHECKING:
     from window.pet.petWindow import PetWindow
 
@@ -47,7 +49,11 @@ class Plugin(QObject):
         """卸载事件过滤器，结束插件"""
         if self._window:
             self._window.removeEventFilter(self)
+        self.window.pluginManager._currentPlugin = None
         self.stopped.emit()
+
+        if self.teardownImmed:
+            self.teardown()
     
     def eventFilter(self, obj, event: QEvent) -> bool:
         """事件过滤器"""
@@ -72,16 +78,14 @@ class PluginManager(QObject):
     
     @currentPlugin.setter
     def currentPlugin(self, plugin: Plugin | None) -> None:
-        if not plugin or plugin in self.plugins.values():
+        if plugin is None or plugin in self.plugins.values():
             # 停止上一个插件
             if self._currentPlugin:
                 prevPlugin = self._currentPlugin
                 self._currentPlugin = None
                 prevPlugin.stop()
-                if prevPlugin.teardownImmed:
-                    prevPlugin.teardown()
             
-            if plugin:
+            if plugin is not None:
                 # 运行新插件
                 self._currentPlugin = plugin
                 self._currentPlugin.setup(self._petWindow)
@@ -102,7 +106,7 @@ class PluginManager(QObject):
             if id in self.plugins:
                 return
             
-            module = self.importModule(self._petWindow.configManager.plugin[id]["path"])
+            module = self.importModule(ConfigManager.plugin[id]["path"])
             pluginClass = getattr(module, "Action")
             
             if pluginClass and issubclass(pluginClass, Plugin) and pluginClass is not Plugin:
@@ -120,8 +124,8 @@ class PluginManager(QObject):
             return None
     
     def importModule(self, path: str) -> ModuleType:
-        if path.startswith("./") or path.startswith(".\\"): # path 为相对路径（window/macos，linux 不用处理）
-            path = os.path.abspath(os.path.join(os.getcwd(), path[2:])) # 工作目录绝对路径 + 插件相对路径（去 ./ 或 .\）
+        if path.startswith("./") or path.startswith(".\\"): # path 为相对路径（Windows/MacOs，Linux 不用处理）
+            path = os.path.abspath(os.path.join(os.getcwd(), path[2:])) # 工作目录绝对路径 + 插件相对路径（去掉 ./ 或 .\）
         elif (len(path) > 3 and path[1] == ":") or path.startswith("/"): # path 为绝对路径
             path = os.path.abspath(path)
         if not os.path.exists(path):
@@ -149,11 +153,11 @@ class PluginManager(QObject):
         # 1. 构建依赖图
         graph = {}  # {插件ID: [依赖的插件ID列表]}
         inDegree = {}  # {插件ID: 入度（依赖它的插件数量）}
-        ids = set(self._petWindow.configManager.plugin.keys())
+        ids = set(ConfigManager.plugin.keys())
         
         # 初始化所有插件
         for id in ids:
-            deps = self._petWindow.configManager.plugin.get(id, {}).get("deps", [])
+            deps = ConfigManager.plugin.get(id, {}).get("deps", [])
             graph[id] = deps
             inDegree[id] = 0  # 初始入度为0
         
@@ -219,5 +223,3 @@ class PluginManager(QObject):
                 self.currentPlugin = None
             else:
                 plugin.stop()
-                if plugin.teardownImmed:
-                    plugin.teardown()

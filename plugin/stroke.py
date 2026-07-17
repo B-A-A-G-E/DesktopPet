@@ -32,4 +32,5 @@ class Action(Plugin):
     def mouseReleaseEvent(self, event: QMouseEvent):
         if self.window.state == self.state:
             self.window.operateState(f"after-{self.state}", f"after-{self.anime}", isAsync = False)
-            self.window.operateState("idle", "idle")
+            self.window.changeState("idle")
+            self.window.changeAnime("idle")

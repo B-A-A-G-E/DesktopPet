@@ -2,8 +2,6 @@ from PySide6.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout
 from PySide6.QtGui import QAction
 from PySide6.QtCore import Qt, Slot, Signal, QRect
 
-import importlib
-
 from tool.config import ConfigManager
 from tool.config import LogType
 from tool import conv
@@ -20,15 +18,17 @@ class PetWindow(QWidget):
     stateChanged = Signal(str, str)
     aboutToQuit = Signal()
     
-    def __init__(self, petPath: str):
+    def __init__(self, name: str, petPath: str):
         super().__init__()
         
         # 无边框及透明背景
         self.setWindowFlag(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
+        self.name: str = name
+        
         # 添加控件
-        self.imgLb = QLabel() # 存放图片
+        self.imgLb: QLabel = QLabel() # 存放图片
 
         # 添加上下文菜单
         self.imgLb.setContextMenuPolicy(Qt.ContextMenuPolicy.ActionsContextMenu)
@@ -49,20 +49,21 @@ class PetWindow(QWidget):
         self.setLayout(self.mainlayout)
 
         # 配置管理器
-        self.configManager = ConfigManager(petPath)
+        self.configManager: ConfigManager = ConfigManager(petPath)
+        
         # 状态机
-        self.stateMachine = StateMachine([k for k in self.configManager.state.keys()])
+        self.stateMachine: StateMachine = StateMachine([k for k in self.configManager.state.keys()])
 
         # 插件管理器
-        self.pluginManager = PluginManager(self)
+        self.pluginManager: PluginManager = PluginManager(self)
         self.pluginManager.loadAllPlugins()
 
         # 添加动画
-        self.animes = { k: anime.Anime(v["path"], v["fps"], v["loop"], self, self.imgLb) for k, v in self.configManager.anime.items()}
-        self.currentAnime = self.animes["idle"]
+        self.animes: dict[str, anime.Anime] = { k: anime.Anime(v["path"], v["fps"], v["loop"], self, self.imgLb) for k, v in self.configManager.anime.items()}
+        self.currentAnime: anime.Anime = self.animes["idle"]
 
         # 添加碰撞体
-        self.collisions = { k: QRect(v["left"], v["top"], v["width"], v["height"]) for k, v in self.configManager.collision.items()}
+        self.collisions: dict[str, QRect] = { k: QRect(v["left"], v["top"], v["width"], v["height"]) for k, v in self.configManager.collision.items()}
 
         # 安装事件过滤器来捕获所有输入事件
         self.installEventFilter(self)
@@ -87,7 +88,7 @@ class PetWindow(QWidget):
         self.imgLb.stateAct.triggered.connect(self.stateMenu.show)
         self.imgLb.setAct.triggered.connect(self.settingMenu.show)
         self.imgLb.actAct.triggered.connect(self.actionMenu.show)
-        self.imgLb.exitAct.triggered.connect(QApplication.quit)
+        self.imgLb.exitAct.triggered.connect(QApplication.quit if ConfigManager.default else self.close)
 
         # 绑定状态机信号
         self.stateMachine.stateChanged.connect(self.onStateChanged)
@@ -100,10 +101,6 @@ class PetWindow(QWidget):
         # 绑定动画加载失败信号
         for anime in self.animes.values():
             anime.loadError.connect(lambda text: self.stateMenu.log(text, LogType.Error))
-        
-        # 绑定插件信号
-        for v in self.pluginManager.plugins.values():
-            v.stopped.connect(lambda id = v.id: self.onActStopped(id))
     
     @property
     def state(self) -> str:
@@ -161,15 +158,90 @@ class PetWindow(QWidget):
     def getAct(self, id: str) -> Plugin | None:
         return self.pluginManager.getPlugin(id)
 
+    def closeEvent(self, event) -> None:
+        try:
+            # 1. 停止所有插件
+            for plugin in self.pluginManager.plugins.values():
+                if plugin.auto:
+                    try:
+                        plugin.stop()
+                        if not plugin.teardownImmed:
+                            plugin.teardown()
+                    except Exception as e:
+                        print(f"failed to stop plugin {plugin.id}: {e}")
+            self.pluginManager.currentPlugin = None
+            
+            # 2. 停止所有动画定时器
+            for anime in self.animes.values():
+                anime.stop()  # 停止定时器
+                # 断开所有信号连接
+                try:
+                    anime.loadError.disconnect()
+                except (RuntimeError, TypeError):
+                    pass
+            
+            # 3. 清空插件管理器
+            self.pluginManager.plugins.clear()
+            self.pluginManager.deleteLater()
+
+            # 4. 断开所有信号连接
+            try:
+                self.stateMachine.stateChanged.disconnect()
+                self.stateMachine.stateUndefined.disconnect()
+                self.settingMenu.dataUpdated.disconnect()
+            except (RuntimeError, TypeError):
+                pass
+            
+            # 5. 删除所有子窗口
+            for menu in [self.dialogMenu, self.stateMenu, self.actionMenu, self.settingMenu]:
+                if menu:
+                    try:
+                        menu.close()
+                        menu.deleteLater()
+                    except Exception:
+                        pass
+            
+            # 6. 删除动画对象
+            for key in list(self.animes.keys()):
+                anime = self.animes.pop(key)
+                try:
+                    anime.deleteLater()
+                except Exception:
+                    pass
+            
+            # 7. 清空碰撞体
+            self.collisions.clear()
+            
+            # 8. 删除状态机和配置管理器
+            self.stateMachine.deleteLater()
+            self.configManager.deleteLater()
+            
+            # 9. 从主窗口的宠物列表中移除
+            if not ConfigManager.default:
+                from window.manager.mainWindow import MainWindow
+                if self in MainWindow.pets:
+                    MainWindow.pets.remove(self)
+            
+            # 10. 写入日志
+            with open(self.configManager.base["log-path"], "a", encoding = "utf-8") as f:
+                from datetime import datetime
+                f.write(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  {LogType.Exit}:    Succeeded to exit\n")
+            
+            # 11. 发射退出信号
+            self.aboutToQuit.emit()
+            
+            # 12. 最后删除自身
+            self.deleteLater()
+            
+        except Exception as e:
+            print(f"Error in closeEvent: {e}")
+        
+        event.accept()
+    
     @Slot(str, str)
     def onStateChanged(self, prevState: str, currentState: str) -> None:
         self.stateMenu.log(self.state, LogType.StateChanged)
         self.stateChanged.emit(prevState, currentState)
-
-    @Slot(str)
-    def onActStopped(self, id: str) -> None:
-        if self.pluginManager.currentPlugin and self.pluginManager.currentPlugin.id == id:
-            self.pluginManager.currentPlugin = None
 
     @Slot()
     def updateData(self) -> None:

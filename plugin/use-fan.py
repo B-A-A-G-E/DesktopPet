@@ -13,14 +13,19 @@ class Action(Plugin):
         self.state = "use-fan"
 
 
-    def start(self):
+    def start(self) -> None:
         self.window.changeAnime("using-fan")
         super().start()
+    
+    def stop(self) -> None:
+        self.window.changeAnime("turn-off-fan", isAsync = False)
+        self.window.changeState("idle")
+        self.window.changeAnime("idle")
+        super().stop()
 
     def eventFilter(self, obj, event: QEvent):
         if event.type() == QEvent.Type.MouseButtonPress:
             mouseEvent: QMouseEvent = event
             if mouseEvent.button() == Qt.MouseButton.LeftButton and getCollision(self.window, mouseEvent.position().toPoint()):
-                self.window.changeAnime("turn-off-fan", isAsync = False)
                 self.stop()
         return super().eventFilter(obj, event)

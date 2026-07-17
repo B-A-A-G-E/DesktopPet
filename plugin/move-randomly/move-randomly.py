@@ -31,6 +31,15 @@ class Action(Plugin):
         self.moveTimer.start(self.data["idle-move-time"])
         super().start()
 
+    def stop(self) -> None:
+        self.step = 0
+        self.moveTimer.stop()
+        super().stop()
+    
+    def teardown(self):
+        self.moveTimer.deleteLater()
+        return super().teardown()
+    
     def eventFilter(self, obj, event: QEvent) -> None:
         if event.type() == QEvent.Type.MouseButtonPress:
             # 终止自动移动
@@ -52,7 +61,7 @@ class Action(Plugin):
         self.window.settingMenu.dataUpdated.connect(self.updateData)
     
     def loadData(self) -> None:
-        with open("./plugin/move_randomly/data.json", "r", encoding = "utf-8") as f:
+        with open("./plugin/move-randomly/data.json", "r", encoding = "utf-8") as f:
             self.data = json.load(f)
 
     def addPage(self) -> None:
@@ -112,5 +121,5 @@ class Action(Plugin):
     def updateData(self) -> None:
         self.data = self.window.settingMenu.getPage("移动配置").getData()
 
-        with open("./plugin/move_randomly/data.json", "w", encoding = "utf-8") as f:
+        with open("./plugin/move-randomly/data.json", "w", encoding = "utf-8") as f:
             f.write(json.dumps(self.data, ensure_ascii = False, indent = 2))

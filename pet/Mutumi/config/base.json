@@ -1,5 +1,5 @@
 {
-  "log-path": "./pet/Mutumi/config/log.log",
+  "log-path": "./pet/Mutumi/log.log",
   "quesSelecter-item-count": 10,
   "idle-time": 10000
 }

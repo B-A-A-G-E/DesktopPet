@@ -15,7 +15,7 @@ def getPixNames(folderPath: str):
     
     # 按数值排序，过滤掉非纯数字的文件
     numericFiles = [f for f in files if f.split('.')[0].isdigit()]
-    numericFiles.sort(key=extractNumber)
+    numericFiles.sort(key = extractNumber)
     
     return numericFiles
 
@@ -49,15 +49,19 @@ class Anime(QObject):
         self.window = window # 窗体
         self.widget = widget # 存储帧的容器
         
+        self.connected = False
+        
         self.imgNames = getPixNames(self.path)
         self.index = 0
         self.timer = QTimer()
-        self.timer.timeout.connect(self.nextImg)
     
     def play(self, isContinue: bool = False, isAsync: bool = True) -> None:
         """开始或继续播放动画"""
+        
         if not isContinue:
             self.index = 0
+            self.timer.timeout.connect(self.nextImg)
+            self.connected = True
         
         if isAsync:
             self.timer.start(1000 // self.fps)
@@ -66,8 +70,9 @@ class Anime(QObject):
                 try:
                     self.widget.setPixmap(QPixmap(f"{self.path}/{imgName}"))
                     fitImgSize(self.window, self.widget) # 调整窗口大小以适应图片
-                except:
-                    self.loadError.emit(f"Can't load file {self.path}.")
+                except Exception as e:
+                    print(e)
+                    self.loadError.emit(f"Can't load file {self.path}.\n{e}")
                     showLoadFailedMsg(self.window, self.path)
                 time.sleep(1 / self.fps)
                 QApplication.processEvents()  # 允许界面更新
@@ -80,6 +85,9 @@ class Anime(QObject):
     def over(self) -> None:
         self.index = 0
         self.timer.stop()
+        if self.connected:
+            self.connected = False
+            self.timer.timeout.disconnect()
         self.overed.emit()
     
     def replay(self) -> None:
@@ -92,8 +100,9 @@ class Anime(QObject):
         try:
             self.widget.setPixmap(QPixmap(f"{self.path}/{self.imgNames[self.index]}")) # 更新帧
             fitImgSize(self.window, self.widget) # 调整窗口大小以适应图片
-        except:
-            self.loadError.emit(f"Can't load file {self.path}.")
+        except Exception as e:
+            print(e)
+            self.loadError.emit(f"Can't load file {self.path}.\n{e}")
             showLoadFailedMsg(self.window, self.path)
         self.index += 1
         if self.index == len(self.imgNames):

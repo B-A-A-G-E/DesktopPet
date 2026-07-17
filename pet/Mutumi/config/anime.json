@@ -35,8 +35,8 @@
     "loop": true
   },
   "turn-off-fan": {
-    "path": "./img/turn-off-fan/",
+    "path": "./pet/Mutumi/img/turn-off-fan/",
     "fps": 20,
-    "loop": true
+    "loop": false
   }
 }
