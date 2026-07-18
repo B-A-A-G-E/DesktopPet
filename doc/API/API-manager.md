@@ -12,7 +12,7 @@
       - [方法 initStack() -> None](#方法-initstack---none)
       - [方法 bind() -> None](#方法-bind---none)
       - [方法 closeEvent()](#方法-closeevent)
-      - [静态方法 getPet(name: str) -> list[PetWindow] | None](#静态方法-getpetname-str---listpetwindow--none)
+      - [静态方法 getPet(name: str) -> list[PetWindow]](#静态方法-getpetname-str---listpetwindow)
     - [类 ManagerPage(SearchStackFactory)](#类-managerpagesearchstackfactory)
       - [属性](#属性-1)
       - [信号](#信号)
@@ -121,14 +121,14 @@ def closeEvent(event) -> None
   - 清空 `MainWindow.pets` 列表
   - 接受关闭事件
 
-#### 静态方法 getPet(name: str) -> list[PetWindow] | None
+#### 静态方法 getPet(name: str) -> list[PetWindow]
 
 根据宠物名获取所有已打开的宠物窗口实例。
 
 - **参数**
   - `name`: 宠物名
 - **返回**
-  - 匹配的宠物窗口列表，若没有匹配项则返回 `None`
+  - 匹配的宠物窗口列表
 
 ---
 

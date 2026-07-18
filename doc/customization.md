@@ -323,7 +323,7 @@ class Action(Plugin):  # 类名必须为 Action
 }
 ```
 
-导入 `tool.mouse.getCollision` 函数获取鼠标所在的碰撞体。
+导入 `tool.collision.pointAt` 函数获取鼠标所在的碰撞体。
 
 #### 7. 使用页面工厂构建自定义面板（可选）
 
@@ -515,6 +515,8 @@ class Action(Plugin):
 - 插件需要频繁启动/停止，可避免重复安装开销
 - 插件需要在停止后保留某些状态供下次使用
 
+**注意:** 关闭桌宠时会结束并卸载正在执行的插件与自启动插件
+
 ---
 
 ## 常见问题
@@ -529,31 +531,31 @@ class Action(Plugin):
 
 **Q: 在 `__init__`/`setup` 中获取主窗口（`self.window`）报错：AttributeError: 'NoneType' object has no attribute 'xxx' 怎么办？**
 
-: 主窗口还未完成初始化。**初始化中涉及主窗口的操作应移至 `setup`，并先调用 `super().setup(window)`**。
+A: 主窗口还未完成初始化。**初始化中涉及主窗口的操作应移至 `setup`，并先调用 `super().setup(window)`**。
 
 **Q: 行动开始后宠物不响应鼠标操作？**
 
-: 检查其他插件是否拦截了事件（`eventFilter` 返回了 `True`）。
+A: 检查其他插件是否拦截了事件（`eventFilter` 返回了 `True`）。
 
 **Q: 如何让行动在结束后自动恢复待机？**
 
-: 调用 `self.window.changeState("idle")` 或有关方法
+A: 调用 `self.window.changeState("idle")` 或有关方法
 
 **Q: 动画不播放怎么办？**
 
-: 检查：
+A: 检查：
 1. `anime.json` 中是否配置了对应动画
 2. 帧图片是否按数字顺序命名（`0.png`, `1.png`...）
 3. 调用 `changeAnime` 时传入的动画名是否正确
 
 **Q: 自动启动插件和普通插件有什么区别？**
 
-: `auto = True` 的插件在程序启动时自动运行，不会出现在行动面板中，**不暂停其他状态的自动切换**，适合后台任务；普通插件需要在行动面板中手动点击执行，**会暂停其他状态切换**。
+A: `auto = True` 的插件在程序启动时自动运行，不会出现在行动面板中，**不暂停其他状态的自动切换**，适合后台任务；普通插件需要在行动面板中手动点击执行，**会暂停其他状态切换**。
 
 **Q: `PluginManager` 和 `PetWindow` 的关系是什么？**
 
-: `PetWindow` 持有 `PluginManager` 实例，通过它管理所有插件的加载、启动和停止。`PetWindow` 的 `startAct`、`stopAct`、`getAct` 等方法是对 `PluginManager` 的封装。
+A: `PetWindow` 持有 `PluginManager` 实例，通过它管理所有插件的加载、启动和停止。`PetWindow` 的 `startAct`、`stopAct`、`getAct` 等方法是对 `PluginManager` 的封装。
 
 **Q: `teardownImmed` 和 `teardown` 有什么区别？**
 
-: `teardownImmed` 是一个控制属性，决定插件停止后是否立即调用 `teardown` 方法。`teardown` 是实际执行资源清理的方法，你可以在其中进行信号解绑、删除临时控件等。
+A: `teardownImmed` 是一个控制属性，决定插件停止后是否立即调用 `teardown` 方法。`teardown` 是实际执行资源清理的方法，你可以在其中进行信号解绑、删除临时控件等。

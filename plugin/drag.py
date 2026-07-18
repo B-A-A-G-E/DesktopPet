@@ -2,7 +2,7 @@ from PySide6.QtCore import Qt, QEvent, QPoint
 from PySide6.QtGui import QMouseEvent
 
 from tool.plugin import Plugin
-from tool import mouse
+from tool.collision import pointAt
 
 class Action(Plugin):
     def __init__(self):
@@ -33,8 +33,8 @@ class Action(Plugin):
     
     def mouseMoveEvent(self, event: QMouseEvent):
         if event.buttons() == Qt.MouseButton.LeftButton and self.window.state in ("idle", "drag"):
-            collision = mouse.getCollision(self.window, event.position().toPoint())
-            if not collision:
+            collision = pointAt(event.position().toPoint(), self.window.collisions)
+            if len(collision) == 0:
                 event.accept()
                 if self.window.state != self.state:
                     self.window.operateState(self.state, self.anime)

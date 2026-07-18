@@ -42,21 +42,21 @@ pip install qmarkdownview
 2.  **运行桌宠**：
     - 运行桌宠管理器:
         ```shell
-        python pet.py
+        python main.py
         # 或
-        pet.exe # 需打包
+        main.exe # 需打包
         ```
     - 运行默认桌宠（需提前配置）:
         ```shell
-        python pet.py -default
+        python main.py -default
         # 或
-        pet.exe -default # 需打包
+        main.exe -default # 需打包
         ```
     - 运行指定名称的桌宠（需提前配置）
         ```shell
-        python pet.py <桌宠名>
+        python main.py <桌宠名>
         # 或
-        pet.exe <桌宠名> # 需打包
+        main.exe <桌宠名> # 需打包
         ```
     在桌宠管理器的图形界面中可以查看所有已注册的宠物、编辑配置，双击启动宠物。
 
@@ -78,6 +78,7 @@ pip install qmarkdownview
 │   └── Mutumi/               # 示例宠物
 │       ├── info.json         # 元信息
 │       ├── introduction.md   # 介绍文档
+│       ├── img/              # 动画帧图片
 │       └── config/           # 行为配置
 │           ├── base.json     # 基础设置
 │           ├── anime.json    # 动画序列
@@ -85,7 +86,6 @@ pip install qmarkdownview
 │           ├── dialog.json   # 对话库
 │           ├── state.json    # 状态反馈
 │           └── pluginState.json # 插件状态
-│       └── img/              # 动画帧图片
 │
 ├── plugin/                   # 插件系统
 │   ├── idle.py               # 待机管理
@@ -95,9 +95,9 @@ pip install qmarkdownview
 │   │   ├── move-randomly.py
 │   │   └── data.json
 │   ├── use-fan.py            # 风扇互动
-│   │   ├── use-fan.py
-│   │   └── data.json
 │   └── attr/                 # 属性面板
+│       ├── attr.py
+│       └── data.json
 │
 ├── tool/                     # 核心工具
 │   ├── config.py             # 配置管理
@@ -106,7 +106,7 @@ pip install qmarkdownview
 │   ├── plugin.py             # 插件管理器
 │   ├── widgetFactory.py      # UI工厂
 │   ├── conv.py               # 对话生成
-│   └── mouse.py              # 碰撞检测
+│   └── collision.py              # 碰撞检测
 │
 └── window/                   # GUI界面
     ├── manager/              # 管理后台

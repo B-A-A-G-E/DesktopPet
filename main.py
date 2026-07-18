@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QApplication
 import sys
 
 import tool
-from tool.config import ConfigManager
+from tool.config import ConfigManager, LogType
 
 from window.pet.petWindow import PetWindow
 from window.manager.mainWindow import MainWindow
@@ -34,4 +34,4 @@ if __name__ == "__main__":
     
     if ConfigManager.default:
         window.operateState("exit", "exit", isAsync = False)
-        window.stateMenu.log("Succeeded to exit", tool.config.LogType.Exit)
+        window.stateMenu.log("Succeeded to exit", LogType.Exit)

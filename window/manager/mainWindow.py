@@ -102,9 +102,9 @@ class MainWindow(QWidget):
         event.accept()
     
     @staticmethod
-    def getPet(name: str) -> list["PetWindow"] | None:
+    def getPet(name: str) -> list["PetWindow"]:
         petList: list["PetWindow"] = []
         for pet in MainWindow.pets:
             if pet.name == name:
                 petList.append(pet)
-        return None if len(petList) == 0 else petList
+        return petList

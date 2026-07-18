@@ -33,8 +33,8 @@
     - [函数 loadPets()](#函数-loadpets)
   - [模块 tool.conv](#模块-toolconv)
     - [函数 replyText()](#函数-replytext)
-  - [模块 tool.mouse](#模块-toolmouse)
-    - [函数 getCollision()](#函数-getcollision)
+  - [模块 tool.collision](#模块-toolcollision)
+    - [函数 pointAt()](#函数-pointAt)
   - [模块 tool.plugin](#模块-toolplugin)
     - [类 Plugin](#类-plugin)
       - [属性](#属性)
@@ -507,23 +507,23 @@ def replyText(type: str, act: str, config: ConfigManager) -> str
 
 ---
 
-## 模块 tool.mouse
+## 模块 tool.collision
 
 鼠标交互辅助函数。
 
-### 函数 getCollision()
+### 函数 pointAt()
 
 ```python
-def getCollision(widget: QWidget, pos: QPoint) -> str | None
+def pointAt(point: QPoint, colls: dict[str, QRect]) -> list[str]
 ```
 
-检测鼠标点击位置是否落在 `widget.collisions` 中定义的某个碰撞体内。
+检测某点是否在某个碰撞体内。
 
 - **参数**
-  - `widget`: 包含 `collisions` 属性的窗口对象
-  - `pos`: 相对于 `widget` 的点击位置
+  - `point`: 点位置
+  - `colls`: 碰撞体字典
 - **返回**
-  - 命中状态名（键名），若未命中则返回 `None`
+  - 命中的碰撞体名（键名）列表
 
 ---
 

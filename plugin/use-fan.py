@@ -2,7 +2,7 @@ from PySide6.QtCore import Qt, QEvent
 from PySide6.QtGui import QMouseEvent
 
 from tool.plugin import Plugin
-from tool.mouse import getCollision
+from tool.collision import pointAt
 
 class Action(Plugin):
     def __init__(self):
@@ -26,6 +26,7 @@ class Action(Plugin):
     def eventFilter(self, obj, event: QEvent):
         if event.type() == QEvent.Type.MouseButtonPress:
             mouseEvent: QMouseEvent = event
-            if mouseEvent.button() == Qt.MouseButton.LeftButton and getCollision(self.window, mouseEvent.position().toPoint()):
+            if mouseEvent.button() == Qt.MouseButton.LeftButton and \
+                "fan-switch" in pointAt(mouseEvent.position().toPoint(), self.window.collisions):
                 self.stop()
         return super().eventFilter(obj, event)
