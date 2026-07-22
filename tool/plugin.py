@@ -149,56 +149,53 @@ class PluginManager(QObject):
         return module
         
     def sortPlugins(self) -> list[str]:
-        """通过检查依赖项对插件加载顺序排序"""
-        # 1. 构建依赖图
-        graph = {}  # {插件ID: [依赖的插件ID列表]}
-        inDegree = {}  # {插件ID: 入度（依赖它的插件数量）}
+        """通过检查依赖项对插件加载顺序排序（Kahn算法）"""
+        from collections import deque
+        
         ids = set(ConfigManager.plugin.keys())
+        if not ids:
+            return []
         
-        # 初始化所有插件
-        for id in ids:
-            deps = ConfigManager.plugin.get(id, {}).get("deps", [])
-            graph[id] = deps
-            inDegree[id] = 0  # 初始入度为0
+        # 构建依赖图和入度
+        graph = {}  # {插件ID: [依赖的插件ID列表]}
+        inDegree = {pid: 0 for pid in ids}
         
-        # 计算入度：对于每个插件A，所有依赖它的插件B，B的入度+1
-        for id, deps in graph.items():
+        for pid in ids:
+            deps = ConfigManager.plugin.get(pid, {}).get("deps", [])
+            validDeos = []
             for dep in deps:
-                if dep in inDegree:
-                    inDegree[dep] = inDegree.get(dep, 0) + 1
+                if dep in ids:
+                    validDeos.append(dep)
                 else:
-                    # 依赖的插件未注册，报错
-                    self.pluginError.emit(f"Plugin \"{id}\" depends on unregistered plugin \"{dep}\"")
+                    self.pluginError.emit(f"Plugin \"{pid}\" depends on unregistered plugin \"{dep}\", skipping")
+            graph[pid] = validDeos
+            inDegree[pid] = len(validDeos)  # 入度 = 依赖数量
         
-        # 2. Kahn 算法主体
-        queue = []  # 存储所有入度为0的节点（可加载的插件）
-        for id, degree in inDegree.items():
-            if degree == 0:
-                queue.append(id)
+        # 构建反向图
+        reverseGraph = {pid: [] for pid in ids}
+        for pid, deps in graph.items():
+            for dep in deps:
+                reverseGraph[dep].append(pid)
         
-        result = []  # 最终的加载顺序
-        sortedPlugins = set()  # 已处理的插件
+        # Kahn算法
+        queue = deque([pid for pid in ids if inDegree[pid] == 0])
+        result = []
         
         while queue:
-            # 从队列取出一个入度为0的节点
-            current = queue.pop(0)
+            current = queue.popleft()
             result.append(current)
-            sortedPlugins.add(current)
             
-            # 找到所有依赖 current 的插件，将其入度减1
-            for id, deps in graph.items():
-                if current in deps and id not in sortedPlugins:
-                    inDegree[id] -= 1
-                    if inDegree[id] == 0:
-                        queue.append(id)
+            for dependent in reverseGraph[current]:
+                inDegree[dependent] -= 1
+                if inDegree[dependent] == 0:
+                    queue.append(dependent)
         
-        # 3. 检测循环依赖
+        # 检测循环依赖
         if len(result) != len(ids):
             remaining = ids - set(result)
             raise ValueError(f"检测到循环依赖，无法加载的插件: {remaining}")
         
         return result
-
     def startAutoPlugins(self) -> None:
         """启动所有自启动插件"""
         for plugin in self.plugins.values():

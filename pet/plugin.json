@@ -5,11 +5,11 @@
   },
   "stroke": {
     "path": "./plugin/stroke.py",
-    "deps": []
+    "deps": ["idle"]
   },
   "drag": {
     "path": "./plugin/drag.py",
-    "deps": []
+    "deps": ["idle"]
   },
   "move-randomly": {
     "path": "./plugin/move-randomly.py",
@@ -17,7 +17,7 @@
   },
   "use-fan": {
     "path": "./plugin/use-fan.py",
-    "deps": []
+    "deps": ["idle"]
   },
   "attr": {
     "path": "./plugin/attr.py",

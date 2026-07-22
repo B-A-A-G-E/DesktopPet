@@ -262,12 +262,11 @@ class Action(Plugin):  # 类名必须为 Action
 
 #### 3. 注册插件
 
-编辑 `./pet/你的宠物/config/plugin.json`：
+编辑 `./pet/plugin.json`：
 
 ``` json
 "action": {
     "path": "./plugin/action.py",
-    "enabled": true,
     "deps": []
 }
 ```
@@ -278,6 +277,16 @@ class Action(Plugin):  # 类名必须为 Action
     - `enabled`: 是否启用
     - `deps`: 依赖的插件 ID 列表（用于控制加载顺序）
 
+---
+
+编辑 `./pet/你的宠物/config/pluginState.json`：
+
+``` json
+"action": true
+```
+
+- 键：插件 ID（须与 `self.id` 一致）
+- 值: 是否启用
 
 #### 4. 注册状态并配置状态反馈文本
 

@@ -64,7 +64,7 @@ pip install qmarkdownview
 
 ```
 .
-├── pet.py                    # 程序入口
+├── main.py                    # 程序入口
 ├── README.md                 # 项目说明文档
 │
 ├── doc/                      # 详细文档
