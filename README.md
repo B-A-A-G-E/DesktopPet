@@ -78,6 +78,7 @@ pip install qmarkdownview
 │   └── Mutumi/               # 示例宠物
 │       ├── info.json         # 元信息
 │       ├── introduction.md   # 介绍文档
+│       ├── icon.png          # 桌宠图标
 │       ├── img/              # 动画帧图片
 │       └── config/           # 行为配置
 │           ├── base.json     # 基础设置
@@ -91,13 +92,9 @@ pip install qmarkdownview
 │   ├── idle.py               # 待机管理
 │   ├── drag.py               # 拖拽交互
 │   ├── stroke.py             # 抚摸交互
-│   ├── move-randomly/        # 随机移动
-│   │   ├── move-randomly.py
-│   │   └── data.json
+│   ├── move-randomly.py      # 随机移动
 │   ├── use-fan.py            # 风扇互动
-│   └── attr/                 # 属性面板
-│       ├── attr.py
-│       └── data.json
+│   └── attr.py               # 属性面板
 │
 ├── tool/                     # 核心工具
 │   ├── config.py             # 配置管理
@@ -106,7 +103,7 @@ pip install qmarkdownview
 │   ├── plugin.py             # 插件管理器
 │   ├── widgetFactory.py      # UI工厂
 │   ├── conv.py               # 对话生成
-│   └── collision.py              # 碰撞检测
+│   └── collision.py          # 碰撞检测
 │
 └── window/                   # GUI界面
     ├── manager/              # 管理后台

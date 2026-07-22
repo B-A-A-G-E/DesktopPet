@@ -1,10 +1,6 @@
-"""
-idle 作为基础状态其插件必须启用，最先加载
-"""
 from PySide6.QtCore import Slot, QTimer
 
 from tool.plugin import Plugin
-from tool.config import LogType
 
 class Action(Plugin):
     def __init__(self):
@@ -25,20 +21,19 @@ class Action(Plugin):
 
         self.bind()
     
-    def start(self) -> None:
-        # 入场并切换待机
-        self.window.stateMenu.log("Succeeded to entre", LogType.Entre)
-        #self.window.operateState("entre", "entre", isAsync = False)
-        self.window.operateState("idle", "idle")
-        self.idleTimer.start(self.idleTime)
-        super().start()
-    
-    def stop(self) -> None:
-        self.idleTimer.stop()
-    
     def teardown(self):
         self.idleTimer.deleteLater()
         return super().teardown()
+    
+    def start(self) -> None:
+        # 入场并切换待机
+        super().start()
+        #self.window.operateState("entre", "entre", isAsync = False)
+        self.window.operateState("idle", "idle")
+        self.idleTimer.start(self.idleTime)
+    
+    def stop(self) -> None:
+        self.idleTimer.stop()
     
     def bind(self) -> None:
         self.window.stateChanged.connect(self.onStateChanged)

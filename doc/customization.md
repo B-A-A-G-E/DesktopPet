@@ -227,8 +227,8 @@ class Action(Plugin):  # 类名必须为 Action
 
     def start(self):
         """开始行动"""
-        # do something here
         super().start()
+        # do something here
 
     def stop(self):
         """停止行动"""
@@ -356,11 +356,11 @@ class Action(Plugin):
 
     def start(self):
         # 切换动画
+        super().start()
         self.window.changeAnime(self.id)
         # 获取并显示随机回复
         reply = conv.replyText("state", self.id)
         self.window.dialogMenu.addLine(reply)
-        super().start()
 
     def stop(self):
         super().stop()
@@ -413,8 +413,8 @@ class Action(Plugin):
         self.auto = True  # 程序启动时自动运行
 
     def start(self):
-        # do something here
         super().start()
+        # do something here
 
     def stop(self):
         # do something here
@@ -454,7 +454,7 @@ class Action(Plugin):
 
 ``` json
 "plugin-b": {
-    "path": "./plugin/plugin_b.py",
+    "path": "./plugin/plugin-b.py",
     "enabled": true,
     "deps": ["plugin-a"]
 }

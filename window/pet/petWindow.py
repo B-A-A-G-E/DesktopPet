@@ -26,6 +26,7 @@ class PetWindow(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         self.name: str = name
+        self.petPath: str = petPath
         
         # 添加控件
         self.imgLb: QLabel = QLabel() # 存放图片
@@ -60,7 +61,7 @@ class PetWindow(QWidget):
 
         # 添加动画
         self.animes: dict[str, anime.Anime] = { k: anime.Anime(v["path"], v["fps"], v["loop"], self, self.imgLb) for k, v in self.configManager.anime.items()}
-        self.currentAnime: anime.Anime = self.animes["idle"]
+        self.currentAnime: anime.Anime = None
 
         # 添加碰撞体
         self.collisions: dict[str, QRect] = { k: QRect(v["left"], v["top"], v["width"], v["height"]) for k, v in self.configManager.collision.items()}
@@ -141,7 +142,8 @@ class PetWindow(QWidget):
     def changeAnime(self, name: str, isContinue: bool = False, isAsync: bool = True) -> None:
         """切换动画"""
         if name in self.animes.keys():
-            self.currentAnime.over()
+            if self.currentAnime is not None:
+                self.currentAnime.over()
             self.currentAnime = self.animes[name]
             self.currentAnime.play(isContinue, isAsync)
 

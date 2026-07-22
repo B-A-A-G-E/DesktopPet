@@ -1,4 +1,4 @@
-# ![icon](./pet/Mutumi.pet.png) Mutumi
+# ![icon](./pet/Mutumi/icon.png) Mutumi
 
 示例桌宠 `Mutumi`
 

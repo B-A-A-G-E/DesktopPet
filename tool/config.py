@@ -39,7 +39,7 @@ class ConfigManager(QObject):
     def __init__(self, path: str):
         super().__init__()
 
-        self.path = path
+        self.path = Path(path)
         # 普通成员变量（实例变量）
         self.base: dict = {}
         self.anime: dict[str, dict] = {}
@@ -63,7 +63,8 @@ class ConfigManager(QObject):
         
         for filename, attr in config_files.items():
             try:
-                with open(f"{self.path}config/{filename}", "r", encoding = "utf-8") as f:
+                filename = Path(filename)
+                with open(self.path/ "config" / filename, "r", encoding = "utf-8") as f:
                     setattr(self, attr, json.load(f))
             except FileNotFoundError as e:
                 print(f"cannot find file {filename}: {e}")
@@ -76,8 +77,8 @@ class ConfigManager(QObject):
         """根据模式保存配置文件"""
         try:
             # 确保目录存在
-            (self.path / "config").mkdir(parents=True, exist_ok=True)
-            Path("./pet").mkdir(parents=True, exist_ok=True)
+            (self.path / "config").mkdir(parents = True, exist_ok = True)
+            Path("./pet").mkdir(parents = True, exist_ok = True)
             
             match mode:
                 # 保存所有配置

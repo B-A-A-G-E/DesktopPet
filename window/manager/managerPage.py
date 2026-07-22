@@ -14,7 +14,7 @@ import sys
 import os
 import shutil
 
-from tool.config import ConfigManager
+from tool.config import ConfigManager, LogType
 from tool.widgetFactory import WidgetFactory, SearchStackFactory, ListBoxFactory, FormFactory, FormBoxFactory
 
 from window.pet.petWindow import PetWindow
@@ -283,6 +283,7 @@ class ManagerPage(SearchStackFactory):
             pet.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
             pet.show()
             MainWindow.pets.append(pet)
+            pet.stateMenu.log("Succeeded to entre", LogType.Entre)
         except Exception as e:
             print(e)
             self.launchError.emit(name, e)

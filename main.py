@@ -2,7 +2,6 @@ from PySide6.QtWidgets import QApplication
 
 import sys
 
-import tool
 from tool.config import ConfigManager, LogType
 
 from window.pet.petWindow import PetWindow
@@ -17,7 +16,7 @@ if __name__ == "__main__":
             window = MainWindow()
     elif sys.argv[1] == "-default":
         if default == "":
-            print("default pet name is not exist")
+            print("default pet does not exist")
             input("pause")
             sys.exit(-1)
         

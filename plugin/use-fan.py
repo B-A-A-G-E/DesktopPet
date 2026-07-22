@@ -14,8 +14,8 @@ class Action(Plugin):
 
 
     def start(self) -> None:
-        self.window.changeAnime("using-fan")
         super().start()
+        self.window.changeAnime("using-fan")
     
     def stop(self) -> None:
         self.window.changeAnime("turn-off-fan", isAsync = False)

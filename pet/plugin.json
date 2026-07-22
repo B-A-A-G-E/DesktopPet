@@ -12,7 +12,7 @@
     "deps": []
   },
   "move-randomly": {
-    "path": "./plugin/move-randomly/move-randomly.py",
+    "path": "./plugin/move-randomly.py",
     "deps": []
   },
   "use-fan": {
@@ -20,7 +20,7 @@
     "deps": []
   },
   "attr": {
-    "path": "./plugin/attr/attr.py",
+    "path": "./plugin/attr.py",
     "deps": []
   }
 }

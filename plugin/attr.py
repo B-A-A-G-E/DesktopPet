@@ -2,6 +2,7 @@ from PySide6.QtWidgets import QWidget, QFormLayout, QProgressBar, QLabel
 from PySide6.QtCore import Slot, QTimer
 
 import json
+import os
 
 from tool.plugin import Plugin
 
@@ -17,21 +18,19 @@ class Action(Plugin):
         self.settings: dict = {}
         self.strokeTimer: QTimer = QTimer()
 
-        self.loadData()
-
-
     def setup(self, window) -> None:
         super().setup(window)
+        self.loadData()
         self.bind()
         self.addPage()
-    
-    def stop(self):
-        self.strokeTimer.stop()
-        return super().stop()
     
     def teardown(self):
         self.strokeTimer.deleteLater()
         return super().teardown()
+    
+    def stop(self):
+        self.strokeTimer.stop()
+        return super().stop()
     
     def bind(self) -> None:
         self.window.aboutToQuit.connect(self.updateData)
@@ -39,16 +38,26 @@ class Action(Plugin):
         self.strokeTimer.timeout.connect(self.onStrokeTimeout)
 
     def loadData(self) -> None:
-        with open("./plugin/attr/data.json", "r", encoding = "utf-8") as f:
-            self.data = json.load(f)
+        if os.path.exists(f"{self.window.petPath}/config/attr.json"):
+            with open(f"{self.window.petPath}/config/attr.json", "r", encoding = "utf-8") as f:
+                self.data = json.load(f)
+        else:
+            with open(f"{self.window.petPath}/config/attr.json", "w", encoding = "utf-8") as f:
+                self.data = {
+                        "satiety": { "min": 0, "max": 100, "value": 100 },
+                        "fb": { "min": 0, "max": 100, "value": 0 },
+                        "settings": {
+                            "stroke": { "time": 3000, "delta": 1 }
+                        }
+                    }
+                json.dump(self.data, f, ensure_ascii = False, indent = 2)
         self.settings = self.data["settings"]
     
     def addPage(self) -> None:
         self.pg = QWidget()
         lyt = QFormLayout()
         
-        self.pg.name = QLabel(self.data["name"])
-        lyt.addRow("名称:", self.pg.name)
+        lyt.addRow("名称:", QLabel(self.window.name))
         fields = [
             ("饱食度", "satiety"),
             ("好感度", "fb")
