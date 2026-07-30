@@ -1,0 +1,5 @@
+{
+  "log-path": "./pet/Dagou/log.log",
+  "quesSelecter-item-count": 10,
+  "idle-time": 10000
+}

@@ -15,7 +15,8 @@ from window.pet.actionMenu import ActionMenu
 from window.pet.settingMenu import SettingMenu
 
 class PetWindow(QWidget):
-    stateChanged = Signal(str, str)
+    replyed = Signal(str, str, str) # kind, stateName/question, reply
+    stateChanged = Signal(str, str) # prevState, currentState
     aboutToQuit = Signal()
     
     def __init__(self, name: str, petPath: str):
@@ -73,11 +74,13 @@ class PetWindow(QWidget):
         # 绑定子窗口及信号
         self.bind()
 
+        self.stateMenu.log("Succeeded to entre", LogType.Entre)
+
         self.pluginManager.startAutoPlugins()
 
     def bind(self) -> None:
         """绑定子窗口及信号"""
-        self.dialogMenu = DialogMenu(self.configManager)
+        self.dialogMenu = DialogMenu(self)
         self.stateMenu = StateMenu(self.configManager)
         self.actionMenu = ActionMenu(self)
         self.settingMenu = SettingMenu(self.configManager)
@@ -137,7 +140,11 @@ class PetWindow(QWidget):
     
     def replyState(self, state: str) -> None:
         """回复状态"""
-        self.dialogMenu.addLine(conv.replyText("state", state, self.configManager))
+        reply = conv.replyText("state", state, self.configManager)
+        if reply:
+            self.dialogMenu.addLine(reply)
+        self.replyed.emit("state", state, reply)
+        
 
     def changeAnime(self, name: str, isContinue: bool = False, isAsync: bool = True) -> None:
         """切换动画"""

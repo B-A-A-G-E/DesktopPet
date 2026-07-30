@@ -221,7 +221,7 @@ class Action(Plugin):  # 类名必须为 Action
         self.id = "action"   # 应与 `plugin.json` 中的键 一致
         self.name = "行动"       # 在行动面板显示的名称（非自启动插件必须设置）
         self.description = "这是插件的描述"  # 可选，用于行动面板的鼠标悬浮提示
-        self.state = "action"  # 状态名，用于状态机切换
+        self.state = "action"  # 状态名，用于状态机切换（没有特殊功能，单纯为了方便修改）
         self.auto = False        # 是否在程序启动时自动运行，默认为 False
         self.teardownImmed = True   # 是否在行动停止后立即卸载插件，默认为True
 

@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import QPoint, QRect
 
 def pointAt(point: QPoint, colls: dict[str, QRect]) -> list[str]:
-    """获取鼠标点击位置的碰撞体"""
+    """获取指定位置对应的碰撞体"""
     collList: list[str] = []
     for k, coll in colls.items():
         if coll.contains(point):

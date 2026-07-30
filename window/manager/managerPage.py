@@ -283,7 +283,6 @@ class ManagerPage(SearchStackFactory):
             pet.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
             pet.show()
             MainWindow.pets.append(pet)
-            pet.stateMenu.log("Succeeded to entre", LogType.Entre)
         except Exception as e:
             print(e)
             self.launchError.emit(name, e)

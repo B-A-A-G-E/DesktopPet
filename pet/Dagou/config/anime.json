@@ -1,0 +1,17 @@
+{
+  "idle": {
+    "path": "./pet/Dagou/img/idle",
+    "fps": 30,
+    "loop": true
+  },
+  "bark": {
+    "path": "./pet/Dagou/img/bark",
+    "fps": 30,
+    "loop": true
+  },
+  "heyiwei": {
+    "path": "./pet/Dagou/img/heyiwei",
+    "fps": 30,
+    "loop": true
+  }
+}

@@ -4,5 +4,6 @@
   "drag": true,
   "move-randomly": true,
   "use-fan": true,
-  "attr": true
+  "attr": true,
+  "dagou-integ-plugin": false
 }

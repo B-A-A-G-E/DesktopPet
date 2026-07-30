@@ -22,5 +22,9 @@
   "attr": {
     "path": "./plugin/attr.py",
     "deps": []
+  },
+  "dagou-integ-plugin": {
+    "path": "./plugin/dagou-integ-plugin/plugin.py",
+    "deps": []
   }
 }
