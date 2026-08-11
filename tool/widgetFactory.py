@@ -1,7 +1,8 @@
 from PySide6.QtWidgets import (
     QWidget, QLayout, QVBoxLayout, QHBoxLayout, QFormLayout,
     QToolBox, QLineEdit, QPushButton, QCheckBox, QSpinBox,
-    QDoubleSpinBox, QFileDialog, QListWidget, QStackedWidget
+    QDoubleSpinBox, QFileDialog, QListWidget, QStackedWidget,
+    QComboBox
 )
 from PySide6.QtCore import Qt, Signal, Slot, QObject
 
@@ -64,6 +65,9 @@ def getVal(edit: Any, dataType: str) -> Any:
     异常:
         TypeError: 当 dataType 不在支持列表中时抛出
     """
+    if isinstance(dataType, dict):
+        dataType = dataType["type"]
+    
     match dataType:
         case "bool":
             return edit.isChecked()
@@ -73,6 +77,8 @@ def getVal(edit: Any, dataType: str) -> Any:
             return edit.text()
         case "file" | "folder":
             return edit.getFile()
+        case "selecter":
+            return edit.currentText()
         case _:
             raise TypeError(f"invalid type: {dataType}")
 
@@ -90,6 +96,9 @@ def setVal(edit: Any, dataType: str, val: Any) -> None:
     异常:
         TypeError: 当 dataType 不在支持列表中时抛出
     """
+    if isinstance(dataType, dict):
+        dataType = dataType["type"]
+    
     match dataType:
         case "bool":
             edit.setChecked(val)
@@ -99,10 +108,12 @@ def setVal(edit: Any, dataType: str, val: Any) -> None:
             edit.setText(val)
         case "file" | "folder":
             edit.setFile(val)
+        case "selecter":
+            edit.setCurrentText(val)
         case _:
             raise TypeError(f"invalid type: {dataType}")
 
-def createEdit(dataType: str) -> QWidget | None:
+def createEdit(dataType: str | dict) -> QWidget | None:
     """
     根据数据类型工厂方法，创建对应的编辑器控件。
 
@@ -112,22 +123,35 @@ def createEdit(dataType: str) -> QWidget | None:
     返回:
         对应类型的 QWidget 子类实例，若类型不支持则返回 None
     """
+    options, minNum, maxNum = None, None, None
+    if isinstance(dataType, dict):
+        if "options" in dataType.keys(): options = dataType["options"]
+        if "min" in dataType.keys(): minNum = dataType["min"]
+        if "max" in dataType.keys(): maxNum = dataType["max"]
+        dataType = dataType["type"]
+    
     edit = None
     match dataType:
         case "bool":
             edit = QCheckBox()
         case "int":
             edit = QSpinBox()
-            edit.setRange(-99999, 99999)
+            if minNum: edit.setMinimum(minNum)
+            if maxNum: edit.setMaximum(maxNum)
         case "float":
             edit = QDoubleSpinBox()
-            edit.setRange(-99999, 99999)
+            if minNum: edit.setMinimum(minNum)
+            if maxNum: edit.setMaximum(maxNum)
         case "str":
             edit = QLineEdit()
+            if maxNum: edit.setMaxLength(maxNum)
         case "file":
             edit = FileSelecter("file")
         case "folder":
             edit = FileSelecter("folder")
+        case "selecter":
+            edit = QComboBox()
+            if options: edit.addItems(options)
     return edit
 
 class FileSelecter(QWidget):
@@ -286,6 +310,7 @@ class RemovableRow(QHBoxLayout):
         self._parent = parent
         self.dataType = dataType
         self.edit = createEdit(dataType)
+
         if self.edit is None:
             raise TypeError(f"invalid type: {dataType}")
 
@@ -385,7 +410,7 @@ class FormFactory(WidgetFactory):
         初始化表单工厂。
 
         参数:
-            fields: 字段定义列表，每个元素为 (显示名称, 数据键, 数据类型)
+            fields: 字段定义列表，每个元素为 (显示名称, 数据键, 数据信息(数据类型/[数据类型, 默认值, 最小值, 最大值]))
             data: 初始数据字典，键应与 fields 中的键对应
         """
         super().__init__(QFormLayout(), data)

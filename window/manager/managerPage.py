@@ -80,8 +80,8 @@ class ManagerPage(SearchStackFactory):
         # page1 (基础项)
         f1 = [
             ("日志保存路径", "log-path", "file"),
-            ("对话面板最大显示问题数", "quesSelecter-item-count", "int"),
-            ("待机判定时间（毫秒）", "idle-time", "int")
+            ("对话面板最大显示问题数", "quesSelecter-item-count", {"type": "int", "min": 1}),
+            ("待机判定时间（毫秒）", "idle-time", {"type": "int", "min": 0})
         ]
         pages.append(FormFactory(f1, self._petConfigs[name].base))
         pages[0].build()
@@ -90,7 +90,7 @@ class ManagerPage(SearchStackFactory):
         # page2 (动画)
         f2F = [
             ("路径", "path", "folder"),
-            ("帧率", "fps", "int"),
+            ("帧率", "fps", {"type": "int", "min": 1}),
             ("是否循环", "loop", "bool")
         ]
         f2 = [(key, key, f2F) for key in self._petConfigs[name].anime.keys()]

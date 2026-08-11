@@ -1,6 +1,8 @@
 from PySide6.QtCore import Qt, QEvent, QPoint, QRect, QTimer
 from PySide6.QtGui import QCursor
+
 from tool.plugin import Plugin
+from tool.audio import AudioPlayer
 
 class Action(Plugin):
     def __init__(self):
@@ -8,6 +10,11 @@ class Action(Plugin):
         self.id = "dagou-integ-plugin"
         self.auto = True
         self.timer = None
+
+    def setup(self, window):
+        super().setup(window)
+
+        self.bark = AudioPlayer(r".\plugin\dagou-integ-plugin\audio\bark.mp3")
 
     def teardown(self):
         if self.timer:
@@ -48,25 +55,28 @@ class Action(Plugin):
                     self.timer.start(20)
         
         return super().eventFilter(obj, event)
-    
-    def checkMouse(self):
+
+    def checkMouse(self) -> None:
         """定时检查鼠标位置"""
         if not self.window or not self.window.isVisible():
             return
         
         # 获取鼠标全局位置
-        mouse_pos = QCursor.pos()
-        window_rect = self.window.geometry()
+        mousePos = QCursor.pos()
+        geo = self.window.geometry()
         
         # 计算距离
-        distance = self.getDistance(mouse_pos, window_rect)
+        distance = self.getDistance(mousePos, geo)
         
         # 更新状态
-        if window_rect.contains(mouse_pos):
+        if geo.contains(mousePos):
+            self.bark.play()
             self.window.operateState("bark", "bark")
-        elif 0 < distance < 500:
+        elif 0 < distance < 200:
+            self.bark.stop()
             self.window.operateState("heyiwei", "heyiwei")
         else:
+            self.bark.stop()
             self.window.operateState("idle", "idle")
 
     def getDistance(self, point: QPoint, rect: QRect) -> float:
