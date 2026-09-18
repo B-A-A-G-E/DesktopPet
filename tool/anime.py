@@ -32,7 +32,7 @@ def fitImgSize(window, widget):
             showLoadFailedMsg(window)
 
 def showLoadFailedMsg(window, path: str = ""):
-    QMessageBox.critical(window, "Fail to Load", f"Can't load file {path}.", QMessageBox.StandardButton.Close)
+    QMessageBox.critical(window, "Fail to Load", f"Cannot load file {path}.", QMessageBox.StandardButton.Close)
     window.close()
 
 class Anime(QObject):
@@ -98,7 +98,7 @@ class Anime(QObject):
     @Slot()
     def nextImg(self) -> None:
         try:
-            self.widget.setPixmap(QPixmap(f"{self.path}/{self.imgNames[self.index]}")) # 更新帧
+            self.widget.setPixmap(QPixmap(self.path + self.imgNames[self.index])) # 更新帧
             fitImgSize(self.window, self.widget) # 调整窗口大小以适应图片
         except Exception as e:
             print(e)

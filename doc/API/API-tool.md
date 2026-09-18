@@ -316,7 +316,7 @@ class LogType(Enum)
 | 成员 | 值 | 说明 |
 | :--- | :--- | :--- |
 | `Error` | 0 | 错误信息 |
-| `Entre` | 1 | 入场事件 |
+| `Enter` | 1 | 入场事件 |
 | `Exit` | 2 | 退场事件 |
 | `Set` | 3 | 设置更新事件 |
 | `StateChanged` | 4 | 状态切换事件 |
@@ -344,7 +344,7 @@ class SaveMode(Enum)
 | `Static` | 1 | 静态成员变量（pets, plugin, settings） |
 | `Common` | 2 | 普通成员变量（base, anime, collision, state, dialog, pluginState） |
 | `Pets` | 3 | `./pet/config.json` |
-| `Plugin` | 4 | `./pet/plugin.json` |
+| `Plugin` | 4 | `./plugin/config.json` |
 | `Settings` | 5 | `./settings.json` |
 | `Base` | 6 | `base.json` |
 | `Anime` | 7 | `anime.json` |
@@ -442,7 +442,7 @@ def saveStaticConfigs() -> None
 保存静态成员变量（pets, plugin, settings）。
 
 - **说明**
-  - 保存到 `./pet/config.json`、`./pet/plugin.json`、`./settings.json`
+  - 保存到 `./pet/config.json`、`./plugin/config.json`、`./settings.json`
 
 #### 方法 saveCommonConfigs()
 
@@ -477,7 +477,7 @@ def save(filepath, data) -> None
 def loadPets() -> None
 ```
 
-加载 `./pet/config.json`、`./pet/plugin.json`、`./settings.json` 中的配置。
+加载 `./pet/config.json`、`./plugin/config.json`、`./settings.json` 中的配置。
 
 - **说明**
   - 由 `config.py` 在导入时自动调用

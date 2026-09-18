@@ -23,7 +23,7 @@ if __name__ == "__main__":
         window = PetWindow(default, ConfigManager.pets[default])
         ConfigManager.default = True
     else:
-        window = PetWindow(sys.argv[1], ConfigManager.pets[sys.argv[1]])
+        window = PetWindow(sys.argv[1])
     
     if ConfigManager.default:
         app.aboutToQuit.connect(window.aboutToQuit)

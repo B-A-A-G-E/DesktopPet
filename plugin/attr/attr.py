@@ -38,11 +38,11 @@ class Action(Plugin):
         self.strokeTimer.timeout.connect(self.onStrokeTimeout)
 
     def loadData(self) -> None:
-        if os.path.exists(f"{self.window.petPath}/config/attr.json"):
-            with open(f"{self.window.petPath}/config/attr.json", "r", encoding = "utf-8") as f:
+        if os.path.exists(f"{self.window.configManager.path}/config/attr.json"):
+            with open(f"{self.window.configManager.path}/config/attr.json", "r", encoding = "utf-8") as f:
                 self.data = json.load(f)
         else:
-            with open(f"{self.window.petPath}/config/attr.json", "w", encoding = "utf-8") as f:
+            with open(f"{self.window.configManager.path}/config/attr.json", "w", encoding = "utf-8") as f:
                 self.data = {
                         "satiety": { "min": 0, "max": 100, "value": 100 },
                         "fb": { "min": 0, "max": 100, "value": 0 },
@@ -91,7 +91,7 @@ class Action(Plugin):
 
     @Slot()
     def updateData(self) -> None:
-        with open("./plugin/attr/data.json", "w", encoding = "utf-8") as f:
+        with open(f"{self.window.configManager.path}/data.json", "w", encoding = "utf-8") as f:
             f.write(json.dumps(self.data, ensure_ascii = False, indent = 2))
     
     @Slot()

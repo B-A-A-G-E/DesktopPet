@@ -1,32 +1,32 @@
 {
   "idle": {
-    "path": "./plugin/idle.py",
+    "path": "./plugin/builtin/idle.py",
     "deps": []
   },
   "stroke": {
-    "path": "./plugin/stroke.py",
+    "path": "./plugin/builtin/stroke.py",
     "deps": [
       "idle"
     ]
   },
   "drag": {
-    "path": "./plugin/drag.py",
+    "path": "./plugin/builtin/drag.py",
     "deps": [
       "idle"
     ]
   },
   "move-randomly": {
-    "path": "./plugin/move-randomly.py",
+    "path": "./plugin/builtin/move-randomly.py",
     "deps": []
   },
   "use-fan": {
-    "path": "./plugin/use-fan.py",
+    "path": "./plugin/for-mutumi/use-fan.py",
     "deps": [
       "idle"
     ]
   },
   "attr": {
-    "path": "./plugin/attr.py",
+    "path": "./plugin/attr/attr.py",
     "deps": []
   },
   "dagou-integ-plugin": {

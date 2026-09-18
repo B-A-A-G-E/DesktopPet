@@ -1,0 +1,14 @@
+{
+  "idle": {
+    "fps": 30,
+    "loop": true
+  },
+  "bark": {
+    "fps": 30,
+    "loop": true
+  },
+  "heyiwei": {
+    "fps": 30,
+    "loop": true
+  }
+}

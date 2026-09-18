@@ -39,9 +39,8 @@ class SettingMenu(QWidget):
     def initPages(self) -> None:
         # page1 (基础项)
         f1 = [
-            ("日志保存路径", "log-path", "file"),
             ("对话面板最大显示问题数", "quesSelecter-item-count", {"type": "int", "min": 1}),
-            ("待机判定时间（毫秒）", "idle-time", {"type": "int", "min": 0})
+            ("待机判定时间（毫秒）", "idle-time", {"type": "int", "min": 0, "max": 999999999})
         ]
         self.pages.append(FormFactory(f1, self.config.base))
         self.pages[0].build()
@@ -49,7 +48,6 @@ class SettingMenu(QWidget):
 
         # page2 (动画)
         f2F = [
-            ("路径", "path", "folder"),
             ("帧率", "fps", {"type": "int", "min": 1}),
             ("是否循环", "loop", "bool")
         ]

@@ -28,20 +28,20 @@ class StateMenu(QWidget):
 
         # logBox添加清空上下文菜单
         self.logBox.setContextMenuPolicy(Qt.ContextMenuPolicy.ActionsContextMenu)
-        self.logBox.clearAct = QAction("清空")
-        self.logBox.addAction(self.logBox.clearAct)
+        self.clearAct = QAction("清空")
+        self.logBox.addAction(self.clearAct)
 
         self.bind()
     
     def bind(self) -> None:
-        self.logBox.clearAct.triggered.connect(self.logBox.clear)
+        self.clearAct.triggered.connect(self.logBox.clear)
     
     def log(self, text: str, type: LogType = None) -> None:
         logLine = f"{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}  {type}:    {text}"
         # 向logBox添加日志
         self.logBox.appendPlainText(logLine)
         # 写入日志文件
-        with open(self.config.base["log-path"], "a", encoding = "utf-8") as f:
+        with open(f"{self.config.path}/log.log", "a", encoding = "utf-8") as f:
             f.write(logLine + '\n')
     
     def addPage(self, page: QWidget, label: str) -> None:

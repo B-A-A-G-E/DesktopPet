@@ -12,7 +12,7 @@ class SettingPage(SearchStackFactory):
         lyt = QVBoxLayout()
 
         self.form = FormFactory([
-                ("默认桌宠", "default-pet", {"type": "selecter", "options": [""] + [key for key in ConfigManager.pets.keys()]}),
+                ("默认桌宠", "default-pet", {"type": "selecter", "options": [""] + [key for key in ConfigManager.pets]}),
                 ("控制器颜色主题", "manager-color-subject", {"type": "selecter", "options": ["Light", "Dark"]}),
                 ("开机自启动", "auto-start", "bool")
             ], ConfigManager.settings)

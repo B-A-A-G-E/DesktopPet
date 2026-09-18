@@ -28,7 +28,7 @@ class Action(Plugin):
     def start(self) -> None:
         # 入场并切换待机
         super().start()
-        #self.window.operateState("entre", "entre", isAsync = False)
+        #self.window.operateState("enter", "enter", isAsync = False)
         self.window.operateState("idle", "idle")
         self.idleTimer.start(self.idleTime)
     

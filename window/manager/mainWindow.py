@@ -10,12 +10,14 @@ from tool.widgetFactory import SearchStackFactory
 
 from window.pet.petWindow import PetWindow
 from window.manager.managerPage import ManagerPage
+from window.manager.tempPage import TempPage
 from window.manager.pluginPage import PluginPage
 from window.manager.docPage import DocPage
 from window.manager.settingPage import SettingPage
 
 if TYPE_CHECKING:
     from window.pet.petWindow import PetWindow
+
 
 class SidebarButton(QPushButton):
     def __init__(self, text: str, toolTipText: str | None = None):
@@ -30,6 +32,7 @@ class SidebarButton(QPushButton):
                 font-size: 30px;
             }
             """)
+
 
 class MainWindow(QWidget):
     pets: list["PetWindow"] = []
@@ -64,7 +67,7 @@ class MainWindow(QWidget):
                 background-color: #0098ff
             }
         """)
-        texts = [("🐱", "桌宠管理"), ("🧩", "插件管理"), ("📄", "文档查阅"), ("⚙", "管理器设置")]
+        texts = [("🐱", "桌宠管理"), ("</>", "模板管理"), ("🧩", "插件管理"), ("📄", "文档查阅"), ("⚙", "管理器设置")]
         
         for text, toolTipText in texts:
             if text == "⚙":
@@ -79,6 +82,7 @@ class MainWindow(QWidget):
     
     def initStack(self) -> None:
         self.pages.append(ManagerPage(self))
+        self.pages.append(TempPage(self))
         self.pages.append(PluginPage())
         self.pages.append(DocPage())
         self.pages.append(SettingPage())
@@ -100,11 +104,3 @@ class MainWindow(QWidget):
             pet.close()
         MainWindow.pets.clear()
         event.accept()
-    
-    @staticmethod
-    def getPet(name: str) -> list["PetWindow"]:
-        petList: list["PetWindow"] = []
-        for pet in MainWindow.pets:
-            if pet.name == name:
-                petList.append(pet)
-        return petList

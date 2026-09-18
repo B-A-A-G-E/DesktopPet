@@ -19,7 +19,7 @@ class PetWindow(QWidget):
     stateChanged = Signal(str, str) # prevState, currentState
     aboutToQuit = Signal()
     
-    def __init__(self, name: str, petPath: str):
+    def __init__(self, name: str):
         super().__init__()
         
         # 无边框及透明背景
@@ -27,23 +27,22 @@ class PetWindow(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         self.name: str = name
-        self.petPath: str = petPath
         
         # 添加控件
         self.imgLb: QLabel = QLabel() # 存放图片
 
         # 添加上下文菜单
         self.imgLb.setContextMenuPolicy(Qt.ContextMenuPolicy.ActionsContextMenu)
-        self.imgLb.dialogAct = QAction("对话")
-        self.imgLb.stateAct = QAction("状态")
-        self.imgLb.actAct = QAction("行动")
-        self.imgLb.setAct = QAction("设置")
-        self.imgLb.exitAct = QAction("退出")
-        self.imgLb.addAction(self.imgLb.dialogAct)
-        self.imgLb.addAction(self.imgLb.stateAct)
-        self.imgLb.addAction(self.imgLb.actAct)
-        self.imgLb.addAction(self.imgLb.setAct)
-        self.imgLb.addAction(self.imgLb.exitAct)
+        self.dialogAct = QAction("对话")
+        self.stateAct = QAction("状态")
+        self.actAct = QAction("行动")
+        self.setAct = QAction("设置")
+        self.exitAct = QAction("退出")
+        self.imgLb.addAction(self.dialogAct)
+        self.imgLb.addAction(self.stateAct)
+        self.imgLb.addAction(self.actAct)
+        self.imgLb.addAction(self.setAct)
+        self.imgLb.addAction(self.exitAct)
 
         # 设置布局并填入控件
         self.mainlayout = QVBoxLayout()
@@ -51,7 +50,7 @@ class PetWindow(QWidget):
         self.setLayout(self.mainlayout)
 
         # 配置管理器
-        self.configManager: ConfigManager = ConfigManager(petPath)
+        self.configManager: ConfigManager = ConfigManager(name)
         
         # 状态机
         self.stateMachine: StateMachine = StateMachine([k for k in self.configManager.state.keys()])
@@ -61,7 +60,7 @@ class PetWindow(QWidget):
         self.pluginManager.loadAllPlugins()
 
         # 添加动画
-        self.animes: dict[str, anime.Anime] = { k: anime.Anime(v["path"], v["fps"], v["loop"], self, self.imgLb) for k, v in self.configManager.anime.items()}
+        self.animes: dict[str, anime.Anime] = { k: anime.Anime(f"./temp/{self.configManager.info['temp']}/img/{k}/", v["fps"], v["loop"], self, self.imgLb) for k, v in self.configManager.anime.items()}
         self.currentAnime: anime.Anime = None
 
         # 添加碰撞体
@@ -74,7 +73,7 @@ class PetWindow(QWidget):
         # 绑定子窗口及信号
         self.bind()
 
-        self.stateMenu.log("Succeeded to entre", LogType.Entre)
+        self.stateMenu.log("Succeeded to enter", LogType.Enter)
 
         self.pluginManager.startAutoPlugins()
 
@@ -88,11 +87,11 @@ class PetWindow(QWidget):
         self.settingMenu.dataUpdated.connect(self.updateData)
         
         # 绑定上下文菜单
-        self.imgLb.dialogAct.triggered.connect(self.dialogMenu.show)
-        self.imgLb.stateAct.triggered.connect(self.stateMenu.show)
-        self.imgLb.setAct.triggered.connect(self.settingMenu.show)
-        self.imgLb.actAct.triggered.connect(self.actionMenu.show)
-        self.imgLb.exitAct.triggered.connect(QApplication.quit if ConfigManager.default else self.close)
+        self.dialogAct.triggered.connect(self.dialogMenu.show)
+        self.stateAct.triggered.connect(self.stateMenu.show)
+        self.setAct.triggered.connect(self.settingMenu.show)
+        self.actAct.triggered.connect(self.actionMenu.show)
+        self.exitAct.triggered.connect(QApplication.quit if ConfigManager.default else self.close)
 
         # 绑定状态机信号
         self.stateMachine.stateChanged.connect(self.onStateChanged)
@@ -232,7 +231,7 @@ class PetWindow(QWidget):
                     MainWindow.pets.remove(self)
             
             # 10. 写入日志
-            with open(self.configManager.base["log-path"], "a", encoding = "utf-8") as f:
+            with open(f"./pet/{self.name}/log.log", "a", encoding = "utf-8") as f:
                 from datetime import datetime
                 f.write(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  {LogType.Exit}:    Succeeded to exit\n")
             
@@ -256,7 +255,7 @@ class PetWindow(QWidget):
     def updateData(self) -> None:
         """更新数据"""
         # petWindow
-        self.animes = { k: anime.Anime(v["path"], v["fps"], v["loop"], self, self.imgLb) for k, v in self.configManager.anime.items()}
+        self.animes = { k: anime.Anime(f"./temp/{self.configManager.info['temp']}/img/{k}/", v["fps"], v["loop"], self, self.imgLb) for k, v in self.configManager.anime.items()}
         self.collisions = { k: QRect(v["left"], v["top"], v["width"], v["height"]) for k, v in self.configManager.collision.items()}
         # dialogWindow
         self.dialogMenu.resetQuesSelecter()

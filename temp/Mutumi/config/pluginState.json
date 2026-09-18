@@ -1,0 +1,9 @@
+{
+  "idle": true,
+  "stroke": true,
+  "drag": true,
+  "move-randomly": true,
+  "use-fan": true,
+  "attr": true,
+  "dagou-integ-plugin": false
+}

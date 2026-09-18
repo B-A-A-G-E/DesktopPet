@@ -1,4 +1,5 @@
-{
-  "Mutumi": "./pet/Mutumi/",
-  "大狗": "./pet/Dagou/"
-}
+[
+  "Mutumi",
+  "大狗1",
+  "大狗2"
+]

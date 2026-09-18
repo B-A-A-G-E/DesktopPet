@@ -191,7 +191,7 @@
 
 1. 在 `plugin/` 目录下新建 Python 文件
 2. 编写继承自 `tool.plugin.Plugin` 的类 `Action`
-3. 在 `./pet/你的宠物/config/plugin.json` 中注册插件
+3. 在 `./plugin/config.json` 中注册插件
 4. （可选）配置动画、碰撞体和状态反馈文本
 
 ### 详细步骤
@@ -218,7 +218,7 @@ class Action(Plugin):  # 类名必须为 Action
         super().__init__()
 
         # 必须设置 id
-        self.id = "action"   # 应与 `plugin.json` 中的键 一致
+        self.id = "action"   # 应与 `./plugin/config.json` 中的键 一致
         self.name = "行动"       # 在行动面板显示的名称（非自启动插件必须设置）
         self.description = "这是插件的描述"  # 可选，用于行动面板的鼠标悬浮提示
         self.state = "action"  # 状态名，用于状态机切换（没有特殊功能，单纯为了方便修改）
@@ -262,7 +262,7 @@ class Action(Plugin):  # 类名必须为 Action
 
 #### 3. 注册插件
 
-编辑 `./pet/plugin.json`：
+编辑 `./plugin/config.json`：
 
 ``` json
 "action": {
@@ -378,11 +378,10 @@ class Action(Plugin):
 #### 注册
 
 ``` json
-// pet/你的宠物/config/plugin.json
+// plugin/config.json
 {
     "dance": {
         "path": "./plugin/dance.py",
-        "enabled": true,
         "deps": []
     }
 }
@@ -459,7 +458,7 @@ class Action(Plugin):
 
 ### 进阶：插件依赖
 
-若插件需要依赖其他插件，可在 `plugin.json` 中通过 `deps` 字段声明：
+若插件需要依赖其他插件，可在 `config.json` 中通过 `deps` 字段声明：
 
 ``` json
 "plugin-b": {
@@ -533,10 +532,10 @@ class Action(Plugin):
 **Q: 插件加载失败怎么办？**
 
 : 检查以下几点：
-1. 文件名和 `plugin.json` 中的键是否一致
+1. 文件名和 `config.json` 中的键是否一致
 2. 模块导入路径是否正确（如 `C:/DesktopPet/plugin/xxx.py` 或 `./plugin/xxx.py`）
 3. 类名是否为 `Action`
-4. `self.id` 是否与 `plugin.json` 中的键一致
+4. `self.id` 是否与 `config.json` 中的键一致
 
 **Q: 在 `__init__`/`setup` 中获取主窗口（`self.window`）报错：AttributeError: 'NoneType' object has no attribute 'xxx' 怎么办？**
 

@@ -64,17 +64,30 @@ pip install qmarkdownview
 
 ```
 .
-├── main.py                    # 程序入口
+├── main.py                   # 程序入口
 ├── README.md                 # 项目说明文档
 │
 ├── doc/                      # 详细文档
-├── API/                      # API接口文档
+|   ├── CHANGELOG.md          # 更新日志
+|   └── API/                  # API接口文档
 │
 ├── customization.md          # 插件开发指南
 ├── CHANGELOG.md              # 更新日志
 │
 ├── pet/                      # 宠物资源包
 │   ├── config.json           # 宠物注册表
+│   └── Mutumi/               # 示例宠物
+│       ├── info.json         # 元信息
+│       ├── log.log           # 日志
+│       └── config/           # 行为配置
+│           ├── base.json     # 基础设置
+│           ├── anime.json    # 动画序列
+│           ├── collision.json# 碰撞区域
+│           ├── dialog.json   # 对话库
+│           ├── state.json    # 状态反馈
+│           └── pluginState.json # 插件状态
+|
+├── temp/                     # 宠物模板
 │   └── Mutumi/               # 示例宠物
 │       ├── info.json         # 元信息
 │       ├── introduction.md   # 介绍文档
@@ -89,12 +102,16 @@ pip install qmarkdownview
 │           └── pluginState.json # 插件状态
 │
 ├── plugin/                   # 插件系统
-│   ├── idle.py               # 待机管理
-│   ├── drag.py               # 拖拽交互
-│   ├── stroke.py             # 抚摸交互
-│   ├── move-randomly.py      # 随机移动
-│   ├── use-fan.py            # 风扇互动
-│   └── attr.py               # 属性面板
+│   ├── config.json           # 插件注册表
+│   ├── builtin
+│   |   ├── idle.py               # 待机管理
+│   |   ├── drag.py               # 拖拽交互
+│   |   ├── stroke.py             # 抚摸交互
+│   |   ├── move-randomly.py      # 随机移动
+|   ├── for-mutumi
+│   |   ├── use-fan.py            # 风扇互动
+|   └── attr
+│       └── attr.py               # 属性面板
 │
 ├── tool/                     # 核心工具
 │   ├── config.py             # 配置管理
@@ -123,7 +140,7 @@ pip install qmarkdownview
 ## API 文档
 
 - [Pet](./doc/API/API-pet.md)
-- [Pet Managet](./doc/API/API-manager.md)
+- [Pet Manager](./doc/API/API-manager.md)
 - [包：tool](./doc/API/API-tool.md)
 
 ## 操作简介（宠物本体）
