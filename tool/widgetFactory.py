@@ -8,7 +8,6 @@ from PySide6.QtCore import Qt, Signal, Slot, QObject
 
 from typing import Any
 
-
 def deleteLyt(lyt: QLayout) -> None:
     """
     递归删除布局及其所有子控件和子布局。
@@ -29,7 +28,6 @@ def deleteLyt(lyt: QLayout) -> None:
                 deleteLyt(item.layout())
         lyt.deleteLater()
 
-
 def clearLyt(lyt: QLayout) -> None:
     """
     清空布局中的所有子项（控件或子布局）。
@@ -46,7 +44,6 @@ def clearLyt(lyt: QLayout) -> None:
             item.widget().deleteLater()
         elif item.layout():
             deleteLyt(item.layout())
-
 
 def getVal(edit: Any, dataType: str) -> Any:
     """
@@ -85,7 +82,6 @@ def getVal(edit: Any, dataType: str) -> Any:
         case _:
             raise TypeError(f"invalid type: {dataType}")
 
-
 def setVal(edit: Any, dataType: str, val: Any) -> None:
     """
     根据数据类型将值设置到编辑控件中。
@@ -116,7 +112,6 @@ def setVal(edit: Any, dataType: str, val: Any) -> None:
             edit.setCurrentText(val)
         case _:
             raise TypeError(f"invalid type: {dataType}")
-
 
 def createEdit(dataType: str | dict) -> QWidget | None:
     """
@@ -158,7 +153,6 @@ def createEdit(dataType: str | dict) -> QWidget | None:
             edit = QComboBox()
             if options: edit.addItems(options)
     return edit
-
 
 class FileSelecter(QWidget):
     """
@@ -208,7 +202,6 @@ class FileSelecter(QWidget):
         """设置当前路径文本。"""
         self.edit.setText(file)
 
-
 class SearchBox(QWidget):
     textChanged = Signal(str)
     modeChanged = Signal(bool, bool) # 是否区分大小写, 是否全字匹配
@@ -241,7 +234,6 @@ class SearchBox(QWidget):
         self.caseSensitive = cs
         self.exactMatch = em
         self.modeChanged.emit(cs, em)
-
 
 class SearchableList(QWidget):
     itemSelected = Signal(QWidget)
@@ -296,7 +288,6 @@ class SearchableList(QWidget):
                 item.setHidden(text != itemText)
             else:
                 item.setHidden(text not in itemText)
-
 
 class RemovableRow(QHBoxLayout):
     """
@@ -358,7 +349,6 @@ class RemovableRow(QHBoxLayout):
         self._parent.removeItem(self)
         deleteLyt(self)
 
-
 class WidgetFactory(QWidget):
     """
     创建控件的工厂基类。
@@ -408,7 +398,6 @@ class WidgetFactory(QWidget):
     def clear(self) -> None:
         """清空页面布局中的所有子项。"""
         clearLyt(self.lyt)
-
 
 class FormFactory(WidgetFactory):
     """
@@ -473,7 +462,6 @@ class FormFactory(WidgetFactory):
         """值变更槽函数，更新 _data 并发出信号。"""
         self._data[key] = val
         self.valChanged.emit(key, val)
-
 
 class DynamicListFactory(WidgetFactory):
     """
@@ -547,7 +535,6 @@ class DynamicListFactory(WidgetFactory):
         edit.setVal(val)
         self.edits.append(edit)
 
-
 class FormBoxFactory(WidgetFactory):
     """
     工具箱（QToolBox）页面工厂，每个页面包含一个表单。
@@ -597,7 +584,6 @@ class FormBoxFactory(WidgetFactory):
         self._data[k][formK] = val
         self.formValChanged.emit(k, formK, val)
 
-
 class ListBoxFactory(WidgetFactory):
     """
     工具箱（QToolBox）页面工厂，每个页面包含一个动态字符串列表。
@@ -638,7 +624,6 @@ class ListBoxFactory(WidgetFactory):
     def getData(self) -> dict[str, list[str]]:
         """从所有列表收集数据，返回字典。"""
         return {key: self.lists[key].getData() for _, key in self.fields}
-
 
 class SearchStackController(QObject):
     pageChanged = Signal(str, int, QWidget) # 标识，索引，页面
@@ -762,7 +747,6 @@ class SearchStackController(QObject):
             if self.fields[key][2] is item:
                 self.changePageByKey(key)
                 break
-
 
 class SearchStackFactory(WidgetFactory):
     def __init__(self, data: Any, fields: dict[str, tuple[QWidget, QWidget]] | None = None):

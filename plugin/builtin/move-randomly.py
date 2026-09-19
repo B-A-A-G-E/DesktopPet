@@ -53,9 +53,7 @@ class Action(Plugin):
     
     def eventFilter(self, obj, event: QEvent) -> bool:
         if event.type() == QEvent.Type.MouseButtonPress:
-            # 用户按下鼠标，立即终止自动移动
             self._stopMoving()
-            # 不拦截事件，让其他插件（drag/stroke）继续处理
             return False
         return super().eventFilter(obj, event)
     
@@ -144,19 +142,18 @@ class Action(Plugin):
             self._moving = False
             self.step = 0
             self.stepTimer.stop()
-            # 回到待机定时器，等待下一次随机移动
             if self.window.state == "idle" and not self.moveTimer.isActive():
                 self.moveTimer.start(self.data["idle-move-time"])
             return
         
         width, height = self.window.width(), self.window.height()
         
-        # 计算移动速度（斜向移动减速）
+        # 计算移动速度
         speed = self.data["move-speed"] * (0.5 if self.dir.x() != 0 and self.dir.y() != 0 else 1)
         newX = self.window.x() + self.dir.x() * speed
         newY = self.window.y() + self.dir.y() * speed
         
-        # 边界限制：将新位置限制在屏幕可用区域内
+        # 边界限制
         minX = self.screenGeo.left()
         maxX = self.screenGeo.right() - width
         minY = self.screenGeo.top()

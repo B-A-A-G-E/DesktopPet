@@ -54,13 +54,14 @@
 
 所有配置均通过 JSON 文件管理，插件通过 Python 模块实现。
 
+注：`config/` 可在模板中统一编辑，也可在实例中单独编辑，这里统一在模板编辑
+
 ---
 
 ## 自定义基础配置
 
 ``` json
 {
-  "log-path": "./log.log",
   "quesSelecter-item-count": 10,
   "idle-time": 10000
 }
@@ -68,7 +69,6 @@
 
 | 键 | 说明 | 默认值 |
 | :---: | :---: | :---: |
-| `log-path` | 日志保存路径 | `./log.log` |
 | `quesSelecter-item-count` | 对话面板最大显示问题数 | `10` |
 | `idle-time` | 待机判定时间（毫秒） | `10000` |
 
@@ -78,14 +78,13 @@
 
 ### 步骤
 
-1. **准备帧图片**：在 `./pet/你的宠物/img/` 下新建文件夹放入帧图片。图片须**按数字顺序命名**（如 `0.png`, `1.png`, `2.png`...）。
-2. **编辑 `./pet/你的宠物/config/anime.json`**：配置动画，格式如下：
+1. **准备帧图片**：在 `./temp/模板/img/` 下新建文件夹放入帧图片。图片须**按数字顺序命名**（如 `0.png`, `1.png`, `2.png`...）。
+2. **编辑 `./temp/模板/config/anime.json`**：配置动画，格式如下：
 
 ### 动画配置示例
 
 ``` json
 "动画名": {
-    "path": "./pet/你的宠物/img/文件夹路径",
     "fps": 30,
     "loop": true
 }
@@ -93,7 +92,6 @@
 
 | 键 | 类型 | 说明 |
 | :--- | :--- | :--- |
-| `path` | str | 帧图片存放文件夹路径 |
 | `fps` | int | 播放帧率（帧/秒） |
 | `loop` | bool | 是否循环播放 |
 
@@ -111,7 +109,7 @@
 ### 步骤
 
 1. **确定碰撞区域**：在图片上测量碰撞区相对于图片左上角的偏移和尺寸。
-2. **编辑 `./pet/你的宠物/config/collision.json`**：配置碰撞体。
+2. **编辑 `./temp/模板/config/collision.json`**：配置碰撞体。
 
 ### 碰撞体配置示例
 
@@ -139,7 +137,7 @@
 
 ### 步骤
 
-1. **编辑 `./pet/你的宠物/config/state.json`**：添加或修改条目。
+1. **编辑 `./temp/模板/config/state.json`**：添加或修改条目。
 
 ``` json
 "状态名": [
@@ -152,7 +150,7 @@
 "状态名": [] // 只注册状态，不显示回复
 ```
 
-- 新建的状态必须在此文件内注册，若不希望回复直接设置空数组即可
+- 状态必须在此文件内注册，若不希望回复直接设置空数组即可
 - 用 `PetWindow.operateState` 切换状态时会从对应数组中随机选取一条回复并播放动画
 - 若状态无对应条目，则不显示回复
 
@@ -164,7 +162,7 @@
 
 ### 步骤
 
-1. **编辑 `./pet/你的宠物/config/dialog.json`**：添加或修改条目。
+1. **编辑 `./temp/模板/config/dialog.json`**：添加或修改条目。
 
 ``` json
 "问题": [
@@ -257,7 +255,6 @@ class Action(Plugin):  # 类名必须为 Action
 > - **类名必须为 `Action`**（便于插件管理器加载与管理）
 > - `self.window` 关联 `PetWindow` 实例，可调用其公开方法
 > - 非自启动行动开始后，**会暂停其他状态的自动切换**，直至插件调用 `stop`、用户点击行动面板的"结束"按钮或手动切换状态
-> - 不需要在 `stop` 中手动切回待机状态（行动结束时会自动切换）
 > - **初始化中涉及主窗口的操作应移至 `setup`，并先调用 `super().setup(window)`**
 
 #### 3. 注册插件
@@ -274,12 +271,11 @@ class Action(Plugin):  # 类名必须为 Action
 - 键：插件 ID（须与 `self.id` 一致）
 - 值：
     - `path`: 模块导入路径（如 `./plugin/action.py`）
-    - `enabled`: 是否启用
     - `deps`: 依赖的插件 ID 列表（用于控制加载顺序）
 
 ---
 
-编辑 `./pet/你的宠物/config/pluginState.json`：
+编辑 `./temp/模板/config/pluginState.json`：
 
 ``` json
 "action": true
@@ -290,7 +286,7 @@ class Action(Plugin):  # 类名必须为 Action
 
 #### 4. 注册状态并配置状态反馈文本
 
-在 `./pet/你的宠物/config/state.json` 中添加状态反馈文本（可选）：
+在 `./temp/模板/config/state.json` 中添加状态反馈文本（可选）：
 
 ``` json
 "状态名": []  // 只注册状态，不显示回复
@@ -390,9 +386,8 @@ class Action(Plugin):
 #### 动画配置
 
 ``` json
-// pet/你的宠物/config/anime.json
+// temp/模板/config/anime.json
 "dance": {
-    "path": "./pet/你的宠物/img/dance",
     "fps": 20,
     "loop": true
 }
@@ -401,7 +396,7 @@ class Action(Plugin):
 #### 状态反馈文本
 
 ``` json
-// pet/你的宠物/config/state.json
+// temp/模板/config/state.json
 "dance": [
     "喵喵喵！",
     "一起来跳舞吧！"
@@ -463,7 +458,6 @@ class Action(Plugin):
 ``` json
 "plugin-b": {
     "path": "./plugin/plugin-b.py",
-    "enabled": true,
     "deps": ["plugin-a"]
 }
 ```

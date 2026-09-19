@@ -195,7 +195,7 @@ def fitImgSize(window: QWidget, widget: QLabel) -> None
 ### 函数 showLoadFailedMsg()
 
 ```python
-def showLoadFailedMsg(window: QWidget, path: str = "") -> None
+def showLoadFailedMsg(window: QWidget, path: str = "")
 ```
 
 显示图片加载失败的错误对话框。
@@ -357,7 +357,7 @@ class SaveMode(Enum)
 
 | 属性 | 类型 | 说明 |
 | :--- | :--- | :--- |
-| `pets` | dict[str, str] | 宠物注册表，键为宠物名，值为路径 |
+| `pets` | list[str] | 宠物注册表，键为宠物名 |
 | `plugin` | dict[str, dict] | 插件注册表 |
 | `settings` | dict | 全局设置 |
 | `default` | bool | 是否为默认宠物 |
@@ -1068,3 +1068,4 @@ def createEdit(dataType: str) -> QWidget | None
   - `list: SearchableList`: 搜索列表
   - `stack: QStackedWidget`: 堆叠页面
   - `controller: SearchStackController`: 控制器
+  

@@ -177,7 +177,6 @@ class PluginManager(QObject):
             for dep in deps:
                 reverseGraph[dep].append(pid)
         
-        # Kahn算法
         queue = deque([pid for pid in ids if inDegree[pid] == 0])
         result = []
         

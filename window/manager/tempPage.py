@@ -71,8 +71,8 @@ class TempPage(SearchStackFactory):
 
         self._mainWindow = mainWindow
 
-        self._data: dict[str, dict] = {}   # 模板目录名 -> info
-        self._intro: dict[str, str] = {}   # 模板目录名 -> 介绍文档
+        self._data: dict[str, dict] = {}   # 模板目录名（info.json）
+        self._intro: dict[str, str] = {}   # 模板目录名（introduction.md）
 
         self.loadTemps()
 
@@ -96,7 +96,7 @@ class TempPage(SearchStackFactory):
                 continue
 
             try:
-                with open(infoPath, "r", encoding="utf-8") as f:
+                with open(infoPath, "r", encoding = "utf-8") as f:
                     info = json.load(f)
             except Exception as e:
                 print(f"failed to load template info {name}: {e}")
@@ -104,7 +104,7 @@ class TempPage(SearchStackFactory):
 
             # 读取介绍文档
             if os.path.exists(introPath):
-                with open(introPath, "r", encoding="utf-8") as f:
+                with open(introPath, "r", encoding = "utf-8") as f:
                     self._intro[name] = f.read()
             else:
                 self._intro[name] = ""
@@ -125,7 +125,7 @@ class TempPage(SearchStackFactory):
             introPg = MarkdownView()
             introPg.setExtensions(["markdown.extensions.tables", "markdown.extensions.extra"])
             introPg.loadFinished.connect(
-                lambda finished, n=name: introPg.setValue(self._intro[n])
+                lambda finished, n = name: introPg.setValue(self._intro[n])
             )
 
             infoPg = self.initInfoPage(name)

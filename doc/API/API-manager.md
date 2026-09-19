@@ -12,7 +12,6 @@
       - [方法 initStack() -> None](#方法-initstack---none)
       - [方法 bind() -> None](#方法-bind---none)
       - [方法 closeEvent()](#方法-closeevent)
-      - [静态方法 getPet(name: str) -> list[PetWindow]](#静态方法-getpetname-str---listpetwindow)
     - [类 ManagerPage(SearchStackFactory)](#类-managerpagesearchstackfactory)
       - [属性](#属性-1)
       - [信号](#信号)
@@ -86,7 +85,7 @@ def __init__(self)
 初始化侧边栏，创建侧边栏按钮。
 
 - **说明**
-  - 按钮文本依次为 `"🐱"`（桌宠管理）、`"🧩"`（插件管理）、`"📄"`（文档查阅）、`"⚙"`（管理器设置）
+  - 按钮文本依次为 `"🐱"`（桌宠管理）、`"</>"`（模板管理）、`"🧩"`（插件管理）、`"📄"`（文档查阅）、`"⚙"`（管理器设置）
   - `"⚙"` 按钮前插入弹簧，将其推至底部
   - 每个按钮均设置相应的工具提示文本
   - 侧边栏背景色为 `#0098ff`
@@ -96,9 +95,9 @@ def __init__(self)
 初始化堆叠页面容器。
 
 - **说明**
-  - 依次创建 `ManagerPage`、`PluginPage`、`DocPage`、`SettingPage` 实例
+  - 依次创建 `ManagerPage`、`TempPage`、`PluginPage`、`DocPage`、`SettingPage` 实例
   - 调用每个页面的 `build()` 方法后添加到堆叠
-  - `ManagerPage` 构造时传入 `self`（主窗口引用）
+  - `ManagerPage` 和 `TempPage` 构造时传入 `self`（主窗口引用）
 
 #### 方法 bind() -> None
 
@@ -120,15 +119,6 @@ def closeEvent(event) -> None
   - 遍历 `MainWindow.pets` 列表，关闭所有已打开的宠物窗口
   - 清空 `MainWindow.pets` 列表
   - 接受关闭事件
-
-#### 静态方法 getPet(name: str) -> list[PetWindow]
-
-根据宠物名获取所有已打开的宠物窗口实例。
-
-- **参数**
-  - `name`: 宠物名
-- **返回**
-  - 匹配的宠物窗口列表
 
 ---
 

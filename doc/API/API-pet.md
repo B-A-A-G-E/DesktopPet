@@ -487,7 +487,6 @@ def getPage(label: str) -> QWidget | None
 | `saveError(str)` | 保存配置失败时发射，携带错误信息 |
 
 #### 属性
-
 | 属性 | 类型 | 说明 |
 | :--- | :--- | :--- |
 | `config` | ConfigManager | 配置管理器实例 |

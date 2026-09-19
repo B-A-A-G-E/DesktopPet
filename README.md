@@ -7,7 +7,6 @@
 - [快速开始](#快速开始)
 - [项目结构](#项目结构)
 - [API 文档](#api-文档)
-- [操作简介（宠物本体）](#操作简介宠物本体)
 - [桌宠管理器](#桌宠管理器)
 - [核心机制](#核心机制)
 - [自定义](#自定义)
@@ -64,77 +63,129 @@ pip install qmarkdownview
 
 ```
 .
-├── main.py                   # 程序入口
-├── README.md                 # 项目说明文档
-│
-├── doc/                      # 详细文档
-|   ├── CHANGELOG.md          # 更新日志
-|   └── API/                  # API接口文档
-│
-├── customization.md          # 插件开发指南
-├── CHANGELOG.md              # 更新日志
-│
-├── pet/                      # 宠物资源包
-│   ├── config.json           # 宠物注册表
-│   └── Mutumi/               # 示例宠物
-│       ├── info.json         # 元信息
-│       ├── log.log           # 日志
-│       └── config/           # 行为配置
-│           ├── base.json     # 基础设置
-│           ├── anime.json    # 动画序列
-│           ├── collision.json# 碰撞区域
-│           ├── dialog.json   # 对话库
-│           ├── state.json    # 状态反馈
-│           └── pluginState.json # 插件状态
-|
-├── temp/                     # 宠物模板
-│   └── Mutumi/               # 示例宠物
-│       ├── info.json         # 元信息
-│       ├── introduction.md   # 介绍文档
-│       ├── icon.png          # 桌宠图标
-│       ├── img/              # 动画帧图片
-│       └── config/           # 行为配置
-│           ├── base.json     # 基础设置
-│           ├── anime.json    # 动画序列
-│           ├── collision.json# 碰撞区域
-│           ├── dialog.json   # 对话库
-│           ├── state.json    # 状态反馈
-│           └── pluginState.json # 插件状态
-│
-├── plugin/                   # 插件系统
-│   ├── config.json           # 插件注册表
-│   ├── builtin
-│   |   ├── idle.py               # 待机管理
-│   |   ├── drag.py               # 拖拽交互
-│   |   ├── stroke.py             # 抚摸交互
-│   |   ├── move-randomly.py      # 随机移动
-|   ├── for-mutumi
-│   |   ├── use-fan.py            # 风扇互动
-|   └── attr
-│       └── attr.py               # 属性面板
-│
-├── tool/                     # 核心工具
-│   ├── config.py             # 配置管理
-│   ├── anime.py              # 动画引擎
-│   ├── stateMachine.py       # 状态机
-│   ├── plugin.py             # 插件管理器
-│   ├── widgetFactory.py      # UI工厂
-│   ├── conv.py               # 对话生成
-│   └── collision.py          # 碰撞检测
-│
-└── window/                   # GUI界面
-    ├── manager/              # 管理后台
-    │   ├── mainWindow.py     # 主窗口
-    │   ├── managerPage.py    # 桌宠管理
-    │   ├── pluginPage.py     # 插件管理
-    │   ├── docPage.py        # 文档查阅
-    │   └── settingPage.py    # 设置
-    └── pet/                  # 宠物窗口
-        ├── petWindow.py      # 主窗口
-        ├── dialogMenu.py     # 对话面板
-        ├── stateMenu.py      # 状态面板
-        ├── actionMenu.py     # 行动面板
-        └── settingMenu.py    # 设置面板
+├── .gitattributes
+├── .gitignore
+├── main.py                          # 程序入口
+├── README.md                        # 项目说明文档
+├── settings.json                    # 全局配置文件
+├── doc/                             # 项目文档目录
+│   ├── CHANGELOG.md                 # 更新日志
+│   ├── customization.md             # 自定义配置说明
+│   └── API/                         # API 文档
+│       ├── API-manager.md           # 管理器 API
+│       ├── API-pet.md               # 桌宠 API
+│       └── API-tool.md              # 工具 API
+├── pet/                             # 桌宠数据目录
+│   ├── config.json                  # 桌宠全局配置
+│   ├── Mutumi/                      # 桌宠 Mutumi
+│   │   ├── info.json                # 桌宠信息
+│   │   ├── log.log                  # 运行日志
+│   │   └── config/                  # 桌宠配置
+│   │       ├── anime.json           # 动画配置
+│   │       ├── attr.json            # 属性配置
+│   │       ├── base.json            # 基础配置
+│   │       ├── collision.json       # 碰撞配置
+│   │       ├── dialog.json          # 对话配置
+│   │       ├── move-randomly.json   # 随机移动配置
+│   │       ├── pluginState.json     # 插件状态
+│   │       └── state.json           # 状态机配置
+│   ├── 大狗1/                        # 桌宠 大狗1
+│   │   ├── info.json                # 桌宠信息
+│   │   ├── log.log                  # 运行日志
+│   │   └── config/                  # 桌宠配置
+│   │       ├── anime.json           # 动画配置
+│   │       ├── base.json            # 基础配置
+│   │       ├── collision.json       # 碰撞配置
+│   │       ├── dialog.json          # 对话配置
+│   │       ├── pluginState.json     # 插件状态
+│   │       └── state.json           # 状态机配置
+│   └── 大狗2/                        # 桌宠 大狗2
+│       ├── info.json                # 桌宠信息
+│       ├── log.log                  # 运行日志
+│       └── config/                  # 桌宠配置
+│           ├── anime.json           # 动画配置
+│           ├── base.json            # 基础配置
+│           ├── collision.json       # 碰撞配置
+│           ├── dialog.json          # 对话配置
+│           ├── pluginState.json     # 插件状态
+│           └── state.json           # 状态机配置
+├── plugin/                          # 插件目录
+│   ├── config.json                  # 插件全局配置
+│   ├── attr/                        # 属性插件
+│   │   └── attr.py                  # 属性插件实现
+│   ├── builtin/                     # 内置插件
+│   │   ├── drag.py                  # 拖拽
+│   │   ├── idle.py                  # 待机
+│   │   ├── move-randomly.py         # 随机移动
+│   │   └── stroke.py                # 抚摸
+│   ├── dagou-integ-plugin/          # 大狗集成插件
+│   │   ├── plugin.py                # 插件实现
+│   │   └── audio/                   # 音频资源
+│   │       └── bark.mp3             # 狗叫音效
+│   └── for-mutumi/                  # Mutumi 专用插件
+│       └── use-fan.py               # 使用风扇
+├── temp/                            # 桌宠模板目录
+│   ├── Mutumi/                      # Mutumi 模板
+│   │   ├── icon.png                 # 图标
+│   │   ├── info.json                # 模板信息
+│   │   ├── introduction.md          # 介绍文档
+│   │   ├── config/                  # 模板配置
+│   │   │   ├── anime.json           # 动画配置
+│   │   │   ├── attr.json            # 属性配置
+│   │   │   ├── base.json            # 基础配置
+│   │   │   ├── collision.json       # 碰撞配置
+│   │   │   ├── dialog.json          # 对话配置
+│   │   │   ├── move-randomly.json   # 随机移动配置
+│   │   │   ├── pluginState.json     # 插件状态
+│   │   │   └── state.json           # 状态机配置
+│   │   └── img/                     # 图片资源
+│   │       ├── after-stroke/        # 抚摸后动画帧
+│   │       ├── drag/                # 拖拽动画帧
+│   │       ├── entre/               # 进入动画帧
+│   │       ├── exit/                # 退出动画帧
+│   │       ├── idle/                # 待机动画帧
+│   │       ├── stroke/              # 抚摸动画帧
+│   │       ├── turn-off-fan/        # 关闭风扇动画帧
+│   │       └── using-fan/           # 使用风扇动画帧
+│   └── 大狗/                         # 大狗模板
+│       ├── icon.png                 # 图标
+│       ├── info.json                # 模板信息
+│       ├── introduction.md          # 介绍文档
+│       ├── config/                  # 模板配置
+│       │   ├── anime.json           # 动画配置
+│       │   ├── base.json            # 基础配置
+│       │   ├── collision.json       # 碰撞配置
+│       │   ├── dialog.json          # 对话配置
+│       │   ├── pluginState.json     # 插件状态
+│       │   └── state.json           # 状态机配置
+│       └── img/                     # 图片资源
+│           ├── bark/                # 吠叫动画帧
+│           ├── heyiwei/             # 何意味动画帧
+│           └── idle/                # 待机动画帧
+├── tool/                            # 工具模块
+│   ├── anime.py                     # 动画工具
+│   ├── audio.py                     # 音频工具
+│   ├── collision.py                 # 碰撞检测工具
+│   ├── config.py                    # 配置工具
+│   ├── conv.py                      # 转换工具
+│   ├── plugin.py                    # 插件工具
+│   ├── stateMachine.py              # 状态机工具
+│   ├── widgetFactory.py             # 控件工厂
+│   └── __init__.py                  # 包初始化
+└── window/                          # 窗口模块
+    ├── manager/                     # 管理器窗口
+    │   ├── docPage.py               # 文档页面
+    │   ├── mainWindow.py            # 主窗口
+    │   ├── managerPage.py           # 管理器页面
+    │   ├── pluginPage.py            # 插件页面
+    │   ├── settingPage.py           # 设置页面
+    │   └── tempPage.py              # 模板页面
+    └── pet/                         # 桌宠窗口
+        ├── actionMenu.py            # 动作菜单
+        ├── dialogMenu.py            # 对话菜单
+        ├── petWindow.py             # 桌宠窗口
+        ├── settingMenu.py           # 设置菜单
+        └── stateMenu.py             # 状态菜单
 ```
 
 ## API 文档
@@ -143,18 +194,9 @@ pip install qmarkdownview
 - [Pet Manager](./doc/API/API-manager.md)
 - [包：tool](./doc/API/API-tool.md)
 
-## 操作简介（宠物本体）
-
-| 操作 | 反馈 |
-| :---: | :--- |
-| **左键拖拽** | 切换至 `drag` 状态，宠物跟随鼠标移动 |
-| **左键点击头部** (碰撞区) | 触发 `stroke` 状态，播放抚摸动画与反馈 |
-| **闲置等待** | 自动进入 `idle` 状态，触发随机移动与待机回复 |
-| **右键菜单** | 打开对话/状态/行动/设置面板 |
-
 ## 桌宠管理器
 
-管理器（`manager.py`）提供了一个统一的图形界面，用于集中管理所有已注册的宠物。
+管理器（`manager.py`）提供了一个统一的图形界面，用于集中管理所有已注册的宠物和模板。
 
 **主要功能**：
 - **宠物管理**：
@@ -171,16 +213,17 @@ pip install qmarkdownview
 **宠物注册**：
 在 `./pet/config.json` 中注册宠物：
 ```json
-{
-    "宠物名": "./pet/宠物名/"
-}
+[
+    "宠物名"
+]
 ```
 每个宠物目录必须包含 `info.json`、`introduction.md`、`config/` 和 `img/` 目录。
 
 ## 核心机制
 
 1.  **多宠物架构**：
-    - 每个宠物拥有独立的配置文件、图片资源和插件状态。
+    - 每个宠物拥有独立的配置文件和插件状态。
+    - 宠物通过实例化模板创建，图片资源和文档不会复制，所有同模板宠物共享
     - 通过 `pet/config.json` 注册，实例由管理器的 `MainWindow` 统一管理。
     - 支持从管理器或命令行独立启动。
 
