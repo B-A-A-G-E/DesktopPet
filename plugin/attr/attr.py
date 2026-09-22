@@ -38,11 +38,11 @@ class Action(Plugin):
         self.strokeTimer.timeout.connect(self.onStrokeTimeout)
 
     def loadData(self) -> None:
-        if os.path.exists(f"{self.window.configManager.path}/config/attr.json"):
-            with open(f"{self.window.configManager.path}/config/attr.json", "r", encoding = "utf-8") as f:
+        if os.path.exists(f"{self.window.configManager.path}/attr.json"):
+            with open(f"{self.window.configManager.path}/attr.json", "r", encoding = "utf-8") as f:
                 self.data = json.load(f)
         else:
-            with open(f"{self.window.configManager.path}/config/attr.json", "w", encoding = "utf-8") as f:
+            with open(f"{self.window.configManager.path}/attr.json", "w", encoding = "utf-8") as f:
                 self.data = {
                         "satiety": { "min": 0, "max": 100, "value": 100 },
                         "fb": { "min": 0, "max": 100, "value": 0 },
@@ -63,12 +63,12 @@ class Action(Plugin):
             ("好感度", "fb")
         ]
 
-        self.pg.bars = {}
+        self.bars = {}
         for name, key in fields:
             value = self.data[key]
             bar = QProgressBar(minimum = int(value["min"]), maximum = int(value["max"]), value = int(value["value"]))
             bar.setTextVisible(True)
-            bar.setFormat(f"{value["min"]} / {value["value"]} / {value["max"]}")
+            bar.setFormat(f"{value['min']} / {value['value']} / {value['max']}")
             bar.setTextVisible(True)
             # 确保文本在任何主题下都可见
             bar.setStyleSheet("""
@@ -77,7 +77,7 @@ class Action(Plugin):
                 }
             """)
             lyt.addRow(name, bar)
-            self.pg.bars[key] = bar
+            self.bars[key] = bar
         
         self.pg.setLayout(lyt)
         self.window.stateMenu.addPage(self.pg, "属性")
@@ -91,7 +91,7 @@ class Action(Plugin):
 
     @Slot()
     def updateData(self) -> None:
-        with open(f"{self.window.configManager.path}/data.json", "w", encoding = "utf-8") as f:
+        with open(f"{self.window.configManager.path}/attr.json", "w", encoding = "utf-8") as f:
             f.write(json.dumps(self.data, ensure_ascii = False, indent = 2))
     
     @Slot()
@@ -99,6 +99,6 @@ class Action(Plugin):
         fb = self.data["fb"]
         fb["value"] += self.settings["stroke"]["delta"]
         if fb["value"] >= self.data["fb"]["min"] and fb["value"] <= self.data["fb"]["max"]:
-            self.pg.bars["fb"].setValue(fb["value"])
-            self.pg.bars["fb"].setFormat(f"{fb["min"]} / {fb["value"]} / {fb["max"]}")
+            self.bars["fb"].setValue(fb["value"])
+            self.bars["fb"].setFormat(f"{fb["min"]} / {fb["value"]} / {fb["max"]}")
             self.data["fb"] = fb

@@ -24,8 +24,7 @@ class Action(Plugin):
     
     def mouseMoveEvent(self, event: QMouseEvent):
         if event.buttons() == Qt.MouseButton.LeftButton and self.window.state == "idle":
-            if self.window.state != "drag" and self.window.state != self.state and \
-                "head" in pointAt(event.position().toPoint(), self.window.collisions):
+            if self.window.state != self.state and "head" in pointAt(event.position().toPoint(), self.window.collisions):
                 event.accept()
                 self.window.operateState(self.state, self.anime)
     

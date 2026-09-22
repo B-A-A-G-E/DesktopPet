@@ -497,7 +497,7 @@ class DynamicListFactory(WidgetFactory):
         """用新数据重建列表，清空原有内容。"""
         # 清空
         while len(self.edits) > 0:
-            self.edits.pop(0)
+            self.edits.pop(0).deleteLater()
         self.clear()
 
         for i in data:
@@ -572,7 +572,7 @@ class FormBoxFactory(WidgetFactory):
         """更新所有表单的数据。"""
         for _, key, _ in self.fields:
             form = self.forms[key]
-            form.data = data[key]
+            form.setData(data[key])
 
     def getData(self) -> dict[str, dict[str, Any]]:
         """从所有表单收集数据，返回嵌套字典。"""

@@ -9,7 +9,7 @@ class Action(Plugin):
         super().__init__()
         self.id = "dagou-integ-plugin"
         self.auto = True
-        self.timer = None
+        self.timer: QTimer | None = None
 
     def setup(self, window):
         super().setup(window)

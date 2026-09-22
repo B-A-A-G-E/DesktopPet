@@ -2,14 +2,14 @@ from PySide6.QtWidgets import QApplication
 
 import sys
 
-from tool.config import ConfigManager, LogType
+from tool.config import ConfigManager
 
 from window.pet.petWindow import PetWindow
 from window.manager.mainWindow import MainWindow
 
 if __name__ == "__main__":
     app = QApplication([])
-    window = None
+    window: MainWindow | PetWindow | None = None
     
     default = ConfigManager.settings["default-pet"]
     if len(sys.argv) == 1:
@@ -20,7 +20,7 @@ if __name__ == "__main__":
             input("pause")
             sys.exit(-1)
         
-        window = PetWindow(default, ConfigManager.pets[default])
+        window = PetWindow(default)
         ConfigManager.default = True
     else:
         window = PetWindow(sys.argv[1])
@@ -30,7 +30,3 @@ if __name__ == "__main__":
     
     window.show()
     app.exec()
-    
-    if ConfigManager.default:
-        window.operateState("exit", "exit", isAsync = False)
-        window.stateMenu.log("Succeeded to exit", LogType.Exit)

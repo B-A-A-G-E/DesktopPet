@@ -98,7 +98,7 @@ class Anime(QObject):
     @Slot()
     def nextImg(self) -> None:
         try:
-            self.widget.setPixmap(QPixmap(self.path + self.imgNames[self.index])) # 更新帧
+            self.widget.setPixmap(QPixmap(f"{self.path}/{self.imgNames[self.index]}")) # 更新帧
             fitImgSize(self.window, self.widget) # 调整窗口大小以适应图片
         except Exception as e:
             print(e)

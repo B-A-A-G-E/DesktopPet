@@ -162,14 +162,14 @@ class PluginManager(QObject):
         
         for pid in ids:
             deps = ConfigManager.plugin.get(pid, {}).get("deps", [])
-            validDeos = []
+            validDeps = []
             for dep in deps:
                 if dep in ids:
-                    validDeos.append(dep)
+                    validDeps.append(dep)
                 else:
                     self.pluginError.emit(f"Plugin \"{pid}\" depends on unregistered plugin \"{dep}\", skipping")
-            graph[pid] = validDeos
-            inDegree[pid] = len(validDeos)  # 入度 = 依赖数量
+            graph[pid] = validDeps
+            inDegree[pid] = len(validDeps)  # 入度 = 依赖数量
         
         # 构建反向图
         reverseGraph = {pid: [] for pid in ids}
@@ -219,3 +219,15 @@ class PluginManager(QObject):
                 self.currentPlugin = None
             else:
                 plugin.stop()
+    def deleteLater(self) -> None:
+        for plugin in self.plugins.values():
+            if plugin.auto:
+                try:
+                    plugin.stop()
+                    if not plugin.teardownImmed:
+                        plugin.teardown()
+                except Exception as e:
+                    self.pluginError.emit(f"failed to stop plugin {plugin.id}: {e}")
+        self.plugins.clear()
+        self.currentPlugin = None
+        return super().deleteLater()

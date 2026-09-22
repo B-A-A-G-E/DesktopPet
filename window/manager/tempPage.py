@@ -219,7 +219,6 @@ class TempPage(SearchStackFactory):
     # ========== 实例化 ==========
 
     def instantiatePet(self, tempName: str) -> None:
-        """实例化宠物：复制模板资源到 ./pet/ 下"""
         dialog = NameInputDialog(self)
         if dialog.exec() != QDialog.DialogCode.Accepted:
             return
@@ -231,45 +230,30 @@ class TempPage(SearchStackFactory):
         try:
             os.makedirs(petPath, exist_ok=True)
 
-            # 复制 info.json
             infoSrc = os.path.join(tempPath, "info.json")
             infoDst = os.path.join(petPath, "info.json")
             if os.path.exists(infoSrc):
                 shutil.copy2(infoSrc, infoDst)
 
-            # 复制 config/
             configSrc = os.path.join(tempPath, "config")
             configDst = os.path.join(petPath, "config")
             if os.path.exists(configSrc):
                 shutil.copytree(configSrc, configDst, dirs_exist_ok=True)
 
-            # 写入 name 与 temp 字段到 info.json
             if os.path.exists(infoDst):
                 with open(infoDst, "r", encoding="utf-8") as f:
                     info = json.load(f)
                 info["name"] = name
-                info["temp"] = tempName   # 记录来源模板，供删除模板时查找实例
+                info["temp"] = tempName
                 with open(infoDst, "w", encoding="utf-8") as f:
                     json.dump(info, f, ensure_ascii=False, indent=2)
 
-            # 新建 log.log
             logPath = os.path.join(petPath, "log.log")
             with open(logPath, "w", encoding="utf-8") as f:
                 pass
 
-            # 注册到 ./pet/config.json（列表结构）
-            with open("./pet/config.json", "r", encoding="utf-8") as f:
-                petsConfig = json.load(f)
-
-            if name not in petsConfig:
-                petsConfig.append(name)
-
-            with open("./pet/config.json", "w", encoding="utf-8") as f:
-                json.dump(petsConfig, f, ensure_ascii=False, indent=2)
-
-            ConfigManager.pets = petsConfig
-
-            # 通知管理器刷新
+            # 不再写 ./pet/config.json
+            ConfigManager.pets = scanPets()   # ← 刷新缓存
             self.refreshManager()
 
             QMessageBox.information(self, "实例化成功", f"桌宠 \"{name}\" 已成功创建")
@@ -285,9 +269,13 @@ class TempPage(SearchStackFactory):
     def findInstances(self, tempName: str) -> list[str]:
         """查找使用指定模板的所有宠物实例名"""
         instances: list[str] = []
-        for petName in ConfigManager.pets:
-            infoPath = f"./pet/{petName}/info.json"
-            if not os.path.exists(infoPath):
+        petDir = "./pet"
+        if not os.path.exists(petDir):
+            return instances
+
+        for petName in os.listdir(petDir):
+            infoPath = os.path.join(petDir, petName, "info.json")
+            if not os.path.isfile(infoPath):
                 continue
             try:
                 with open(infoPath, "r", encoding="utf-8") as f:
@@ -299,12 +287,10 @@ class TempPage(SearchStackFactory):
         return instances
 
     def deleteTemp(self, tempName: str) -> None:
-        """删除模板（及其所有实例）"""
         instances = self.findInstances(tempName)
         tempPath = os.path.join("./temp", tempName)
 
         if instances:
-            # 有实例，询问是否删除所有实例
             reply = QMessageBox.question(
                 self, "确认删除",
                 f"模板 \"{tempName}\" 当前有以下 {len(instances)} 个实例：\n"
@@ -315,29 +301,15 @@ class TempPage(SearchStackFactory):
                 QMessageBox.StandardButton.No
             )
             if reply != QMessageBox.StandardButton.Yes:
-                return  # 取消：不做任何操作
+                return
 
-            # 确定：先删除所有实例
             try:
-                # 从注册表中移除
-                with open("./pet/config.json", "r", encoding="utf-8") as f:
-                    petsConfig = json.load(f)
-
-                for instName in instances:
-                    if instName in petsConfig:
-                        petsConfig.remove(instName)
-
-                with open("./pet/config.json", "w", encoding="utf-8") as f:
-                    json.dump(petsConfig, f, ensure_ascii=False, indent=2)
-
-                ConfigManager.pets = petsConfig
-
-                # 删除实例目录
+                # 不再更新 ./pet/config.json，直接删目录
                 for instName in instances:
                     instPath = f"./pet/{instName}"
                     if os.path.exists(instPath):
                         shutil.rmtree(instPath, ignore_errors=True)
-
+                ConfigManager.pets = scanPets()
             except Exception as e:
                 print(e)
                 QMessageBox.critical(self, "删除失败", f"删除实例失败：\n{e}")
@@ -353,21 +325,15 @@ class TempPage(SearchStackFactory):
             if reply != QMessageBox.StandardButton.Yes:
                 return
 
-        # 删除模板目录
         try:
             if os.path.exists(tempPath):
                 shutil.rmtree(tempPath, ignore_errors=True)
 
-            # 从 UI 中移除
             self.controller.removePage(tempName)
-
-            # 从内存数据中移除
             self._data.pop(tempName, None)
             self._intro.pop(tempName, None)
 
-            # 通知管理器刷新
             self.refreshManager()
-
             QMessageBox.information(self, "删除成功", f"模板 \"{tempName}\" 已成功删除")
         except Exception as e:
             print(e)

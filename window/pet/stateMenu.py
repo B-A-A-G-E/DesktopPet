@@ -1,9 +1,7 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QPlainTextEdit, QGroupBox, QTabWidget
 from PySide6.QtGui import Qt, QAction
 
-from datetime import datetime
-
-from tool.config import ConfigManager
+from tool.config import ConfigManager, log
 from tool.config import LogType
 
 class StateMenu(QWidget):
@@ -36,13 +34,10 @@ class StateMenu(QWidget):
     def bind(self) -> None:
         self.clearAct.triggered.connect(self.logBox.clear)
     
-    def log(self, text: str, type: LogType = None) -> None:
-        logLine = f"{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}  {type}:    {text}"
+    def log(self, text: str, type: LogType | None = None) -> None:
+        logLine = log(f"{self.config.path}/log.log", text, type)
         # 向logBox添加日志
         self.logBox.appendPlainText(logLine)
-        # 写入日志文件
-        with open(f"{self.config.path}/log.log", "a", encoding = "utf-8") as f:
-            f.write(logLine + '\n')
     
     def addPage(self, page: QWidget, label: str) -> None:
         self.pages[label] = page

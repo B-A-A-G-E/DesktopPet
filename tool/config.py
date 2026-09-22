@@ -1,6 +1,8 @@
 from PySide6.QtCore import QObject, Signal
 
+import os
 import json
+from datetime import datetime
 from enum import Enum
 
 class LogType(Enum):
@@ -10,6 +12,13 @@ class LogType(Enum):
     Set = 3
     StateChanged = 4
     PluginLoaded = 5
+
+def log(path: str, text: str, type: LogType | None = None) -> str:
+    logLine = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  {type if type else ''}:    {text}"
+    # 写入日志文件
+    with open(path, "a", encoding = "utf-8") as f:
+        f.write(logLine + '\n')
+    return logLine
 
 class ConfigManager(QObject):
     class SaveMode(Enum):
@@ -154,20 +163,35 @@ class ConfigManager(QObject):
         with open(filepath, "w", encoding = "utf-8") as f:
             json.dump(data, f, ensure_ascii = False, indent = 2)
 
-# 全局加载函数
+# 扫描实例
+def scanPets() -> list[str]:
+    """扫描 ./pet/ 下的所有宠物目录"""
+    petDir = "./pet"
+    if not os.path.exists(petDir):
+        return []
+    
+    result: list[str] = []
+    for name in os.listdir(petDir):
+        path = os.path.join(petDir, name)
+        if not os.path.isdir(path):
+            continue
+        if not os.path.exists(os.path.join(path, "info.json")):
+            continue
+        result.append(name)
+    return result
+
+# 加载实例
 def loadPets() -> None:
     """加载宠物相关配置"""
     try:
-        with open("./pet/config.json", "r", encoding = "utf-8") as f:
-            ConfigManager.pets = json.load(f)
-        with open("./plugin/config.json", "r", encoding = "utf-8") as f:
+        ConfigManager.pets = scanPets()          # ← 改为扫描
+        with open("./plugin/config.json", "r", encoding="utf-8") as f:
             ConfigManager.plugin = json.load(f)
-        with open("./settings.json", "r", encoding = "utf-8") as f:
+        with open("./settings.json", "r", encoding="utf-8") as f:
             ConfigManager.settings = json.load(f)
     except FileNotFoundError as e:
         print(f"cannot find config: {e}")
-        # 初始化空配置
-        ConfigManager.pets = []
+        ConfigManager.pets = scanPets()          # ← 仍扫描
         ConfigManager.plugin = {}
         ConfigManager.settings = {}
     except Exception as e:

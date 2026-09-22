@@ -2,8 +2,7 @@ from PySide6.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout
 from PySide6.QtGui import QAction
 from PySide6.QtCore import Qt, Slot, Signal, QRect
 
-from tool.config import ConfigManager
-from tool.config import LogType
+from tool.config import ConfigManager, LogType, log
 from tool import conv
 from tool import anime
 from tool.stateMachine import StateMachine
@@ -148,7 +147,7 @@ class PetWindow(QWidget):
     def changeAnime(self, name: str, isContinue: bool = False, isAsync: bool = True) -> None:
         """切换动画"""
         if name in self.animes.keys():
-            if self.currentAnime is not None:
+            if self.currentAnime and self.currentAnime.connected:
                 self.currentAnime.over()
             self.currentAnime = self.animes[name]
             self.currentAnime.play(isContinue, isAsync)
@@ -168,31 +167,18 @@ class PetWindow(QWidget):
 
     def closeEvent(self, event) -> None:
         try:
-            # 1. 停止所有插件
-            for plugin in self.pluginManager.plugins.values():
-                if plugin.auto:
-                    try:
-                        plugin.stop()
-                        if not plugin.teardownImmed:
-                            plugin.teardown()
-                    except Exception as e:
-                        print(f"failed to stop plugin {plugin.id}: {e}")
-            self.pluginManager.currentPlugin = None
+            self.pluginManager.deleteLater()
             
-            # 2. 停止所有动画定时器
+            # 停止动画定时器
             for anime in self.animes.values():
                 anime.stop()  # 停止定时器
-                # 断开所有信号连接
+                # 断开信号连接
                 try:
                     anime.loadError.disconnect()
                 except (RuntimeError, TypeError):
                     pass
-            
-            # 3. 清空插件管理器
-            self.pluginManager.plugins.clear()
-            self.pluginManager.deleteLater()
 
-            # 4. 断开所有信号连接
+            # 断开信号连接
             try:
                 self.stateMachine.stateChanged.disconnect()
                 self.stateMachine.stateUndefined.disconnect()
@@ -200,7 +186,7 @@ class PetWindow(QWidget):
             except (RuntimeError, TypeError):
                 pass
             
-            # 5. 删除所有子窗口
+            # 删除子窗口
             for menu in [self.dialogMenu, self.stateMenu, self.actionMenu, self.settingMenu]:
                 if menu:
                     try:
@@ -209,7 +195,7 @@ class PetWindow(QWidget):
                     except Exception:
                         pass
             
-            # 6. 删除动画对象
+            # 删除动画对象
             for key in list(self.animes.keys()):
                 anime = self.animes.pop(key)
                 try:
@@ -217,29 +203,26 @@ class PetWindow(QWidget):
                 except Exception:
                     pass
             
-            # 7. 清空碰撞体
+            # 清空碰撞体
             self.collisions.clear()
             
-            # 8. 删除状态机和配置管理器
+            # 删除状态机和配置管理器
             self.stateMachine.deleteLater()
             self.configManager.deleteLater()
             
-            # 9. 从主窗口的宠物列表中移除
+            # 从主窗口的宠物列表中移除
             if not ConfigManager.default:
                 from window.manager.mainWindow import MainWindow
                 if self in MainWindow.pets:
                     MainWindow.pets.remove(self)
             
-            # 10. 写入日志
-            with open(f"./pet/{self.name}/log.log", "a", encoding = "utf-8") as f:
-                from datetime import datetime
-                f.write(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  {LogType.Exit}:    Succeeded to exit\n")
+            # 写入日志
+            log(f"./pet/{self.name}/log.log", "Succeeded to exit", LogType.Exit)
             
-            # 11. 发射退出信号
+            # 发射退出信号
             self.aboutToQuit.emit()
             
-            # 12. 最后删除自身
-            self.deleteLater()
+            super().deleteLater()
             
         except Exception as e:
             print(f"Error in closeEvent: {e}")
@@ -255,6 +238,8 @@ class PetWindow(QWidget):
     def updateData(self) -> None:
         """更新数据"""
         # petWindow
+        if self.currentAnime and self.currentAnime.connected:
+            self.currentAnime.over()
         self.animes = { k: anime.Anime(f"./temp/{self.configManager.info['temp']}/img/{k}/", v["fps"], v["loop"], self, self.imgLb) for k, v in self.configManager.anime.items()}
         self.collisions = { k: QRect(v["left"], v["top"], v["width"], v["height"]) for k, v in self.configManager.collision.items()}
         # dialogWindow

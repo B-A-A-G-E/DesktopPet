@@ -42,7 +42,7 @@
 
 ## 概述
 
-桌面宠物支持高度的自定义，你可以在不修改核心代码的情况下：
+宠物工坊支持高度的自定义，你可以在不修改核心代码的情况下：
 
 - 添加/修改动画
 - 添加/修改碰撞体
@@ -527,7 +527,7 @@ class Action(Plugin):
 
 : 检查以下几点：
 1. 文件名和 `config.json` 中的键是否一致
-2. 模块导入路径是否正确（如 `C:/DesktopPet/plugin/xxx.py` 或 `./plugin/xxx.py`）
+2. 模块导入路径是否正确（如 `C:/PetForge/plugin/xxx.py` 或 `./plugin/xxx.py`）
 3. 类名是否为 `Action`
 4. `self.id` 是否与 `config.json` 中的键一致
 

@@ -14,7 +14,7 @@ import sys
 import os
 import shutil
 
-from tool.config import ConfigManager
+from tool.config import ConfigManager, scanPets
 from tool.widgetFactory import WidgetFactory, SearchStackFactory, ListBoxFactory, FormFactory, FormBoxFactory
 
 from window.pet.petWindow import PetWindow
@@ -63,7 +63,7 @@ class ManagerPage(SearchStackFactory):
                 self._petConfigs[name] = ConfigManager(name)
                 with open(f"{path}/info.json", "r", encoding="utf-8") as f:
                     info = json.load(f)
-                    self._data[info["name"]] = info
+                    self._data[name] = info
                 with open(f"./temp/{info['temp']}/introduction.md", "r", encoding="utf-8") as f:
                     self._intro[name] = f.read()
             except Exception as e:
@@ -252,10 +252,8 @@ class ManagerPage(SearchStackFactory):
 
     @Slot(str)
     def renamePet(self, oldName: str) -> None:
-        """重命名桌宠"""
         from window.manager.mainWindow import MainWindow
 
-        # 有运行中的实例时禁止重命名
         for pet in MainWindow.pets:
             if getattr(pet, "name", None) == oldName:
                 QMessageBox.critical(
@@ -265,7 +263,7 @@ class ManagerPage(SearchStackFactory):
                 )
                 return
 
-        newName, ok = QInputDialog.getText(self, "重命名桌宠", "请输入新名称:", text = oldName)
+        newName, ok = QInputDialog.getText(self, "重命名桌宠", "请输入新名称:", text=oldName)
         if not ok:
             return
 
@@ -275,9 +273,6 @@ class ManagerPage(SearchStackFactory):
             return
         if newName == oldName:
             return
-        if newName in ConfigManager.pets:
-            QMessageBox.warning(self, "警告", f"桌宠 \"{newName}\" 已存在，请使用其他名称")
-            return
         if os.path.exists(f"./pet/{newName}"):
             QMessageBox.warning(self, "警告", f"目录 \"./pet/{newName}\" 已存在，请使用其他名称")
             return
@@ -286,45 +281,32 @@ class ManagerPage(SearchStackFactory):
         newPath = os.path.abspath(f"./pet/{newName}")
 
         try:
-            # 1. 重命名磁盘目录
             os.rename(oldPath, newPath)
 
-            # 2. 更新 info.json 中的 name 字段
+            # 更新 info.json 的 name 字段（可选，仅作显示）
             infoPath = os.path.join(newPath, "info.json")
             if os.path.exists(infoPath):
-                with open(infoPath, "r", encoding = "utf-8") as f:
+                with open(infoPath, "r", encoding="utf-8") as f:
                     info = json.load(f)
                 info["name"] = newName
-                with open(infoPath, "w", encoding = "utf-8") as f:
-                    json.dump(info, f, ensure_ascii = False, indent = 2)
+                with open(infoPath, "w", encoding="utf-8") as f:
+                    json.dump(info, f, ensure_ascii=False, indent=2)
 
-            # 3. 更新注册表 ./pet/config.json（列表结构）
-            with open("./pet/config.json", "r", encoding = "utf-8") as f:
-                petsConfig = json.load(f)
-            if oldName in petsConfig:
-                petsConfig[petsConfig.index(oldName)] = newName
-            with open("./pet/config.json", "w", encoding = "utf-8") as f:
-                json.dump(petsConfig, f, ensure_ascii = False, indent = 2)
-            ConfigManager.pets = petsConfig
+            # 不再更新 ./pet/config.json，改为刷新缓存
+            ConfigManager.pets = scanPets()   # 或直接 self.reload() 内部会重新读
 
-            # 4. 重建页面（最稳妥）
             self.reload()
-
-            QMessageBox.information(
-                self, "重命名成功",
-                f"桌宠已重命名为 \"{newName}\""
-            )
+            QMessageBox.information(self, "重命名成功", f"桌宠已重命名为 \"{newName}\"")
 
         except Exception as e:
             print(e)
-            # 回滚磁盘重命名
             try:
                 if os.path.exists(newPath) and not os.path.exists(oldPath):
                     os.rename(newPath, oldPath)
             except Exception:
                 pass
             QMessageBox.critical(self, "重命名失败", f"重命名桌宠失败：\n{e}")
-
+    
     # ========== 配置应用/取消 ==========
 
     @Slot(str)
@@ -386,30 +368,19 @@ class ManagerPage(SearchStackFactory):
             return
         try:
             absPath = os.path.abspath(f"./pet/{name}")
-
-            # 从注册文件中移除（列表结构）
-            with open("./pet/config.json", "r", encoding="utf-8") as f:
-                config = json.load(f)
-            if name in config:
-                config.remove(name)
-            with open("./pet/config.json", "w", encoding="utf-8") as f:
-                json.dump(config, f, ensure_ascii=False, indent=2)
-            ConfigManager.pets = config
-
-            # 删除文件夹
             if os.path.exists(absPath) and os.path.isdir(absPath):
                 shutil.rmtree(absPath)
             else:
                 QMessageBox.warning(self, "警告", f"宠物文件夹 \"{absPath}\" 不存在或不是目录")
 
-            # 重建整个页面（避免索引错位）
+            # 不再更新 ./pet/config.json
+            ConfigManager.pets = scanPets()
             self.reload()
-
             QMessageBox.information(self, "删除成功", f"桌宠 \"{name}\" 已成功删除")
         except Exception as e:
             print(e)
             self.delError.emit(name, e)
-
+    
     # ========== 启动 ==========
 
     @Slot(str)
