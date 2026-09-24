@@ -195,7 +195,7 @@ pip install qmarkdownview
 
 ## 桌宠管理器
 
-管理器（`manager.py`）提供了一个统一的图形界面，用于集中管理所有已注册的宠物和模板。
+管理器（`./window/manager/mainWindow.py`）提供了一个统一的图形界面，用于集中管理所有已注册的宠物和模板。
 
 **主要功能**：
 - **宠物管理**：

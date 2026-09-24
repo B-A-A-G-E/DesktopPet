@@ -12,7 +12,7 @@ import os
 import json
 import shutil
 
-from tool.config import ConfigManager
+from tool.config import ConfigManager, scanPets
 from tool.widgetFactory import SearchStackFactory
 
 
@@ -125,7 +125,9 @@ class TempPage(SearchStackFactory):
             introPg = MarkdownView()
             introPg.setExtensions(["markdown.extensions.tables", "markdown.extensions.extra"])
             introPg.loadFinished.connect(
-                lambda finished, n = name: introPg.setValue(self._intro[n])
+                lambda finished, pg = introPg, n = name:
+                    (pg.setValue(self._intro[n]),
+                    pg.loadFinished.disconnect())
             )
 
             infoPg = self.initInfoPage(name)
@@ -252,7 +254,6 @@ class TempPage(SearchStackFactory):
             with open(logPath, "w", encoding="utf-8") as f:
                 pass
 
-            # 不再写 ./pet/config.json
             ConfigManager.pets = scanPets()   # ← 刷新缓存
             self.refreshManager()
 
@@ -264,7 +265,7 @@ class TempPage(SearchStackFactory):
             if os.path.exists(petPath):
                 shutil.rmtree(petPath, ignore_errors=True)
 
-    # ========== 删除模板 ==========
+    # ========== 查找实例 ==========
 
     def findInstances(self, tempName: str) -> list[str]:
         """查找使用指定模板的所有宠物实例名"""
@@ -286,6 +287,8 @@ class TempPage(SearchStackFactory):
                 instances.append(petName)
         return instances
 
+    # ========== 删除模板 ==========
+
     def deleteTemp(self, tempName: str) -> None:
         instances = self.findInstances(tempName)
         tempPath = os.path.join("./temp", tempName)
@@ -295,8 +298,7 @@ class TempPage(SearchStackFactory):
                 self, "确认删除",
                 f"模板 \"{tempName}\" 当前有以下 {len(instances)} 个实例：\n"
                 f"{', '.join(instances)}\n\n"
-                f"是否删除所有实例及模板？\n"
-                f"（选择\"No\"将不做任何操作）",
+                f"是否删除所有实例及模板？\n",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.No
             )
@@ -304,7 +306,6 @@ class TempPage(SearchStackFactory):
                 return
 
             try:
-                # 不再更新 ./pet/config.json，直接删目录
                 for instName in instances:
                     instPath = f"./pet/{instName}"
                     if os.path.exists(instPath):

@@ -20,8 +20,8 @@ if __name__ == "__main__":
             input("pause")
             sys.exit(-1)
         
-        window = PetWindow(default)
         ConfigManager.default = True
+        window = PetWindow(default)
     else:
         window = PetWindow(sys.argv[1])
     

@@ -399,6 +399,10 @@ class WidgetFactory(QWidget):
         """清空页面布局中的所有子项。"""
         clearLyt(self.lyt)
 
+    def reload(self) -> None:
+        """刷新页面"""
+        pass
+
 class FormFactory(WidgetFactory):
     """
     表单工厂，用于创建基于 QFormLayout 的编辑页面。

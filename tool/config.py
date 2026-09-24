@@ -145,7 +145,6 @@ class ConfigManager(QObject):
     @staticmethod
     def saveStaticConfigs() -> None:
         """保存静态成员变量（类变量）"""
-        ConfigManager.save("./pet/config.json", ConfigManager.pets)
         ConfigManager.save("./plugin/config.json", ConfigManager.plugin)
         ConfigManager.save("./settings.json", ConfigManager.settings)
     

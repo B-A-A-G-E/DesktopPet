@@ -77,7 +77,11 @@ class ManagerPage(SearchStackFactory):
 
             introPg = MarkdownView()
             introPg.setExtensions(["markdown.extensions.tables", "markdown.extensions.extra"])
-            introPg.loadFinished.connect(lambda finished, name = k: introPg.setValue(self._intro[name]))
+            introPg.loadFinished.connect(
+                lambda finished, pg = introPg, name = k:
+                    (pg.setValue(self._intro[name]),
+                    pg.loadFinished.disconnect())
+            )
 
             configPg = self.initConfigPage(k)
             setPg = self.initSettingPage(k)
@@ -198,6 +202,7 @@ class ManagerPage(SearchStackFactory):
 
         info = self._data[name]
         form.addRow("名称:", QLabel(info["name"]))
+        form.addRow("模板:", QLabel(info["temp"]))
         form.addRow("版本:", QLabel(str(info.get("version", ""))))
         authors: str = ""
         for author in info.get("author", []):
@@ -292,7 +297,6 @@ class ManagerPage(SearchStackFactory):
                 with open(infoPath, "w", encoding="utf-8") as f:
                     json.dump(info, f, ensure_ascii=False, indent=2)
 
-            # 不再更新 ./pet/config.json，改为刷新缓存
             ConfigManager.pets = scanPets()   # 或直接 self.reload() 内部会重新读
 
             self.reload()
@@ -373,7 +377,6 @@ class ManagerPage(SearchStackFactory):
             else:
                 QMessageBox.warning(self, "警告", f"宠物文件夹 \"{absPath}\" 不存在或不是目录")
 
-            # 不再更新 ./pet/config.json
             ConfigManager.pets = scanPets()
             self.reload()
             QMessageBox.information(self, "删除成功", f"桌宠 \"{name}\" 已成功删除")

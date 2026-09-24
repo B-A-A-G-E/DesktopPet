@@ -100,5 +100,5 @@ class Action(Plugin):
         fb["value"] += self.settings["stroke"]["delta"]
         if fb["value"] >= self.data["fb"]["min"] and fb["value"] <= self.data["fb"]["max"]:
             self.bars["fb"].setValue(fb["value"])
-            self.bars["fb"].setFormat(f"{fb["min"]} / {fb["value"]} / {fb["max"]}")
+            self.bars["fb"].setFormat(f"{fb['min']} / {fb['value']} / {fb['max']}")
             self.data["fb"] = fb
